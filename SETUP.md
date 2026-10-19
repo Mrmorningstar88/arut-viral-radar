@@ -6,18 +6,7 @@
 ## 1. Supabase (база и вход)
 
 1. Создай проект на [supabase.com](https://supabase.com). Регион поближе к Дубаю, например Mumbai или Frankfurt.
-2. Открой **SQL Editor** и выполни по очереди:
-   - содержимое `supabase/migrations/0001_init.sql`;
-   - содержимое `supabase/seed.sql`;
-   - создание твоего пространства:
-     ```sql
-     with w as (insert into workspaces (name) values ('ARUT') returning id)
-     insert into persona (workspace_id, name) select id, 'Арут' from w returning workspace_id;
-     ```
-     Скопируй `workspace_id` из результата, это `WORKSPACE_ID`. Затем:
-     ```sql
-     select seed_redpill_backlog('<WORKSPACE_ID>');
-     ```
+2. Открой **SQL Editor**, вставь целиком содержимое файла `supabase/setup-all.sql` (не имя файла, а текст внутри) и нажми **Run** один раз. Внизу появится `workspace_id`, это `WORKSPACE_ID`.
 3. **Project Settings → API**: скопируй `Project URL`, `anon` и `service_role` ключи.
 4. **Authentication → URL Configuration**: в `Site URL` впиши адрес сайта из Vercel (шаг 4) и добавь его же с `/auth/callback` в `Redirect URLs`.
 
