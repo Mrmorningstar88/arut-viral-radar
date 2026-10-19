@@ -29,6 +29,16 @@ const radarRun = async ({ step, kind }: { step: Parameters<Parameters<typeof inn
     else stats.queue_errors++;
   }
 
+  let redpill = 0;
+  if (kind === "morning") {
+    try {
+      await step.run("redpill", () => pipeline.runRedPill(ws, runId));
+      redpill = 1;
+    } catch (e) {
+      errors.push(`Red Pill: ${pipeline.errorRu(e)}`);
+    }
+  }
+
   const found: pipeline.Found[] = [];
   const creators = await step.run("load-creators", () => store.creatorsToCheck(ws, CREATORS_PER_RUN));
   for (const c of creators) {
@@ -67,7 +77,7 @@ const radarRun = async ({ step, kind }: { step: Parameters<Parameters<typeof inn
   }
 
   await step.run("finish", async () => {
-    await store.finishRun(runId, stats, errors);
+    await store.finishRun(runId, { ...stats, redpill }, errors);
     const total = stats.selected + stats.queue;
     if (total > 0) await store.notify(ws, "run", `Готово: ${total} новых разборов`);
     if (errors.length > 0) await store.notify(ws, "run_errors", `Прогон завершился с ошибками: ${errors.length}`);

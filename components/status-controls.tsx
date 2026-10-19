@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from "motion/react";
 import { useState, useTransition } from "react";
-import { setReelStatus } from "@/app/actions";
+import { setRedpillStatus, setReelStatus } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import { REJECT_REASONS, STATUS_LABEL, type ReelStatus } from "@/lib/db/types";
@@ -25,7 +25,7 @@ const DONE_MSG: Record<ReelStatus, string> = {
 
 const VARIANT = { in_work: "primary", rejected: "danger", filmed: "ghost", published: "success", new: "ghost" } as const;
 
-export function StatusControls({ id, status }: { id: string; status: ReelStatus }) {
+export function StatusControls({ id, status, kind = "reel" }: { id: string; status: ReelStatus; kind?: "reel" | "redpill" }) {
   const [mode, setMode] = useState<"idle" | "reject" | "publish">("idle");
   const [pending, start] = useTransition();
   const toast = useToast();
@@ -36,7 +36,7 @@ export function StatusControls({ id, status }: { id: string; status: ReelStatus 
       fd.set("id", id);
       for (const [k, v] of Object.entries(fields)) fd.set(k, v);
       try {
-        await setReelStatus(fd);
+        await (kind === "redpill" ? setRedpillStatus : setReelStatus)(fd);
         setMode("idle");
         toast(DONE_MSG[fields.status as ReelStatus]);
       } catch (e) {

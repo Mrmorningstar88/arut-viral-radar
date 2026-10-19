@@ -1,6 +1,8 @@
 import "server-only";
 import { generateReelAnalysis } from "@/lib/generate";
 import { MODEL_MAIN, RefusalError } from "@/lib/llm";
+import { proposeTopic, researchStory, writeStory } from "@/lib/redpill";
+import { embed } from "@/lib/sources/embeddings";
 import { lanesFor, MAX_NEW_PER_RUN, pickTop, VIRAL_MIN_VIEWS, type Candidate } from "@/lib/selection";
 import { classifyReel } from "@/lib/selection/classify";
 import { apifySource, shortcodeFromUrl } from "@/lib/sources/apify";
@@ -115,4 +117,37 @@ export async function analyzeCandidate(ws: string, runId: string, f: Found) {
   );
   if ((f.views ?? 0) >= VIRAL_MIN_VIEWS && f.author) await store.upsertCreator(ws, { username: f.author, followers: f.followers });
   return { accepted: true as const };
+}
+
+// Red Pill: один сюжет в утренний прогон. Сначала стартовый бэклог, потом новые темы без дублей по смыслу.
+export async function runRedPill(ws: string, runId: string) {
+  const profile = await store.loadProfile(ws);
+  let usd = 0;
+  let topic = await store.nextBacklogTopic(ws);
+  const fromBacklog = topic != null;
+  let embedding: number[] | null = null;
+
+  if (!topic) {
+    const past = await store.pastRedpillTopics(ws);
+    for (let i = 0; i < 3 && !topic; i++) {
+      const p = await proposeTopic(past);
+      usd += p.usd;
+      const e = await embed(p.topic);
+      if (e && (await store.similarRedpill(ws, e)).length > 0) {
+        past.push(p.topic);
+        continue;
+      }
+      topic = p.topic;
+      embedding = e;
+    }
+    if (!topic) throw new Error("Не нашёл новую тему без повторов");
+  }
+
+  const { notes, usd: u1 } = await researchStory(topic);
+  const { story, usd: u2 } = await writeStory(topic, notes, profile.persona, profile);
+  embedding ??= await embed(`${story.title}. ${story.distraction}`);
+  await store.saveRedpill(ws, story.title || topic, story, embedding, MODEL_MAIN);
+  if (fromBacklog) await store.markBacklogUsed(ws, topic);
+  await store.logCost(ws, runId, "anthropic", usd + u1 + u2);
+  return { topic: story.title || topic };
 }

@@ -1,4 +1,4 @@
-import type { ReelAnalysis, Shot } from "@/lib/generate/schema";
+import type { ReelAnalysis, RedPillStory, Shot } from "@/lib/generate/schema";
 
 // Вымышленный разбор для демо-режима и тестов.
 export const demoAnalysis = (hook: string, keyword: string): ReelAnalysis => {
@@ -36,3 +36,34 @@ export const demoAnalysis = (hook: string, keyword: string): ReelAnalysis => {
   return structuredClone({ ...ru, i18n: { ru, en } });
 };
 
+
+// Вымышленный сюжет Red Pill для демо: факты и источники здесь не настоящие.
+export const demoRedpill = (): RedPillStory => {
+  const base = demoAnalysis("В 1985 году пять стран за один день договорились обесценить доллар. Ты об этом слышал?", "ДОЛЛАР");
+  const ru = {
+    title: "Соглашение Плаза (демо)",
+    era: "22 сентября 1985, отель Plaza, Нью-Йорк",
+    distraction: "Новости о холодной войне и спорте, пока министры финансов G5 решали судьбу курсов валют (демо)",
+    facts: [
+      "Министры финансов пяти стран договорились о совместных интервенциях против доллара (демо).",
+      "За следующие два года доллар заметно подешевел к иене и марке (демо).",
+      "Последствия для Японии обсуждают до сих пор: от пузыря активов до потерянного десятилетия (демо).",
+    ],
+    adaptation: { ...base.adaptation, hook: "В 1985 году пять стран за один день договорились обесценить доллар. Ты об этом слышал?", keyword: "ДОЛЛАР" },
+    expert: {
+      markets: "Пример того, как скоординированные интервенции двигают валютные пары годами (демо).",
+      macro: "Торговый дефицит США как причина договорённости (демо).",
+      politics: "Не требуется.",
+    },
+    risks: ["Не выдавать гипотезы о последствиях за доказанные факты", "Это не финансовый совет"],
+  };
+  const en = structuredClone({ ...ru, title: "The Plaza Accord (demo)", adaptation: { ...ru.adaptation, keyword: "DOLLAR" } });
+  return structuredClone({
+    ...ru,
+    sources: [
+      { title: "Демо-источник: официальное заявление G5", url: "https://example.com/demo-official", kind: "official" as const },
+      { title: "Демо-источник: научная статья", url: "https://example.com/demo-paper", kind: "peer_reviewed" as const },
+    ],
+    i18n: { ru, en },
+  });
+};

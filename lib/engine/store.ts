@@ -1,6 +1,6 @@
 import "server-only";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import type { ReelAnalysis } from "@/lib/generate/schema";
+import type { ReelAnalysis, RedPillStory } from "@/lib/generate/schema";
 import type { Persona } from "@/lib/generate/persona";
 
 // Доступ движка к базе: service role, всегда в рамках одного пространства.
@@ -139,4 +139,49 @@ export async function cached<T>(key: string, load: () => Promise<T>, ttlHours = 
     await d.from("source_cache").upsert({ key, payload: value as object, expires_at: new Date(Date.now() + ttlHours * 3600_000).toISOString() }),
   );
   return value;
+}
+
+// ---- Red Pill ----
+
+export async function nextBacklogTopic(ws: string): Promise<string | null> {
+  const row = check(
+    await serviceDb().from("redpill_backlog").select("topic").eq("workspace_id", ws).is("used_at", null).order("topic").limit(1).maybeSingle(),
+  ) as { topic: string } | null;
+  return row?.topic ?? null;
+}
+
+export async function markBacklogUsed(ws: string, topic: string) {
+  check(await serviceDb().from("redpill_backlog").update({ used_at: new Date().toISOString() }).eq("workspace_id", ws).eq("topic", topic));
+}
+
+export async function pastRedpillTopics(ws: string): Promise<string[]> {
+  const d = serviceDb();
+  const [a, b] = await Promise.all([
+    d.from("redpill").select("topic").eq("workspace_id", ws),
+    d.from("redpill_backlog").select("topic").eq("workspace_id", ws),
+  ]);
+  return [...new Set([...(check(a) as { topic: string }[]), ...(check(b) as { topic: string }[])].map((r) => r.topic))];
+}
+
+export async function similarRedpill(ws: string, embedding: number[]): Promise<{ topic: string; similarity: number }[]> {
+  return check(await serviceDb().rpc("match_redpill", { ws, q: JSON.stringify(embedding), min_similarity: 0.85 })) as {
+    topic: string;
+    similarity: number;
+  }[];
+}
+
+export async function saveRedpill(ws: string, topic: string, story: RedPillStory, embedding: number[] | null, model: string) {
+  const d = serviceDb();
+  const row = check(
+    await d
+      .from("redpill")
+      .insert({
+        workspace_id: ws, topic, era: story.era, distraction: story.distraction, facts: story.facts, sources: story.sources,
+        embedding: embedding ? JSON.stringify(embedding) : null,
+      })
+      .select("id")
+      .single(),
+  ) as { id: string };
+  check(await d.from("analyses").insert({ workspace_id: ws, redpill_id: row.id, payload: story, model }));
+  return row.id;
 }

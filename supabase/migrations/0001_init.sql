@@ -89,6 +89,7 @@ create table redpill (
   status text not null default 'new'
     check (status in ('new', 'in_work', 'rejected', 'filmed', 'published')),
   notes text not null default '',
+  published_url text,
   created_at timestamptz not null default now()
 );
 
@@ -127,6 +128,7 @@ create table own_posts (
   workspace_id uuid not null references workspaces(id) on delete cascade,
   url text not null,
   reel_id uuid references reels(id),
+  redpill_id uuid references redpill(id),
   posted_at timestamptz,
   tags jsonb not null default '{}',
   imported boolean not null default false,
@@ -220,3 +222,14 @@ end $$;
 alter table own_post_metrics enable row level security;
 create policy member_all on own_post_metrics for all to authenticated
   using (exists (select 1 from own_posts p where p.id = post_id and is_member(p.workspace_id)));
+
+-- Похожие сюжеты Red Pill по смыслу (косинусная близость эмбеддингов).
+create function match_redpill(ws uuid, q vector(512), min_similarity float default 0.85)
+returns table (topic text, similarity float)
+language sql stable as $$
+  select topic, 1 - (embedding <=> q) as similarity
+  from redpill
+  where workspace_id = ws and embedding is not null and 1 - (embedding <=> q) >= min_similarity
+  order by embedding <=> q
+  limit 3
+$$;

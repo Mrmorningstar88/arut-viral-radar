@@ -1,6 +1,6 @@
 import type { ReelAnalysis } from "@/lib/generate/schema";
-import { demoAnalysis } from "./demo-analysis";
-import type { Creator, LearnedRule, Persona, QueueItem, Reel, Repo, Run, StatusChange } from "./types";
+import { demoAnalysis, demoRedpill } from "./demo-analysis";
+import type { Creator, LearnedRule, Persona, QueueItem, RedPill, Reel, Repo, Run, StatusChange } from "./types";
 
 // Демо-режим без ключей: данные вымышленные и живут до перезапуска сервера.
 
@@ -17,6 +17,11 @@ const analyses: Record<string, ReelAnalysis> = {
   d2: demoAnalysis("Эти три вещи я перестал покупать, когда начал зарабатывать.", "ТРИ"),
   d3: demoAnalysis("Один день в Дубае, который стоит дороже, чем кажется.", "ДУБАЙ"),
 };
+
+const plaza = demoRedpill();
+const redpills: RedPill[] = [
+  { id: "p1", topic: "Plaza Accord 1985", title: plaza.title, era: plaza.era, distraction: plaza.distraction, status: "new", publishedUrl: null, createdAt: hoursAgo(3) },
+];
 
 const queue: QueueItem[] = [];
 let persona: Persona = { name: "Арут", facts: "", voice: "", taboo: "", queries: ["деньги привычки", "трейдинг мотивация", "Дубай жизнь"] };
@@ -41,6 +46,19 @@ export const demoRepo: Repo = {
   },
   async setReelStatus(id, change: StatusChange) {
     const r = reels.find((x) => x.id === id);
+    if (!r) return;
+    r.status = change.status;
+    if (change.publishedUrl) r.publishedUrl = change.publishedUrl;
+  },
+  async listRedpill() {
+    return redpills;
+  },
+  async getRedpill(id) {
+    const r = redpills.find((x) => x.id === id);
+    return r ? { ...r, story: id === "p1" ? plaza : null } : null;
+  },
+  async setRedpillStatus(id, change) {
+    const r = redpills.find((x) => x.id === id);
     if (!r) return;
     r.status = change.status;
     if (change.publishedUrl) r.publishedUrl = change.publishedUrl;

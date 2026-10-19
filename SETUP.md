@@ -30,7 +30,9 @@
 
 [console.anthropic.com](https://console.anthropic.com) → **API Keys** → создай ключ и пополни баланс.
 
-Необязательно: [exa.ai](https://exa.ai), ключ для поиска новых залётов по запросам из вкладки Persona. Без него работает только мониторинг креаторов.
+Необязательно:
+- [exa.ai](https://exa.ai), ключ для поиска новых залётов по запросам из вкладки Persona. Без него работает только мониторинг креаторов.
+- [voyageai.com](https://www.voyageai.com), ключ для проверки, что новый сюжет Red Pill не повторяет прошлые по смыслу. Без него повторы ловятся только по названию.
 
 ## 4. Vercel (хостинг и расписание)
 
@@ -47,6 +49,7 @@
 | `ANTHROPIC_API_KEY` | Anthropic |
 | `APIFY_TOKEN` | Apify |
 | `EXA_API_KEY` | Exa, необязательно |
+| `VOYAGE_API_KEY` | Voyage, необязательно |
 
 3. **Integrations → Inngest** (Vercel Marketplace): подключи, он сам добавит `INNGEST_EVENT_KEY` и `INNGEST_SIGNING_KEY`. Расписание 09:00 и 20:00 по Дубаю включится само.
 4. Сделай **Redeploy**.

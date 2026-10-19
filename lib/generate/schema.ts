@@ -47,13 +47,21 @@ export const ReelAnalysis = Localized.extend({
 });
 export type ReelAnalysis = z.infer<typeof ReelAnalysis>;
 
-export const RedPillStory = z.object({
-  era: z.string(),
-  distraction: z.string(),
-  facts: z.array(z.string()),
-  sources: z.array(z.string().describe("URL первичного источника")).min(2).max(4),
+const RedPillLocalized = z.object({
+  title: z.string().describe("Короткое название сюжета"),
+  era: z.string().describe("Когда и где это происходило"),
+  distraction: z.string().describe("На что в это время отвлекали внимание людей"),
+  facts: z.array(z.string()).min(3).max(6).describe("Подтверждённые факты, каждый опирается на источник из sources"),
   adaptation: Adaptation,
   expert: Expert,
   risks: z.array(z.string()),
-  i18n: z.object({ ru: z.unknown(), en: z.unknown() }),
 });
+
+export const RedPillStory = RedPillLocalized.extend({
+  sources: z
+    .array(z.object({ title: z.string(), url: z.string(), kind: z.enum(["court", "official", "peer_reviewed", "primary_document"]) }))
+    .min(2)
+    .max(4),
+  i18n: z.object({ ru: RedPillLocalized, en: RedPillLocalized }),
+});
+export type RedPillStory = z.infer<typeof RedPillStory>;

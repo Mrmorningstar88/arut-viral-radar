@@ -1,4 +1,4 @@
-import type { ReelAnalysis } from "@/lib/generate/schema";
+import type { ReelAnalysis, RedPillStory } from "@/lib/generate/schema";
 
 export const REEL_STATUSES = ["new", "in_work", "rejected", "filmed", "published"] as const;
 export type ReelStatus = (typeof REEL_STATUSES)[number];
@@ -40,6 +40,19 @@ export type Reel = {
 };
 
 export type ReelWithAnalysis = Reel & { analysis: ReelAnalysis | null };
+
+export type RedPill = {
+  id: string;
+  topic: string;
+  title: string;
+  era: string | null;
+  distraction: string | null;
+  status: ReelStatus;
+  publishedUrl: string | null;
+  createdAt: string;
+};
+
+export type RedPillWithStory = RedPill & { story: RedPillStory | null };
 
 export type QueueItem = {
   id: string;
@@ -87,6 +100,9 @@ export interface Repo {
   listReels(status?: ReelStatus): Promise<Reel[]>;
   getReel(id: string): Promise<ReelWithAnalysis | null>;
   setReelStatus(id: string, change: StatusChange): Promise<void>;
+  listRedpill(): Promise<RedPill[]>;
+  getRedpill(id: string): Promise<RedPillWithStory | null>;
+  setRedpillStatus(id: string, change: StatusChange): Promise<void>;
   listQueue(): Promise<QueueItem[]>;
   addToQueue(url: string, note: string): Promise<void>;
   getPersona(): Promise<Persona>;

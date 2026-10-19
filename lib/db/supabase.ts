@@ -1,6 +1,6 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import type { ReelAnalysis } from "@/lib/generate/schema";
-import type { Creator, LearnedRule, QueueItem, Reel, Repo, Run } from "./types";
+import type { ReelAnalysis, RedPillStory } from "@/lib/generate/schema";
+import type { Creator, LearnedRule, QueueItem, RedPill, Reel, Repo, Run } from "./types";
 
 // Пока пользователь один: сервер ходит service role-ключом в пространство WORKSPACE_ID.
 // Когда подключим вход, клиент будет создаваться из сессии и RLS ограничит доступ сам.
@@ -24,6 +24,20 @@ const toReel = (r: Row): Reel => ({
   notes: (r.notes as string) ?? "",
   publishedUrl: (r.published_url as string) ?? null,
 });
+
+const toRedpill = (r: Row, story: RedPillStory | null): RedPill => ({
+  id: r.id as string,
+  topic: r.topic as string,
+  title: story?.title ?? (r.topic as string),
+  era: (r.era as string) ?? null,
+  distraction: (r.distraction as string) ?? null,
+  status: r.status as RedPill["status"],
+  publishedUrl: (r.published_url as string) ?? null,
+  createdAt: r.created_at as string,
+});
+
+const latestStory = (r: Row) =>
+  ((r.analyses as { payload: RedPillStory; created_at: string }[] | null) ?? []).sort((a, b) => b.created_at.localeCompare(a.created_at))[0]?.payload ?? null;
 
 function check<T>(res: { data: T; error: { message: string } | null }): T {
   if (res.error) throw new Error(res.error.message);
@@ -61,6 +75,32 @@ export function supabaseRepo(url: string, key: string, ws: string): Repo {
         check(
           await db.from("own_posts").upsert(
             { workspace_id: ws, url: c.publishedUrl, reel_id: id, posted_at: new Date().toISOString() },
+            { onConflict: "workspace_id,url" },
+          ),
+        );
+      }
+    },
+    async listRedpill() {
+      const rows = check(
+        await db.from("redpill").select("*, analyses(payload, created_at)").eq("workspace_id", ws).order("created_at", { ascending: false }).limit(60),
+      ) as Row[];
+      return rows.map((r) => toRedpill(r, latestStory(r)));
+    },
+    async getRedpill(id) {
+      const r = check(await db.from("redpill").select("*, analyses(payload, created_at)").eq("workspace_id", ws).eq("id", id).maybeSingle()) as Row | null;
+      if (!r) return null;
+      const story = latestStory(r);
+      return { ...toRedpill(r, story), story };
+    },
+    async setRedpillStatus(id, c) {
+      const patch: Row = { status: c.status };
+      if (c.publishedUrl) patch.published_url = c.publishedUrl;
+      if (c.reasonText) patch.notes = c.reasonText;
+      check(await db.from("redpill").update(patch).eq("workspace_id", ws).eq("id", id));
+      if (c.status === "published" && c.publishedUrl) {
+        check(
+          await db.from("own_posts").upsert(
+            { workspace_id: ws, url: c.publishedUrl, redpill_id: id, posted_at: new Date().toISOString() },
             { onConflict: "workspace_id,url" },
           ),
         );
