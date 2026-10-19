@@ -51,7 +51,7 @@ export async function addToQueue(formData: FormData): Promise<{ error?: string; 
 export async function savePersona(formData: FormData) {
   const field = (k: string) => String(formData.get(k) ?? "");
   const queries = field("queries").split("\n").map((q) => q.trim()).filter(Boolean).slice(0, 10);
-  await (await getRepo()).savePersona({ name: field("name"), facts: field("facts"), voice: field("voice"), taboo: field("taboo"), queries });
+  await (await getRepo()).savePersona({ name: field("name"), topics: field("topics"), facts: field("facts"), voice: field("voice"), taboo: field("taboo"), queries });
   revalidatePath("/persona");
 }
 

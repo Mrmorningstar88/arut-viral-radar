@@ -37,7 +37,18 @@ export type Reel = {
   status: ReelStatus;
   notes: string;
   publishedUrl: string | null;
+  coverUrl: string | null;
 };
+
+// Короткая выжимка разбора для каталога: хватает, чтобы решить «беру или нет».
+export type ReelSummary = {
+  hook: string;
+  concept: string;
+  why: string[];
+  mechanic: { element: string; theirs: string; yours: string }[];
+};
+
+export type ReelCard = Reel & { summary: ReelSummary | null };
 
 export type ReelWithAnalysis = Reel & { analysis: ReelAnalysis | null };
 
@@ -63,7 +74,7 @@ export type QueueItem = {
   createdAt: string;
 };
 
-export type Persona = { name: string; facts: string; voice: string; taboo: string; queries: string[] };
+export type Persona = { name: string; topics: string; facts: string; voice: string; taboo: string; queries: string[] };
 
 export type Creator = {
   username: string;
@@ -97,7 +108,7 @@ export type StatusChange = {
 
 export interface Repo {
   readonly demo: boolean;
-  listReels(status?: ReelStatus): Promise<Reel[]>;
+  listReels(status?: ReelStatus): Promise<ReelCard[]>;
   getReel(id: string): Promise<ReelWithAnalysis | null>;
   setReelStatus(id: string, change: StatusChange): Promise<void>;
   listRedpill(): Promise<RedPill[]>;

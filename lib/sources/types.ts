@@ -7,6 +7,7 @@ export type ProfileReel = {
   date: string;
   caption: string;
   pinned: boolean;
+  cover: string;
 };
 
 export type ReelDetails = {
@@ -21,6 +22,8 @@ export type ReelDetails = {
   views: number | null;
   topComments: string[];
   keywords: string[];
+  cover: string;
+  transcript: string;
 };
 
 export interface InstagramSource {

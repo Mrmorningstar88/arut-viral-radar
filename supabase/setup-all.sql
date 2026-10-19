@@ -26,6 +26,7 @@ $$;
 create table persona (
   workspace_id uuid primary key references workspaces(id) on delete cascade,
   name text not null default '',
+  topics text not null default '',
   facts text not null default '',
   voice text not null default '',
   taboo text not null default '',
@@ -65,6 +66,7 @@ create table reels (
     check (status in ('new', 'in_work', 'rejected', 'filmed', 'published')),
   notes text not null default '',
   published_url text,
+  cover_url text,
   created_at timestamptz not null default now(),
   unique (workspace_id, platform, ext_id)
 );
@@ -237,6 +239,8 @@ language sql stable as $$
   limit 3
 $$;
 
+insert into storage.buckets (id, name, public) values ('covers', 'covers', true) on conflict (id) do nothing;
+
 -- Стартовый бэклог Red Pill для нового пространства. Вызывается при создании workspace.
 create or replace function seed_redpill_backlog(ws uuid) returns void language sql as $$
   insert into redpill_backlog (workspace_id, topic)
@@ -248,7 +252,6 @@ create or replace function seed_redpill_backlog(ws uuid) returns void language s
   ]) as t
   on conflict do nothing
 $$;
-
 -- Твоё пространство, образ и стартовые темы Red Pill.
 do $$
 declare ws uuid;

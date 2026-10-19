@@ -1,5 +1,6 @@
 import type { ReelAnalysis } from "@/lib/generate/schema";
 import { demoAnalysis, demoRedpill } from "./demo-analysis";
+import { toSummary } from "./summary";
 import type { Creator, LearnedRule, Persona, QueueItem, RedPill, Reel, Repo, Run, StatusChange } from "./types";
 
 // Демо-режим без ключей: данные вымышленные и живут до перезапуска сервера.
@@ -7,9 +8,9 @@ import type { Creator, LearnedRule, Persona, QueueItem, RedPill, Reel, Repo, Run
 const hoursAgo = (h: number) => new Date(Date.now() - h * 3600_000).toISOString();
 
 const reels: Reel[] = [
-  { id: "d1", platform: "instagram", url: "https://www.instagram.com/reel/DEMO1/", author: "example_finance", views: 14_200_000, likes: 910_000, comments: 12_400, postedAt: hoursAgo(30), caption: "Ты точно знаешь, куда уходят деньги? (демо)", lanes: ["viral"], fitScore: 88, fitReason: "Деньги и привычки: прямо в твою тему, формат говорящей головы.", status: "new", notes: "", publishedUrl: null },
-  { id: "d2", platform: "instagram", url: "https://www.instagram.com/reel/DEMO2/", author: "example_mindset", views: 4_100_000, likes: 380_000, comments: 5_100, postedAt: hoursAgo(50), caption: "3 вещи, которые богатые не покупают (демо)", lanes: ["rising"], fitScore: 74, fitReason: "Растёт быстро, формат списка легко адаптировать.", status: "new", notes: "", publishedUrl: null },
-  { id: "d3", platform: "instagram", url: "https://www.instagram.com/reel/DEMO3/", author: "example_travel", views: 22_000_000, likes: 1_500_000, comments: 30_000, postedAt: hoursAgo(400), caption: "Дубай за 1 день (демо)", lanes: ["viral"], fitScore: 52, fitReason: "Локация твоя, но тема туристическая.", status: "in_work", notes: "Снять на крыше", publishedUrl: null },
+  { id: "d1", platform: "instagram", url: "https://www.instagram.com/reel/DEMO1/", author: "example_finance", views: 14_200_000, likes: 910_000, comments: 12_400, postedAt: hoursAgo(30), caption: "Ты точно знаешь, куда уходят деньги? (демо)", lanes: ["viral"], fitScore: 88, fitReason: "Деньги и привычки: прямо в твою тему, формат говорящей головы.", status: "new", notes: "", publishedUrl: null, coverUrl: null },
+  { id: "d2", platform: "instagram", url: "https://www.instagram.com/reel/DEMO2/", author: "example_mindset", views: 4_100_000, likes: 380_000, comments: 5_100, postedAt: hoursAgo(50), caption: "3 вещи, которые богатые не покупают (демо)", lanes: ["rising"], fitScore: 74, fitReason: "Растёт быстро, формат списка легко адаптировать.", status: "new", notes: "", publishedUrl: null, coverUrl: null },
+  { id: "d3", platform: "instagram", url: "https://www.instagram.com/reel/DEMO3/", author: "example_travel", views: 22_000_000, likes: 1_500_000, comments: 30_000, postedAt: hoursAgo(400), caption: "Дубай за 1 день (демо)", lanes: ["viral"], fitScore: 52, fitReason: "Локация твоя, но тема туристическая.", status: "in_work", notes: "Снять на крыше", publishedUrl: null, coverUrl: null },
 ];
 
 const analyses: Record<string, ReelAnalysis> = {
@@ -24,7 +25,7 @@ const redpills: RedPill[] = [
 ];
 
 const queue: QueueItem[] = [];
-let persona: Persona = { name: "Арут", facts: "", voice: "", taboo: "", queries: ["деньги привычки", "трейдинг мотивация", "Дубай жизнь"] };
+let persona: Persona = { name: "Арут", topics: "Экономика, деньги, макро, трейдинг, политика и правда, о которой не говорят (демо)", facts: "", voice: "", taboo: "", queries: ["деньги привычки", "трейдинг мотивация", "Дубай жизнь"] };
 const creators: Creator[] = [
   { username: "example_finance", followers: 2_400_000, medianViews: 900_000, source: "auto", lastCheckedAt: hoursAgo(5) },
 ];
@@ -38,7 +39,7 @@ const rules: LearnedRule[] = [
 export const demoRepo: Repo = {
   demo: true,
   async listReels(status) {
-    return reels.filter((r) => !status || r.status === status);
+    return reels.filter((r) => !status || r.status === status).map((r) => ({ ...r, summary: analyses[r.id] ? toSummary(analyses[r.id]) : null }));
   },
   async getReel(id) {
     const r = reels.find((x) => x.id === id);

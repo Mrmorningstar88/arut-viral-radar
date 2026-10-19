@@ -34,7 +34,19 @@ const Adaptation = z.object({
 
 const Expert = z.object({ markets: z.string(), macro: z.string(), politics: z.string() });
 
+// Что было в оригинале и какой приём из него переносится на автора.
+const Original = z.object({
+  summary: z.string().describe("Что происходит в оригинале, 1–2 предложения"),
+  beats: z.array(z.object({ t: z.string(), what: z.string() })).min(3).max(6).describe("Ход оригинала по секундам"),
+  mechanic: z
+    .array(z.object({ element: z.string(), theirs: z.string(), yours: z.string() }))
+    .min(3)
+    .max(5)
+    .describe("Приёмы залёта (хук, структура, формат, триггер, CTA): как у оригинала и как у автора"),
+});
+
 const Localized = z.object({
+  original: Original,
   why: z.array(z.string()).min(3).max(4),
   adaptation: Adaptation,
   expert: Expert,

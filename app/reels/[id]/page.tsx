@@ -9,7 +9,7 @@ import { Reveal } from "@/components/ui/reveal";
 import { ScoreRing } from "@/components/ui/score-ring";
 import { Segmented } from "@/components/ui/segmented";
 import { getRepo } from "@/lib/db";
-import { compact, dubaiDate } from "@/lib/format";
+import { compact, dubaiDate, igEmbed } from "@/lib/format";
 
 export default async function ReelPage({ params, searchParams }: PageProps<"/reels/[id]">) {
   const { id } = await params;
@@ -18,6 +18,7 @@ export default async function ReelPage({ params, searchParams }: PageProps<"/ree
   if (!reel) notFound();
 
   const a = reel.analysis?.i18n[lang];
+  const embed = igEmbed(reel.url);
 
   return (
     <article className="space-y-8">
@@ -54,6 +55,43 @@ export default async function ReelPage({ params, searchParams }: PageProps<"/ree
         <p className="text-muted">Разбор ещё не готов.</p>
       ) : (
         <>
+          <Reveal delay={0.03}>
+            <Panel title="Оригинал и что из него берём" subtitle={a.original?.summary}>
+              <div className="grid gap-5 md:grid-cols-[280px_1fr]">
+                {embed && <iframe src={embed} className="aspect-[9/16] w-full rounded-2xl bg-white" loading="lazy" allowFullScreen title="Оригинал в Instagram" />}
+                <div className="space-y-5">
+                  {a.original?.beats && (
+                    <ol className="space-y-2 text-sm">
+                      {a.original.beats.map((b, i) => (
+                        <li key={i} className="grid grid-cols-[3.5rem_1fr] gap-3">
+                          <span className="font-mono text-xs text-muted">{b.t} с</span>
+                          <span>{b.what}</span>
+                        </li>
+                      ))}
+                    </ol>
+                  )}
+                  {a.original?.mechanic && (
+                    <div className="overflow-hidden rounded-2xl border border-white/[0.07]">
+                      <div className="grid grid-cols-[6.5rem_1fr_1fr] bg-white/[0.04] px-3 py-2 text-xs text-muted">
+                        <span />
+                        <span>У них</span>
+                        <span className="text-amber-200">У тебя</span>
+                      </div>
+                      {a.original.mechanic.map((m) => (
+                        <div key={m.element} className="grid grid-cols-[6.5rem_1fr_1fr] gap-3 border-t border-white/[0.05] px-3 py-2.5 text-sm">
+                          <span className="font-medium text-muted">{m.element}</span>
+                          <span className="text-white/70">{m.theirs}</span>
+                          <span>{m.yours}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {!a.original && <p className="text-sm text-muted">Этот разбор сделан до появления блока «оригинал». Новые ролики будут с ним.</p>}
+                </div>
+              </div>
+            </Panel>
+          </Reveal>
+
           <Reveal delay={0.05} className="grid gap-4 md:grid-cols-[1.1fr_1fr]">
             <Panel title="Почему залетело">
               <ol className="space-y-3">
@@ -77,7 +115,7 @@ export default async function ReelPage({ params, searchParams }: PageProps<"/ree
           </Reveal>
 
           <Reveal delay={0.1}>
-            <Panel title="Раскадровка" subtitle="3D-превью из простых фигур: камера, план и подача по каждому кадру">
+            <Panel title="Твоя раскадровка" subtitle="Как это снять тебе: 3D-превью из простых фигур, камера, план и подача по каждому кадру">
               <StoryboardStudio storyboard={a.adaptation.storyboard} vo={a.adaptation.vo} />
             </Panel>
           </Reveal>

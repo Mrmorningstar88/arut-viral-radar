@@ -32,6 +32,7 @@ export async function loadProfile(ws: string): Promise<WorkspaceProfile> {
   return {
     persona: {
       name: (row?.name as string) ?? "",
+      topics: (row?.topics as string) ?? "",
       facts: (row?.facts as string) ?? "",
       voice: (row?.voice as string) ?? "",
       taboo: (row?.taboo as string) ?? "",
@@ -86,30 +87,46 @@ export async function upsertCreator(ws: string, c: { username: string; followers
   check(await serviceDb().from("creators").upsert(row, { onConflict: "workspace_id,username" }));
 }
 
+// Обложки Instagram живут на CDN несколько дней, поэтому копируем их в своё хранилище.
+async function storeCover(ws: string, extId: string, url: string): Promise<string | null> {
+  if (!url) return null;
+  try {
+    const res = await fetch(url, { signal: AbortSignal.timeout(15_000) });
+    if (!res.ok) return null;
+    const path = `${ws}/${extId}.jpg`;
+    const { error } = await serviceDb().storage.from("covers").upload(path, await res.arrayBuffer(), { contentType: "image/jpeg", upsert: true });
+    if (error) return null;
+    return serviceDb().storage.from("covers").getPublicUrl(path).data.publicUrl;
+  } catch {
+    return null;
+  }
+}
+
 export async function saveReel(
   ws: string,
   reel: {
     extId: string; url: string; author: string; views: number | null; likes: number | null; comments: number | null;
-    postedAt: string | null; caption: string; lanes: string[]; fitScore: number | null; fitReason: string | null;
+    postedAt: string | null; caption: string; lanes: string[]; fitScore: number | null; fitReason: string | null; cover: string;
   },
   analysis: ReelAnalysis,
   model: string,
 ): Promise<string> {
   const d = serviceDb();
-  const row = check(
-    await d
-      .from("reels")
-      .upsert(
-        {
-          workspace_id: ws, platform: "instagram", ext_id: reel.extId, url: reel.url, author: reel.author,
-          views: reel.views, likes: reel.likes, comments: reel.comments, posted_at: reel.postedAt || null,
-          caption: reel.caption, lanes: reel.lanes, fit_score: reel.fitScore, fit_reason: reel.fitReason,
-        },
-        { onConflict: "workspace_id,platform,ext_id" },
-      )
-      .select("id")
-      .single(),
-  ) as { id: string };
+  const fields: Record<string, unknown> = {
+    workspace_id: ws, platform: "instagram", ext_id: reel.extId, url: reel.url, author: reel.author,
+    views: reel.views, likes: reel.likes, comments: reel.comments, posted_at: reel.postedAt || null,
+    caption: reel.caption, lanes: reel.lanes, fit_score: reel.fitScore, fit_reason: reel.fitReason,
+    cover_url: await storeCover(ws, reel.extId, reel.cover),
+  };
+  const upsert = (f: Record<string, unknown>) =>
+    d.from("reels").upsert(f, { onConflict: "workspace_id,platform,ext_id" }).select("id").single();
+  let res = await upsert(fields);
+  // База ещё без обновления 0002: сохраняем без обложки, чем теряем разбор.
+  if (res.error?.message.includes("cover_url")) {
+    delete fields.cover_url;
+    res = await upsert(fields);
+  }
+  const row = check(res) as { id: string };
   check(await d.from("analyses").insert({ workspace_id: ws, reel_id: row.id, payload: analysis, model }));
   return row.id;
 }

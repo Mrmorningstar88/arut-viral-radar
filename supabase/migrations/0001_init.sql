@@ -23,6 +23,7 @@ $$;
 create table persona (
   workspace_id uuid primary key references workspaces(id) on delete cascade,
   name text not null default '',
+  topics text not null default '',
   facts text not null default '',
   voice text not null default '',
   taboo text not null default '',
@@ -62,6 +63,7 @@ create table reels (
     check (status in ('new', 'in_work', 'rejected', 'filmed', 'published')),
   notes text not null default '',
   published_url text,
+  cover_url text,
   created_at timestamptz not null default now(),
   unique (workspace_id, platform, ext_id)
 );
@@ -233,3 +235,5 @@ language sql stable as $$
   order by embedding <=> q
   limit 3
 $$;
+
+insert into storage.buckets (id, name, public) values ('covers', 'covers', true) on conflict (id) do nothing;

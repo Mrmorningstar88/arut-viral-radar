@@ -1,5 +1,6 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { ReelAnalysis, RedPillStory } from "@/lib/generate/schema";
+import { toSummary } from "./summary";
 import type { Creator, LearnedRule, QueueItem, RedPill, Reel, Repo, Run } from "./types";
 
 // Пока пользователь один: сервер ходит service role-ключом в пространство WORKSPACE_ID.
@@ -23,7 +24,11 @@ const toReel = (r: Row): Reel => ({
   status: r.status as Reel["status"],
   notes: (r.notes as string) ?? "",
   publishedUrl: (r.published_url as string) ?? null,
+  coverUrl: (r.cover_url as string) ?? null,
 });
+
+const latestPayload = <T>(r: Row) =>
+  ((r.analyses as { payload: T; created_at: string }[] | null) ?? []).sort((a, b) => b.created_at.localeCompare(a.created_at))[0]?.payload ?? null;
 
 const toRedpill = (r: Row, story: RedPillStory | null): RedPill => ({
   id: r.id as string,
@@ -36,8 +41,7 @@ const toRedpill = (r: Row, story: RedPillStory | null): RedPill => ({
   createdAt: r.created_at as string,
 });
 
-const latestStory = (r: Row) =>
-  ((r.analyses as { payload: RedPillStory; created_at: string }[] | null) ?? []).sort((a, b) => b.created_at.localeCompare(a.created_at))[0]?.payload ?? null;
+const latestStory = (r: Row) => latestPayload<RedPillStory>(r);
 
 function check<T>(res: { data: T; error: { message: string } | null }): T {
   if (res.error) throw new Error(res.error.message);
@@ -50,9 +54,12 @@ export function supabaseRepo(url: string, key: string, ws: string): Repo {
   return {
     demo: false,
     async listReels(status) {
-      let q = db.from("reels").select("*").eq("workspace_id", ws).order("posted_at", { ascending: false }).limit(200);
+      let q = db.from("reels").select("*, analyses(payload, created_at)").eq("workspace_id", ws).order("posted_at", { ascending: false }).limit(200);
       if (status) q = q.eq("status", status);
-      return (check(await q) as Row[]).map(toReel);
+      return (check(await q) as Row[]).map((r) => {
+        const a = latestPayload<ReelAnalysis>(r);
+        return { ...toReel(r), summary: a ? toSummary(a) : null };
+      });
     },
     async getReel(id) {
       const r = check(await db.from("reels").select("*").eq("workspace_id", ws).eq("id", id).maybeSingle()) as Row | null;
@@ -119,7 +126,7 @@ export function supabaseRepo(url: string, key: string, ws: string): Repo {
     async getPersona() {
       const r = check(await db.from("persona").select("*").eq("workspace_id", ws).maybeSingle()) as Row | null;
       return {
-        name: (r?.name as string) ?? "", facts: (r?.facts as string) ?? "", voice: (r?.voice as string) ?? "",
+        name: (r?.name as string) ?? "", topics: (r?.topics as string) ?? "", facts: (r?.facts as string) ?? "", voice: (r?.voice as string) ?? "",
         taboo: (r?.taboo as string) ?? "", queries: (r?.search_queries as string[]) ?? [],
       };
     },

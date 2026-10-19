@@ -16,11 +16,18 @@ async function probe(fn: () => Promise<boolean>) {
 // Проверяет каждое подключение по-настоящему, но бесплатно: без генерации и без скрапинга.
 export async function healthChecks(): Promise<Check[]> {
   const ws = process.env.WORKSPACE_ID;
-  const [db, anthropic, apify] = await Promise.all([
+  const [db, schema, anthropic, apify] = await Promise.all([
     probe(async () => {
       if (!ws) return false;
       const { data, error } = await serviceDb().from("workspaces").select("id").eq("id", ws).maybeSingle();
       return !error && Boolean(data);
+    }),
+    probe(async () => {
+      const [a, b] = await Promise.all([
+        serviceDb().from("reels").select("cover_url").limit(1),
+        serviceDb().from("persona").select("topics").limit(1),
+      ]);
+      return !a.error && !b.error;
     }),
     probe(async () => {
       if (!has("ANTHROPIC_API_KEY")) return false;
@@ -38,6 +45,7 @@ export async function healthChecks(): Promise<Check[]> {
 
   return [
     { name: "База Supabase", ok: db, hint: "Проверь в Vercel SUPABASE_SERVICE_ROLE_KEY и WORKSPACE_ID" },
+    { name: "Схема базы обновлена", ok: schema, hint: "Выполни в Supabase SQL Editor файл обновления, который я прислал в чат" },
     { name: "Вход по почте", ok: has("OWNER_EMAILS"), hint: "Добавь в Vercel OWNER_EMAILS" },
     { name: "Claude", ok: anthropic, hint: "Ключ ANTHROPIC_API_KEY не подошёл или на балансе ноль" },
     { name: "Apify (Instagram)", ok: apify, hint: "Токен APIFY_TOKEN не подошёл" },

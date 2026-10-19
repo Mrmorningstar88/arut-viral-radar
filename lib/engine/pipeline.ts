@@ -26,7 +26,7 @@ const getReelCached = (url: string) =>
   store.cached<ReelDetails>(`reel:${shortcodeFromUrl(url) ?? url}`, () => apify().getReel(url));
 
 function classifierProfile(p: store.WorkspaceProfile) {
-  return { persona: [p.persona.name, p.persona.facts, p.persona.voice].filter(Boolean).join("\n"), taste: p.taste, rules: p.rules };
+  return { persona: [p.persona.name, p.persona.topics && `Темы: ${p.persona.topics}`, p.persona.facts, p.persona.voice].filter(Boolean).join("\n"), taste: p.taste, rules: p.rules };
 }
 
 export function errorRu(e: unknown) {
@@ -47,7 +47,7 @@ export async function processQueueItem(ws: string, runId: string, item: store.Qu
       {
         extId: shortcodeFromUrl(reel.url) ?? reel.id, url: reel.url, author: reel.author, views: reel.views, likes: reel.likes,
         comments: reel.comments, postedAt: reel.date, caption: reel.caption, lanes: ["queue"],
-        fitScore: verdict.fit_score, fitReason: verdict.fit_reason,
+        fitScore: verdict.fit_score, fitReason: verdict.fit_reason, cover: reel.cover,
       },
       analysis,
       MODEL_MAIN,
@@ -110,7 +110,7 @@ export async function analyzeCandidate(ws: string, runId: string, f: Found) {
     ws,
     {
       extId: f.extId, url: f.url, author: f.author, views: f.views, likes: reel.likes, comments: reel.comments,
-      postedAt: f.postedAt, caption: reel.caption, lanes, fitScore: verdict.fit_score, fitReason: verdict.fit_reason,
+      postedAt: f.postedAt, caption: reel.caption, lanes, fitScore: verdict.fit_score, fitReason: verdict.fit_reason, cover: reel.cover,
     },
     analysis,
     MODEL_MAIN,

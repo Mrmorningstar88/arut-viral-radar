@@ -43,6 +43,7 @@ export function apifySource(token: string): InstagramSource & { getFollowers(use
       date: str(it, "timestamp", "takenAt", "date"),
       caption: str(it, "caption", "text"),
       pinned: Boolean(it.isPinned ?? it.pinned),
+      cover: str(it, "displayUrl", "thumbnailUrl", "imageUrl"),
     };
   };
 
@@ -65,6 +66,7 @@ export function apifySource(token: string): InstagramSource & { getFollowers(use
         authorFollowers: null,
         topComments: comments.map((c) => str(c, "text")).filter(Boolean).slice(0, 15),
         keywords: ((it.hashtags as string[] | undefined) ?? []).slice(0, 15),
+        transcript: str(it, "transcript", "videoTranscript").slice(0, 4000),
       } satisfies ReelDetails;
     },
     async getFollowers(username) {

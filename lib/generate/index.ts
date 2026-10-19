@@ -29,11 +29,12 @@ export async function generateReelAnalysis(
     `РОЛИК @${reel.author} (${reel.url})`,
     `Просмотры: ${reel.views ?? "неизвестно"} · лайки: ${reel.likes ?? "?"} · комментарии: ${reel.comments ?? "?"} · дата: ${reel.date}`,
     `Подпись:\n${reel.caption || "(нет)"}`,
+    reel.transcript && `РАСШИФРОВКА РЕЧИ:\n${reel.transcript}`,
     reel.keywords.length > 0 && `Хэштеги: ${reel.keywords.join(" ")}`,
     reel.topComments.length > 0 && `Топ-комментарии:\n- ${reel.topComments.join("\n- ")}`,
     wish && `ПОЖЕЛАНИЕ АВТОРА К АДАПТАЦИИ:\n${wish}`,
     figures && `СВЕЖИЕ ЦИФРЫ (из веб-поиска, с источниками):\n${figures}`,
-    "Разбери, почему ролик залетел (3–4 конкретные причины), и сделай адаптацию под автора.",
+    "Опиши оригинал и его механику, разбери, почему он залетел (3–4 конкретные причины), и перенеси механику на темы автора.",
   ]
     .filter(Boolean)
     .join("\n\n");
