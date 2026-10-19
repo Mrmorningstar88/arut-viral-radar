@@ -1,8 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { CopyButton } from "@/components/copy-button";
+import { StoryboardStudio } from "@/components/previz/storyboard-studio";
 import { StatusBadge } from "@/components/status-badge";
 import { StatusControls } from "@/components/status-controls";
+import { CopyButton } from "@/components/ui/copy-button";
+import { Reveal } from "@/components/ui/reveal";
+import { ScoreRing } from "@/components/ui/score-ring";
+import { Segmented } from "@/components/ui/segmented";
 import { getRepo } from "@/lib/db";
 import { compact, dubaiDate } from "@/lib/format";
 
@@ -13,104 +17,115 @@ export default async function ReelPage({ params, searchParams }: PageProps<"/ree
   if (!reel) notFound();
 
   const a = reel.analysis?.i18n[lang];
-  const allPrompts = a?.adaptation.storyboard.map((s) => `${s.n}. ${s.prompt}`).join("\n\n") ?? "";
 
   return (
-    <article className="space-y-6">
-      <header className="space-y-2">
-        <Link href="/reels" className="text-sm text-muted">← Все ролики</Link>
-        <div className="flex flex-wrap items-center gap-2">
-          <StatusBadge status={reel.status} />
-          <a href={reel.url} target="_blank" rel="noreferrer" className="text-sm underline">Оригинал @{reel.author}</a>
-          {reel.publishedUrl && <a href={reel.publishedUrl} target="_blank" rel="noreferrer" className="text-sm underline">Твой ролик</a>}
-          <span className="ml-auto flex gap-1 text-sm">
-            <LangLink id={id} lang="ru" active={lang === "ru"} />
-            <LangLink id={id} lang="en" active={lang === "en"} />
-          </span>
+    <article className="space-y-8">
+      <Reveal className="space-y-4">
+        <Link href="/reels" className="inline-flex items-center gap-1 text-sm text-muted hover:text-foreground">← Все ролики</Link>
+        <div className="flex flex-wrap items-start gap-5">
+          <div className="min-w-0 flex-1 space-y-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <StatusBadge status={reel.status} />
+              <a href={reel.url} target="_blank" rel="noreferrer" className="text-sm text-muted underline-offset-4 hover:text-foreground hover:underline">Оригинал @{reel.author} ↗</a>
+              {reel.publishedUrl && <a href={reel.publishedUrl} target="_blank" rel="noreferrer" className="text-sm text-emerald-300 underline-offset-4 hover:underline">Твой ролик ↗</a>}
+            </div>
+            <h1 className="font-display text-2xl leading-tight font-semibold md:text-3xl">{reel.caption}</h1>
+            <p className="text-sm text-muted">
+              <span className="font-semibold text-amber-200">{compact(reel.views)}</span> просмотров · {compact(reel.likes)} лайков · {compact(reel.comments)} комментов · {dubaiDate(reel.postedAt)}
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            {reel.fitScore != null && <ScoreRing value={reel.fitScore} size={56} />}
+            <Segmented
+              id="lang"
+              size="sm"
+              items={[
+                { href: `/reels/${id}?lang=ru`, label: "RU", active: lang === "ru" },
+                { href: `/reels/${id}?lang=en`, label: "EN", active: lang === "en" },
+              ]}
+            />
+          </div>
         </div>
-        <h1 className="text-xl font-semibold">{reel.caption}</h1>
-        <p className="text-sm text-muted">
-          {compact(reel.views)} просмотров · {compact(reel.likes)} лайков · {compact(reel.comments)} комментов · {dubaiDate(reel.postedAt)}
-        </p>
         <StatusControls id={reel.id} status={reel.status} />
-      </header>
+      </Reveal>
 
       {!a ? (
         <p className="text-muted">Разбор ещё не готов.</p>
       ) : (
         <>
-          <Section title="Почему залетело">
-            <ul className="list-disc space-y-1 pl-5">{a.why.map((w, i) => <li key={i}>{w}</li>)}</ul>
-          </Section>
+          <Reveal delay={0.05} className="grid gap-4 md:grid-cols-[1.1fr_1fr]">
+            <Panel title="Почему залетело">
+              <ol className="space-y-3">
+                {a.why.map((w, i) => (
+                  <li key={i} className="flex gap-3">
+                    <span className="grid size-6 shrink-0 place-items-center rounded-full bg-amber-400/15 text-xs font-semibold text-amber-300">{i + 1}</span>
+                    <span className="leading-relaxed">{w}</span>
+                  </li>
+                ))}
+              </ol>
+            </Panel>
+            <Panel title="Адаптация">
+              <p className="rounded-2xl bg-gradient-to-br from-amber-300/15 to-orange-500/5 p-4 text-lg leading-snug font-semibold ring-1 ring-amber-300/20">«{a.adaptation.hook}»</p>
+              <dl className="mt-4 space-y-2 text-sm">
+                <Row k="Концепт" v={a.adaptation.concept} />
+                <Row k="Формат" v={a.adaptation.format} />
+                <Row k="CTA" v={a.adaptation.cta} />
+              </dl>
+              <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-white/[0.05] px-3 py-1 font-mono text-sm tracking-widest">{a.adaptation.keyword}</div>
+            </Panel>
+          </Reveal>
 
-          <Section title="Адаптация">
-            <dl className="grid gap-2 text-sm sm:grid-cols-[8rem_1fr]">
-              <dt className="text-muted">Концепт</dt><dd>{a.adaptation.concept}</dd>
-              <dt className="text-muted">Формат</dt><dd>{a.adaptation.format}</dd>
-              <dt className="text-muted">Хук</dt><dd className="font-medium">{a.adaptation.hook}</dd>
-              <dt className="text-muted">Ключевое слово</dt><dd className="font-mono">{a.adaptation.keyword}</dd>
-              <dt className="text-muted">CTA</dt><dd>{a.adaptation.cta}</dd>
-            </dl>
-          </Section>
+          <Reveal delay={0.1}>
+            <Panel title="Раскадровка" subtitle="3D-превью из простых фигур: камера, план и подача по каждому кадру">
+              <StoryboardStudio storyboard={a.adaptation.storyboard} vo={a.adaptation.vo} />
+            </Panel>
+          </Reveal>
 
-          <Section title="Сценарий (голос)">
-            <ol className="space-y-2">
-              {a.adaptation.vo.map((v, i) => (
-                <li key={i} className="flex gap-3"><span className="w-14 shrink-0 font-mono text-xs text-muted">{v.t} с</span><span>{v.text}</span></li>
-              ))}
-            </ol>
-          </Section>
+          <Reveal delay={0.15} className="grid gap-4 md:grid-cols-2">
+            <Panel title="Подпись" action={<CopyButton text={a.adaptation.caption} />}>
+              <p className="leading-relaxed">{a.adaptation.caption}</p>
+            </Panel>
+            <Panel title="Экспертный слой">
+              <dl className="space-y-2 text-sm">
+                <Row k="Рынки" v={a.expert.markets} />
+                <Row k="Макро" v={a.expert.macro} />
+                <Row k="Политика" v={a.expert.politics} />
+              </dl>
+            </Panel>
+          </Reveal>
 
-          <Section title="Сториборд" action={<CopyButton text={allPrompts} />}>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {a.adaptation.storyboard.map((s) => (
-                <div key={s.n} className="rounded-md border border-border p-3 text-sm">
-                  <div className="flex justify-between text-xs text-muted"><span>Кадр {s.n}</span><span>{s.dur} с</span></div>
-                  <p className="mt-1">{s.frame}</p>
-                  <p className="mt-1 font-medium">«{s.overlay}»</p>
-                  <div className="mt-2 rounded bg-foreground/5 p-2 font-mono text-xs">{s.prompt}</div>
-                  <div className="mt-1 text-right"><CopyButton text={s.prompt} /></div>
-                </div>
-              ))}
-            </div>
-          </Section>
-
-          <Section title="Подпись" action={<CopyButton text={a.adaptation.caption} />}>
-            <p>{a.adaptation.caption}</p>
-          </Section>
-
-          <Section title="Экспертный слой">
-            <dl className="grid gap-2 text-sm sm:grid-cols-[8rem_1fr]">
-              <dt className="text-muted">Рынки</dt><dd>{a.expert.markets}</dd>
-              <dt className="text-muted">Макро</dt><dd>{a.expert.macro}</dd>
-              <dt className="text-muted">Политика</dt><dd>{a.expert.politics}</dd>
-            </dl>
-          </Section>
-
-          <Section title="Риски">
-            <ul className="list-disc space-y-1 pl-5">{a.risks.map((r, i) => <li key={i}>{r}</li>)}</ul>
-          </Section>
-
-          <p className="text-sm text-muted">{a.note}</p>
+          <Reveal delay={0.2}>
+            <Panel title="Риски">
+              <ul className="space-y-2">{a.risks.map((r, i) => <li key={i} className="flex gap-2 text-sm"><span className="text-rose-300">⚠</span>{r}</li>)}</ul>
+              <p className="mt-4 text-xs text-muted">{a.note}</p>
+            </Panel>
+          </Reveal>
         </>
       )}
     </article>
   );
 }
 
-function Section({ title, action, children }: { title: string; action?: React.ReactNode; children: React.ReactNode }) {
+function Panel({ title, subtitle, action, children }: { title: string; subtitle?: string; action?: React.ReactNode; children: React.ReactNode }) {
   return (
-    <section className="rounded-lg border border-border bg-card p-4">
-      <div className="mb-3 flex items-center justify-between"><h2 className="font-semibold">{title}</h2>{action}</div>
+    <section className="h-full rounded-3xl border border-white/[0.07] bg-white/[0.025] p-5 md:p-6">
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <div>
+          <h2 className="font-display text-sm font-semibold tracking-wide uppercase">{title}</h2>
+          {subtitle && <p className="mt-1 text-xs text-muted">{subtitle}</p>}
+        </div>
+        {action}
+      </div>
       {children}
     </section>
   );
 }
 
-function LangLink({ id, lang, active }: { id: string; lang: "ru" | "en"; active: boolean }) {
+function Row({ k, v }: { k: string; v: string }) {
   return (
-    <Link href={`/reels/${id}?lang=${lang}`} className={`rounded px-2 py-0.5 ${active ? "bg-foreground text-background" : "text-muted"}`}>
-      {lang.toUpperCase()}
-    </Link>
+    <div className="grid grid-cols-[6rem_1fr] gap-3">
+      <dt className="text-muted">{k}</dt>
+      <dd>{v}</dd>
+    </div>
   );
 }

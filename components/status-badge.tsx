@@ -1,13 +1,18 @@
 import { STATUS_LABEL, type ReelStatus } from "@/lib/db/types";
 
 const TONE: Record<ReelStatus, string> = {
-  new: "bg-blue-500/15 text-blue-600 dark:text-blue-400",
-  in_work: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
-  rejected: "bg-zinc-500/15 text-muted",
-  filmed: "bg-violet-500/15 text-violet-600 dark:text-violet-400",
-  published: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
+  new: "bg-sky-400/10 text-sky-300 ring-sky-400/20",
+  in_work: "bg-amber-400/10 text-amber-300 ring-amber-400/25",
+  rejected: "bg-white/5 text-white/40 ring-white/10",
+  filmed: "bg-violet-400/10 text-violet-300 ring-violet-400/20",
+  published: "bg-emerald-400/10 text-emerald-300 ring-emerald-400/20",
 };
 
 export function StatusBadge({ status }: { status: ReelStatus }) {
-  return <span className={`rounded px-2 py-0.5 text-xs font-medium ${TONE[status]}`}>{STATUS_LABEL[status]}</span>;
+  return (
+    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ${TONE[status]}`}>
+      <span className="size-1.5 rounded-full bg-current" />
+      {STATUS_LABEL[status]}
+    </span>
+  );
 }

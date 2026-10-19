@@ -1,4 +1,4 @@
-import type { ReelAnalysis } from "@/lib/generate/schema";
+import type { ReelAnalysis, Shot } from "@/lib/generate/schema";
 import type { Creator, LearnedRule, Persona, QueueItem, Reel, Repo, Run, StatusChange } from "./types";
 
 // Демо-режим без ключей: данные вымышленные и живут до перезапуска сервера.
@@ -22,11 +22,11 @@ const demoAnalysis = (hook: string, keyword: string): ReelAnalysis => {
         { t: "12-24", text: "Я это понял на рынке: [реальный факт]. С тех пор у меня одно правило." },
         { t: "24-30", text: "Напиши слово в комментах, пришлю чек-лист. Это не финансовый совет." },
       ],
-      storyboard: [
-        { n: 1, dur: 3, frame: "Крупный план, ты смотришь в камеру", overlay: hook, prompt: "[ARUT character reference] close-up, looking into camera, Dubai rooftop at dusk, cinematic, 9:16" },
-        { n: 2, dur: 6, frame: "Руки, телефон с банковским приложением", overlay: "Куда уходит первая сотня?", prompt: "[ARUT character reference] hands holding phone, generic banking app UI without logos, shallow depth of field, 9:16" },
-        { n: 3, dur: 9, frame: "Ты за трейдинг-столом, мониторы", overlay: "Одно правило", prompt: "[ARUT character reference] at trading desk with multiple monitors showing abstract charts, moody lighting, 9:16" },
-        { n: 4, dur: 6, frame: "Средний план, жест в камеру", overlay: `Пиши «${keyword}»`, prompt: "[ARUT character reference] medium shot, pointing at camera, confident, clean background, 9:16" },
+      storyboard: <Shot[]>[
+        { n: 1, dur: 3, frame: "Крупный план, ты смотришь в камеру", overlay: hook, prompt: "[ARUT character reference] close-up, looking into camera, Dubai rooftop at dusk, cinematic, 9:16", scene: { location: "rooftop", shot: "close", camera: "push_in", action: "talk", props: [] } },
+        { n: 2, dur: 9, frame: "Руки, телефон с банковским приложением", overlay: "Куда уходит первая сотня?", prompt: "[ARUT character reference] hands holding phone, generic banking app UI without logos, shallow depth of field, 9:16", scene: { location: "home", shot: "medium", camera: "orbit", action: "hold_phone", props: ["phone", "table"] } },
+        { n: 3, dur: 12, frame: "Ты за трейдинг-столом, мониторы", overlay: "Одно правило", prompt: "[ARUT character reference] at trading desk with multiple monitors showing abstract charts, moody lighting, 9:16", scene: { location: "office", shot: "wide", camera: "pan", action: "sit", props: ["desk", "monitors", "chair"] } },
+        { n: 4, dur: 6, frame: "Средний план, жест в камеру", overlay: `Пиши «${keyword}»`, prompt: "[ARUT character reference] medium shot, pointing at camera, confident, clean background, 9:16", scene: { location: "studio", shot: "medium", camera: "pull_out", action: "point", props: [] } },
       ],
       caption: "Не доход решает, а первая сотня. Пиши слово в комментах. Не финансовый совет.",
       keyword,

@@ -5,7 +5,7 @@ export default async function CreatorsPage() {
   const creators = await (await getRepo()).listCreators();
   return (
     <div className="space-y-3">
-      <h1 className="text-xl font-semibold">Креаторы</h1>
+      <h1 className="font-display text-2xl font-semibold">Креаторы</h1>
       <p className="text-sm text-muted">Автор с роликом от 10M попадает сюда сам, и дальше его профиль проверяется каждый прогон.</p>
       <table className="w-full text-sm">
         <thead className="text-left text-muted"><tr><th className="py-2">Автор</th><th>Подписчики</th><th>Медиана просмотров</th><th>Проверен</th></tr></thead>
