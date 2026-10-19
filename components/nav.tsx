@@ -5,13 +5,10 @@ import { motion } from "motion/react";
 import { usePathname } from "next/navigation";
 
 const TABS = [
-  { href: "/reels", label: "Reels" },
-  { href: "/redpill", label: "Red Pill" },
-  { href: "/queue", label: "Очередь" },
-  { href: "/creators", label: "Креаторы" },
-  { href: "/learning", label: "Обучение" },
-  { href: "/persona", label: "Persona" },
-  { href: "/runs", label: "Логи" },
+  { href: "/reels", label: "Ролики", match: ["/reels"] },
+  { href: "/redpill", label: "Red Pill", match: ["/redpill"] },
+  { href: "/sources", label: "Добавить", match: ["/sources"] },
+  { href: "/settings", label: "⚙ Настройки", match: ["/settings", "/persona", "/learning", "/runs"] },
 ];
 
 export function Nav() {
@@ -28,7 +25,7 @@ export function Nav() {
         </Link>
         <nav className="flex flex-1 gap-1 overflow-x-auto text-sm [scrollbar-width:none]">
           {TABS.map((t) => {
-            const active = path.startsWith(t.href);
+            const active = t.match.some((m) => path.startsWith(m));
             return (
               <Link key={t.href} href={t.href} className={`relative rounded-full px-3 py-1.5 whitespace-nowrap transition-colors ${active ? "text-foreground" : "text-muted hover:text-foreground"}`}>
                 {active && (

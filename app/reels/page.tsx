@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { AddReelForm } from "@/components/add-forms";
+import { LastRun } from "@/components/last-run";
 import { StatusBadge } from "@/components/status-badge";
 import { RunNowButton } from "@/components/run-now";
 import { StatusControls } from "@/components/status-controls";
@@ -18,7 +20,8 @@ const LANE = {
 export default async function ReelsPage({ searchParams }: PageProps<"/reels">) {
   const raw = (await searchParams).status;
   const status = REEL_STATUSES.find((s) => s === raw) as ReelStatus | undefined;
-  const all = await (await getRepo()).listReels();
+  const repo = await getRepo();
+  const [all, runs, creators] = await Promise.all([repo.listReels(), repo.listRuns(), repo.listCreators()]);
   const reels = status ? all.filter((r) => r.status === status) : all;
   const count = (s?: ReelStatus) => (s ? all.filter((r) => r.status === s).length : all.length);
 
@@ -26,12 +29,16 @@ export default async function ReelsPage({ searchParams }: PageProps<"/reels">) {
     <div className="space-y-6">
       <Reveal className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="font-display text-2xl font-semibold">Залетевшие Reels</h1>
-          <p className="mt-1 text-sm text-muted">Свежие залёты, разобранные и адаптированные под тебя. Автозапуск в 09:00 и 20:00 по Дубаю</p>
+          <h1 className="font-display text-2xl font-semibold">Ролики для тебя</h1>
+          <p className="mt-1 mb-2 text-sm text-muted">Залетевшие Reels со сценарием под тебя. Сам ищу в 09:00 и 20:00 по Дубаю</p>
+          <LastRun run={runs[0]} />
         </div>
         <RunNowButton />
       </Reveal>
 
+      {all.length === 0 ? (
+        <GettingStarted hasCreators={creators.length > 0} />
+      ) : (
       <Segmented
         id="reels-status"
         items={[
@@ -40,8 +47,10 @@ export default async function ReelsPage({ searchParams }: PageProps<"/reels">) {
         ]}
       />
 
-      {reels.length === 0 && (
-        <Reveal className="rounded-3xl border border-dashed border-white/10 p-12 text-center text-muted">Здесь пока пусто.</Reveal>
+      )}
+
+      {all.length > 0 && reels.length === 0 && (
+        <Reveal className="rounded-3xl border border-dashed border-white/10 p-12 text-center text-muted">В этом статусе пока ничего.</Reveal>
       )}
 
       <div className="grid gap-4 md:grid-cols-2">
@@ -89,5 +98,37 @@ function Metric({ label, value, highlight }: { label: string; value: string; hig
       <div className={`text-lg font-semibold tabular-nums ${highlight ? "bg-gradient-to-r from-amber-200 to-orange-400 bg-clip-text text-transparent" : ""}`}>{value}</div>
       <div className="text-[11px] text-muted">{label}</div>
     </div>
+  );
+}
+
+function GettingStarted({ hasCreators }: { hasCreators: boolean }) {
+  return (
+    <Reveal delay={0.05} className="grid gap-4 md:grid-cols-2">
+      <section className="rounded-3xl border border-amber-400/20 bg-gradient-to-br from-amber-400/[0.08] to-transparent p-6">
+        <p className="text-xs font-semibold tracking-widest text-amber-300 uppercase">Быстрый тест</p>
+        <h2 className="mt-2 font-display text-lg font-semibold">Вставь ссылку на любой Reels</h2>
+        <p className="mt-1 mb-4 text-sm text-muted">Через пару минут здесь появится разбор: почему залетело, сценарий под тебя и 3D-раскадровка.</p>
+        <AddReelForm compact />
+      </section>
+      <section className="rounded-3xl border border-white/[0.07] bg-white/[0.025] p-6">
+        <p className="text-xs font-semibold tracking-widest text-muted uppercase">Чтобы радар искал сам</p>
+        <ol className="mt-3 space-y-3 text-sm">
+          <Step n={1} done={hasCreators}>
+            <Link href="/sources" className="font-medium text-amber-200 hover:underline">Добавь 3–5 авторов</Link>, чей формат тебе близок
+          </Step>
+          <Step n={2}>Нажми «Запустить сейчас» или жди 09:00 и 20:00</Step>
+          <Step n={3}>Отмечай ролики «В работе» или «Не подходит», так я учусь твоему вкусу</Step>
+        </ol>
+      </section>
+    </Reveal>
+  );
+}
+
+function Step({ n, done, children }: { n: number; done?: boolean; children: React.ReactNode }) {
+  return (
+    <li className="flex gap-3">
+      <span className={`grid size-6 shrink-0 place-items-center rounded-full text-xs font-semibold ${done ? "bg-emerald-400/20 text-emerald-300" : "bg-white/[0.06] text-muted"}`}>{done ? "✓" : n}</span>
+      <span className="leading-relaxed">{children}</span>
+    </li>
   );
 }

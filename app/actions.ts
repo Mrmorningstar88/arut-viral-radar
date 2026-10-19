@@ -33,11 +33,16 @@ export async function setRedpillStatus(formData: FormData) {
   revalidatePath(`/redpill/${id}`);
 }
 
-export async function addToQueue(formData: FormData) {
+// Ссылка сразу запускает прогон: разбор появится без ожидания расписания.
+export async function addToQueue(formData: FormData): Promise<{ error?: string; started?: boolean }> {
   const url = String(formData.get("url") ?? "").trim();
-  if (!/^https:\/\/(www\.)?instagram\.com\/(reel|p)\//.test(url)) throw new Error("Нужна ссылка на Reels");
+  if (!/^https:\/\/(www\.)?instagram\.com\/([^/]+\/)?(reel|reels|p)\//.test(url)) return { error: "Нужна ссылка на Reels из Instagram" };
   await (await getRepo()).addToQueue(url, String(formData.get("note") ?? "").trim());
-  revalidatePath("/queue");
+  revalidatePath("/sources");
+  revalidatePath("/reels");
+  if (isDemo()) return {};
+  const { error } = await runNow();
+  return error ? { error } : { started: true };
 }
 
 export async function savePersona(formData: FormData) {
@@ -66,10 +71,12 @@ export async function runNow(): Promise<{ error?: string }> {
   }
 }
 
-export async function addCreator(formData: FormData) {
+export async function addCreator(formData: FormData): Promise<{ error?: string }> {
   const raw = String(formData.get("username") ?? "").trim();
   const username = raw.replace(/^@/, "").replace(/^https?:\/\/(www\.)?instagram\.com\//, "").split(/[/?]/)[0].toLowerCase();
-  if (!/^[a-z0-9._]{1,30}$/.test(username)) throw new Error("Неверный ник");
+  if (!/^[a-z0-9._]{1,30}$/.test(username)) return { error: "Не похоже на ник Instagram" };
   await (await getRepo()).addCreator(username);
-  revalidatePath("/creators");
+  revalidatePath("/sources");
+  revalidatePath("/reels");
+  return {};
 }

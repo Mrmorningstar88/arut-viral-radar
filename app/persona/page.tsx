@@ -12,7 +12,7 @@ export default async function PersonaPage() {
   const p = await (await getRepo()).getPersona();
   return (
     <form action={savePersona} className="space-y-4">
-      <h1 className="font-display text-2xl font-semibold">Persona</h1>
+      <h1 className="font-display text-2xl font-semibold">Твой образ</h1>
       <label className="block space-y-1">
         <span className="font-medium">Имя</span>
         <input name="name" defaultValue={p.name} className="w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 outline-none transition focus:border-amber-400/50" />
