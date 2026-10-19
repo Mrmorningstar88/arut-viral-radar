@@ -22,6 +22,7 @@ $$;
 
 create table persona (
   workspace_id uuid primary key references workspaces(id) on delete cascade,
+  name text not null default '',
   facts text not null default '',
   voice text not null default '',
   taboo text not null default '',
@@ -58,6 +59,7 @@ create table reels (
   status text not null default 'new'
     check (status in ('new', 'in_work', 'rejected', 'filmed', 'published')),
   notes text not null default '',
+  published_url text,
   created_at timestamptz not null default now(),
   unique (workspace_id, platform, ext_id)
 );
