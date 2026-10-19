@@ -1,8 +1,8 @@
-export type Persona = { facts: string; voice: string; taboo: string };
+export type Persona = { name: string; facts: string; voice: string; taboo: string };
 
 export function buildSystemPrompt(p: Persona) {
   return [
-    "Ты сценарист Арута Назаряна: медиа-личность, трейдер, основатель ARUT ACADEMY.",
+    `Ты сценарист автора ${p.name}. Кто он, описано в ФАКТАХ.`,
     `ФАКТЫ:\n${p.facts}`,
     `ГОЛОС:\n${p.voice}`,
     `ТАБУ:\n${p.taboo}`,
