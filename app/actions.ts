@@ -1,6 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
+import { processPendingNow } from "@/lib/engine/direct";
 import { getRepo, isDemo } from "@/lib/db";
 import { inngest, RUN_REQUESTED } from "@/inngest/client";
 import { REEL_STATUSES, REJECT_REASONS, type RejectReason, type ReelStatus, type StatusChange } from "@/lib/db/types";
@@ -33,7 +35,7 @@ export async function setRedpillStatus(formData: FormData) {
   revalidatePath(`/redpill/${id}`);
 }
 
-// Ссылка сразу запускает прогон: разбор появится без ожидания расписания.
+// Ссылка разбирается сразу, в фоне после ответа: без ожидания расписания и без Inngest.
 export async function addToQueue(formData: FormData): Promise<{ error?: string; started?: boolean }> {
   const url = String(formData.get("url") ?? "").trim();
   if (!/^https:\/\/(www\.)?instagram\.com\/([^/]+\/)?(reel|reels|p)\//.test(url)) return { error: "Нужна ссылка на Reels из Instagram" };
@@ -41,8 +43,9 @@ export async function addToQueue(formData: FormData): Promise<{ error?: string; 
   revalidatePath("/sources");
   revalidatePath("/reels");
   if (isDemo()) return {};
-  const { error } = await runNow();
-  return error ? { error } : { started: true };
+  const ws = process.env.WORKSPACE_ID!;
+  after(() => processPendingNow(ws).catch((e) => console.error("processPendingNow", e)));
+  return { started: true };
 }
 
 export async function savePersona(formData: FormData) {
@@ -78,5 +81,13 @@ export async function addCreator(formData: FormData): Promise<{ error?: string }
   await (await getRepo()).addCreator(username);
   revalidatePath("/sources");
   revalidatePath("/reels");
+  return {};
+}
+
+export async function processQueueNow(): Promise<{ error?: string }> {
+  if (isDemo()) return { error: "В демо-режиме разбор недоступен" };
+  await getRepo(); // проверяет вход владельца
+  const ws = process.env.WORKSPACE_ID!;
+  after(() => processPendingNow(ws).catch((e) => console.error("processPendingNow", e)));
   return {};
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useTransition } from "react";
-import { addCreator, addToQueue } from "@/app/actions";
+import { addCreator, addToQueue, processQueueNow } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 
@@ -51,5 +51,23 @@ export function AddCreatorForm() {
       <input name="username" required placeholder="@ник или ссылка на профиль" className={INPUT} />
       <Button variant="primary" type="submit" disabled={pending} className="shrink-0">Добавить</Button>
     </form>
+  );
+}
+
+export function RetryQueueButton() {
+  const [pending, start] = useTransition();
+  const toast = useToast();
+  return (
+    <Button
+      disabled={pending}
+      onClick={() =>
+        start(async () => {
+          const r = await processQueueNow();
+          toast(r.error ?? "Разбираю. Обнови страницу через пару минут", r.error ? "error" : undefined);
+        })
+      }
+    >
+      Разобрать сейчас
+    </Button>
   );
 }

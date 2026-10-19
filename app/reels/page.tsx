@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AddReelForm } from "@/components/add-forms";
+import { AddReelForm, RetryQueueButton } from "@/components/add-forms";
 import { LastRun } from "@/components/last-run";
 import { StatusBadge } from "@/components/status-badge";
 import { RunNowButton } from "@/components/run-now";
@@ -17,11 +17,16 @@ const LANE = {
   queue: { label: "✋ Из очереди", cls: "bg-sky-500/15 text-sky-300" },
 } as Record<string, { label: string; cls: string }>;
 
+// Разбор ссылки идёт в фоне после ответа и может занять пару минут.
+export const maxDuration = 300;
+
 export default async function ReelsPage({ searchParams }: PageProps<"/reels">) {
   const raw = (await searchParams).status;
   const status = REEL_STATUSES.find((s) => s === raw) as ReelStatus | undefined;
   const repo = await getRepo();
-  const [all, runs, creators] = await Promise.all([repo.listReels(), repo.listRuns(), repo.listCreators()]);
+  const [all, runs, creators, queue] = await Promise.all([repo.listReels(), repo.listRuns(), repo.listCreators(), repo.listQueue()]);
+  const open = queue.filter((q) => q.status !== "done").slice(0, 5);
+  const running = runs[0] && !runs[0].finishedAt;
   const reels = status ? all.filter((r) => r.status === status) : all;
   const count = (s?: ReelStatus) => (s ? all.filter((r) => r.status === s).length : all.length);
 
@@ -35,6 +40,26 @@ export default async function ReelsPage({ searchParams }: PageProps<"/reels">) {
         </div>
         <RunNowButton />
       </Reveal>
+
+      {open.length > 0 && (
+        <Reveal className="space-y-2 rounded-3xl border border-white/[0.07] bg-white/[0.025] p-4">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm font-medium">Твои ссылки</p>
+            {!running && open.some((q) => q.status === "pending") && <RetryQueueButton />}
+          </div>
+          <ul className="space-y-1.5 text-sm">
+            {open.map((q) => (
+              <li key={q.id} className="rounded-2xl bg-white/[0.03] px-3 py-2">
+                <div className="flex items-center justify-between gap-2">
+                  <a href={q.url} target="_blank" rel="noreferrer" className="truncate text-white/80">{q.url.replace(/^https:\/\/(www\.)?/, "")}</a>
+                  <span className="shrink-0 text-xs text-muted">{q.status === "pending" ? (running ? "⏳ Разбираю" : "⏸ Ждёт") : "⚠️ Ошибка"}</span>
+                </div>
+                {q.errorRu && <p className="mt-1 text-xs text-rose-300">{q.errorRu}</p>}
+              </li>
+            ))}
+          </ul>
+        </Reveal>
+      )}
 
       {all.length === 0 ? (
         <GettingStarted hasCreators={creators.length > 0} />

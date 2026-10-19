@@ -6,6 +6,9 @@ import { compact, dubaiDate } from "@/lib/format";
 
 const QUEUE_LABEL = { pending: "⏳ Разбираю", done: "✅ Готово", error: "⚠️ Ошибка" } as const;
 
+// Разбор ссылки идёт в фоне после ответа и может занять пару минут.
+export const maxDuration = 300;
+
 export default async function SourcesPage() {
   const repo = await getRepo();
   const [queue, creators] = await Promise.all([repo.listQueue(), repo.listCreators()]);
