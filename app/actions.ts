@@ -1,7 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getRepo } from "@/lib/db";
+import { getRepo, isDemo } from "@/lib/db";
+import { inngest, RUN_REQUESTED } from "@/inngest/client";
 import { REEL_STATUSES, REJECT_REASONS, type RejectReason, type ReelStatus } from "@/lib/db/types";
 
 export async function setReelStatus(formData: FormData) {
@@ -32,7 +33,8 @@ export async function addToQueue(formData: FormData) {
 
 export async function savePersona(formData: FormData) {
   const field = (k: string) => String(formData.get(k) ?? "");
-  await (await getRepo()).savePersona({ name: field("name"), facts: field("facts"), voice: field("voice"), taboo: field("taboo") });
+  const queries = field("queries").split("\n").map((q) => q.trim()).filter(Boolean).slice(0, 10);
+  await (await getRepo()).savePersona({ name: field("name"), facts: field("facts"), voice: field("voice"), taboo: field("taboo"), queries });
   revalidatePath("/persona");
 }
 
@@ -41,4 +43,24 @@ export async function setRuleStatus(formData: FormData) {
   if (status !== "approved" && status !== "rejected") throw new Error("Неизвестный статус");
   await (await getRepo()).setRuleStatus(String(formData.get("id")), status);
   revalidatePath("/learning");
+}
+
+// Возвращает текст ошибки, а не бросает: в продакшене Next скрывает сообщения брошенных ошибок.
+export async function runNow(): Promise<{ error?: string }> {
+  if (isDemo()) return { error: "В демо-режиме прогон недоступен: подключи базу и ключи" };
+  await getRepo(); // проверяет вход владельца
+  try {
+    await inngest.send({ name: RUN_REQUESTED, data: {} });
+    return {};
+  } catch {
+    return { error: "Не получилось запустить: проверь ключи Inngest" };
+  }
+}
+
+export async function addCreator(formData: FormData) {
+  const raw = String(formData.get("username") ?? "").trim();
+  const username = raw.replace(/^@/, "").replace(/^https?:\/\/(www\.)?instagram\.com\//, "").split(/[/?]/)[0].toLowerCase();
+  if (!/^[a-z0-9._]{1,30}$/.test(username)) throw new Error("Неверный ник");
+  await (await getRepo()).addCreator(username);
+  revalidatePath("/creators");
 }

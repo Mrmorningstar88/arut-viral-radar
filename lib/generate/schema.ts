@@ -27,7 +27,7 @@ const Adaptation = z.object({
   vo: z.array(z.object({ t: z.string(), text: z.string() })),
   storyboard: z.array(Shot).min(4).max(7),
   caption: z.string(),
-  keyword: z.string().regex(/^[\p{Lu}]+$/u, "одно слово CAPS"),
+  keyword: z.string().describe("Одно слово КАПСОМ"),
   cta: z.string(),
   prompt_gift: z.string().optional(),
 });
@@ -51,7 +51,7 @@ export const RedPillStory = z.object({
   era: z.string(),
   distraction: z.string(),
   facts: z.array(z.string()),
-  sources: z.array(z.string().url()).min(2).max(4),
+  sources: z.array(z.string().describe("URL первичного источника")).min(2).max(4),
   adaptation: Adaptation,
   expert: Expert,
   risks: z.array(z.string()),

@@ -78,10 +78,14 @@ export function supabaseRepo(url: string, key: string, ws: string): Repo {
     },
     async getPersona() {
       const r = check(await db.from("persona").select("*").eq("workspace_id", ws).maybeSingle()) as Row | null;
-      return { name: (r?.name as string) ?? "", facts: (r?.facts as string) ?? "", voice: (r?.voice as string) ?? "", taboo: (r?.taboo as string) ?? "" };
+      return {
+        name: (r?.name as string) ?? "", facts: (r?.facts as string) ?? "", voice: (r?.voice as string) ?? "",
+        taboo: (r?.taboo as string) ?? "", queries: (r?.search_queries as string[]) ?? [],
+      };
     },
     async savePersona(p) {
-      check(await db.from("persona").upsert({ workspace_id: ws, ...p, updated_at: new Date().toISOString() }));
+      const { queries, ...rest } = p;
+      check(await db.from("persona").upsert({ workspace_id: ws, ...rest, search_queries: queries, updated_at: new Date().toISOString() }));
     },
     async listCreators() {
       const rows = check(await db.from("creators").select("*").eq("workspace_id", ws).order("followers", { ascending: false })) as Row[];
@@ -89,6 +93,11 @@ export function supabaseRepo(url: string, key: string, ws: string): Repo {
         username: r.username as string, followers: (r.followers as number) ?? null, medianViews: (r.median_views as number) ?? null,
         source: r.source as Creator["source"], lastCheckedAt: (r.last_checked_at as string) ?? null,
       }));
+    },
+    async addCreator(username) {
+      check(
+        await db.from("creators").upsert({ workspace_id: ws, username, source: "manual" }, { onConflict: "workspace_id,username", ignoreDuplicates: true }),
+      );
     },
     async listRuns() {
       const rows = check(await db.from("runs").select("*").eq("workspace_id", ws).order("started_at", { ascending: false }).limit(50)) as Row[];

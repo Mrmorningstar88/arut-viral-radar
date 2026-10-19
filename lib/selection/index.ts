@@ -28,6 +28,7 @@ export function lanesFor(c: Candidate, now = new Date()): Lane[] {
 export function pickTop<T extends Candidate>(
   candidates: T[],
   existingIds: Set<string>,
+  limit = MAX_NEW_PER_RUN,
   now = new Date(),
 ): T[] {
   return candidates
@@ -37,7 +38,7 @@ export function pickTop<T extends Candidate>(
       if (byDay !== 0) return byDay;
       return ratio(b) - ratio(a);
     })
-    .slice(0, MAX_NEW_PER_RUN);
+    .slice(0, limit);
 }
 
 function ratio(c: Candidate) {

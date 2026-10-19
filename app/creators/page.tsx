@@ -1,3 +1,5 @@
+import { addCreator } from "@/app/actions";
+import { Button } from "@/components/ui/button";
 import { getRepo } from "@/lib/db";
 import { compact, dubaiDate } from "@/lib/format";
 
@@ -7,6 +9,10 @@ export default async function CreatorsPage() {
     <div className="space-y-3">
       <h1 className="font-display text-2xl font-semibold">Креаторы</h1>
       <p className="text-sm text-muted">Автор с роликом от 10M попадает сюда сам, и дальше его профиль проверяется каждый прогон.</p>
+      <form action={addCreator} className="flex max-w-md gap-2">
+        <input name="username" required placeholder="@ник или ссылка на профиль" className="flex-1 rounded-xl border border-white/10 bg-black/30 px-4 py-2.5 outline-none transition focus:border-amber-400/50" />
+        <Button variant="primary" type="submit">Добавить</Button>
+      </form>
       <table className="w-full text-sm">
         <thead className="text-left text-muted"><tr><th className="py-2">Автор</th><th>Подписчики</th><th>Медиана просмотров</th><th>Проверен</th></tr></thead>
         <tbody>

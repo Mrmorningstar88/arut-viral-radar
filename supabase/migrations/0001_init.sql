@@ -26,6 +26,8 @@ create table persona (
   facts text not null default '',
   voice text not null default '',
   taboo text not null default '',
+  -- Запросы для поиска новых залётов (Exa), дополняют мониторинг креаторов.
+  search_queries text[] not null default '{}',
   updated_at timestamptz not null default now()
 );
 

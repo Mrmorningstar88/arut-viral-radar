@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { StatusBadge } from "@/components/status-badge";
+import { RunNowButton } from "@/components/run-now";
 import { StatusControls } from "@/components/status-controls";
 import { Reveal } from "@/components/ui/reveal";
 import { ScoreRing } from "@/components/ui/score-ring";
@@ -26,8 +27,9 @@ export default async function ReelsPage({ searchParams }: PageProps<"/reels">) {
       <Reveal className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl font-semibold">Залетевшие Reels</h1>
-          <p className="mt-1 text-sm text-muted">Свежие залёты, разобранные и адаптированные под тебя</p>
+          <p className="mt-1 text-sm text-muted">Свежие залёты, разобранные и адаптированные под тебя. Автозапуск в 09:00 и 20:00 по Дубаю</p>
         </div>
+        <RunNowButton />
       </Reveal>
 
       <Segmented

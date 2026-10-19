@@ -50,7 +50,7 @@ export type QueueItem = {
   createdAt: string;
 };
 
-export type Persona = { name: string; facts: string; voice: string; taboo: string };
+export type Persona = { name: string; facts: string; voice: string; taboo: string; queries: string[] };
 
 export type Creator = {
   username: string;
@@ -92,6 +92,7 @@ export interface Repo {
   getPersona(): Promise<Persona>;
   savePersona(p: Persona): Promise<void>;
   listCreators(): Promise<Creator[]>;
+  addCreator(username: string): Promise<void>;
   listRuns(): Promise<Run[]>;
   listRules(): Promise<LearnedRule[]>;
   setRuleStatus(id: string, status: LearnedRule["status"]): Promise<void>;
