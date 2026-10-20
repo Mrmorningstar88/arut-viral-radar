@@ -65,7 +65,7 @@ export function ReelCatalog({ reels }: { reels: ReelCard[] }) {
             <motion.article
               layoutId={`tile-${open.id}`}
               onClick={(e) => e.stopPropagation()}
-              className="relative mx-auto grid max-w-5xl gap-5 overflow-hidden rounded-3xl border border-white/10 bg-[#111] p-4 md:grid-cols-[320px_1fr] md:p-6"
+              className="relative mx-auto grid max-w-5xl gap-5 overflow-hidden rounded-3xl glass-strong p-4 md:grid-cols-[320px_1fr] md:p-6"
             >
               <button onClick={() => setOpenId(null)} className="absolute top-3 right-3 z-10 grid size-8 place-items-center rounded-full bg-white/10 text-sm hover:bg-white/20" aria-label="Закрыть">✕</button>
               <Original reel={open} />
@@ -83,7 +83,7 @@ function Cover({ reel }: { reel: ReelCard }) {
     // eslint-disable-next-line @next/next/no-img-element
     return <img src={reel.coverUrl} alt="" className="absolute inset-0 size-full object-cover transition-transform duration-500 group-hover:scale-105" />;
   }
-  return <div className="absolute inset-0 bg-gradient-to-br from-amber-500/25 via-rose-500/10 to-violet-600/20" />;
+  return <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.10),rgba(255,255,255,0.02)_60%)]" />;
 }
 
 function Original({ reel }: { reel: ReelCard }) {

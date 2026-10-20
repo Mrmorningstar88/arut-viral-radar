@@ -66,7 +66,7 @@ export default async function RedPillStoryPage({ params, searchParams }: PagePro
               </ol>
             </Panel>
             <Panel title="Адаптация">
-              <p className="rounded-2xl bg-gradient-to-br from-rose-400/15 to-amber-500/5 p-4 text-lg leading-snug font-semibold ring-1 ring-rose-300/20">«{a.adaptation.hook}»</p>
+              <p className="rounded-2xl glass p-4 text-lg leading-snug font-semibold">«{a.adaptation.hook}»</p>
               <dl className="mt-4 space-y-2 text-sm">
                 <Row k="Концепт" v={a.adaptation.concept} />
                 <Row k="Формат" v={a.adaptation.format} />

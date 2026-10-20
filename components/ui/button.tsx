@@ -5,7 +5,7 @@ import { motion, type HTMLMotionProps } from "motion/react";
 type Variant = "primary" | "ghost" | "danger" | "success";
 
 const STYLES: Record<Variant, string> = {
-  primary: "bg-gradient-to-br from-amber-300 to-orange-500 text-black shadow-[0_8px_24px_-8px_rgba(245,158,11,0.7)]",
+  primary: "bg-white text-black shadow-[0_8px_30px_-14px_rgba(255,255,255,0.45)] hover:bg-white/90",
   ghost: "border border-white/10 bg-white/[0.04] text-foreground hover:bg-white/[0.08] hover:border-white/20",
   danger: "border border-rose-400/20 bg-rose-500/10 text-rose-200 hover:bg-rose-500/20",
   success: "border border-emerald-400/20 bg-emerald-500/10 text-emerald-200 hover:bg-emerald-500/20",

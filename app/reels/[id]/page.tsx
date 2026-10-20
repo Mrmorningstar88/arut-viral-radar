@@ -108,7 +108,7 @@ export default async function ReelPage({ params, searchParams }: PageProps<"/ree
               </ol>
             </Panel>
             <Panel title="Адаптация">
-              <p className="rounded-2xl bg-gradient-to-br from-amber-300/15 to-orange-500/5 p-4 text-lg leading-snug font-semibold ring-1 ring-amber-300/20">«{a.adaptation.hook}»</p>
+              <p className="rounded-2xl glass p-4 text-lg leading-snug font-semibold">«{a.adaptation.hook}»</p>
               <dl className="mt-4 space-y-2 text-sm">
                 <Row k="Концепт" v={a.adaptation.concept} />
                 <Row k="Формат" v={a.adaptation.format} />

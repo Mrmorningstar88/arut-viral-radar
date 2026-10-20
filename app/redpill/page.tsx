@@ -22,7 +22,7 @@ export default async function RedPillPage() {
       <div className="grid gap-4 md:grid-cols-2">
         {items.map((p, i) => (
           <Reveal key={p.id} delay={i * 0.06}>
-            <article className="group relative flex h-full flex-col overflow-hidden rounded-3xl border border-white/[0.07] bg-gradient-to-br from-rose-500/[0.07] via-white/[0.02] to-transparent p-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-rose-400/30 hover:shadow-[0_20px_60px_-30px_rgba(244,63,94,0.45)]">
+            <article className="group relative flex h-full flex-col overflow-hidden rounded-3xl glass p-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-rose-400/30 hover:shadow-[0_20px_60px_-30px_rgba(244,63,94,0.45)]">
               <div className="flex flex-wrap items-center gap-1.5">
                 <StatusBadge status={p.status} />
                 <span className="rounded-full bg-rose-500/15 px-2.5 py-0.5 text-xs font-medium text-rose-300">💊 {dubaiDate(p.createdAt)}</span>

@@ -37,18 +37,18 @@ export default async function LearningPage() {
         {GOALS.map((g) => {
           const n = overview.signals[g.key];
           return (
-            <div key={g.key} className="rounded-3xl border border-white/[0.07] bg-white/[0.025] p-4">
+            <div key={g.key} className="rounded-3xl glass p-4">
               <p className="font-display text-2xl font-semibold">{n}<span className="text-base text-muted"> / {g.goal}</span></p>
               <p className="text-sm text-muted">{g.label}</p>
               <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
-                <div className="h-full rounded-full bg-gradient-to-r from-amber-300 to-orange-500" style={{ width: `${Math.min(100, (n / g.goal) * 100)}%` }} />
+                <div className="h-full rounded-full bg-white/80" style={{ width: `${Math.min(100, (n / g.goal) * 100)}%` }} />
               </div>
             </div>
           );
         })}
       </Reveal>
 
-      <Reveal delay={0.08} className="rounded-3xl border border-white/[0.07] bg-white/[0.025] p-5">
+      <Reveal delay={0.08} className="rounded-3xl glass p-5">
         <h2 className="font-display text-sm font-semibold tracking-wide uppercase">Твой вкус, как я его понимаю</h2>
         {overview.updatedAt && <p className="mt-1 text-xs text-muted">Обновлено {dubaiDate(overview.updatedAt)}</p>}
         <p className="mt-3 text-sm leading-relaxed whitespace-pre-line">{overview.taste || "Пока не сформирован: нужно хотя бы 5 решений или правок."}</p>
@@ -58,7 +58,7 @@ export default async function LearningPage() {
         <h2 className="font-semibold">Ждут твоего решения</h2>
         {proposed.length === 0 && <p className="text-sm text-muted">Новых правил нет.</p>}
         {proposed.map((r) => (
-          <div key={r.id} className="flex flex-wrap items-center gap-3 rounded-3xl border border-amber-400/15 bg-amber-400/[0.03] p-4 text-sm">
+          <div key={r.id} className="flex flex-wrap items-center gap-3 glass rounded-3xl p-4 text-sm">
             <span className="flex-1 leading-relaxed">{r.text}</span>
             <form action={setRuleStatus} className="flex gap-2">
               <input type="hidden" name="id" value={r.id} />

@@ -1,6 +1,6 @@
 export function Panel({ title, subtitle, action, children }: { title: string; subtitle?: string; action?: React.ReactNode; children: React.ReactNode }) {
   return (
-    <section className="h-full rounded-3xl border border-white/[0.07] bg-white/[0.025] p-5 md:p-6">
+    <section className="h-full rounded-3xl glass p-5 md:p-6">
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
           <h2 className="font-display text-sm font-semibold tracking-wide uppercase">{title}</h2>

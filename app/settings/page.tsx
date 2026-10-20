@@ -19,7 +19,7 @@ export default async function SettingsPage() {
         <p className="mt-1 text-sm text-muted">Заглядывать сюда нужно редко.</p>
       </Reveal>
       {checks && (
-        <Reveal delay={0.03} className="rounded-3xl border border-white/[0.07] bg-white/[0.025] p-5">
+        <Reveal delay={0.03} className="rounded-3xl glass p-5">
           <h2 className="font-display text-sm font-semibold tracking-wide uppercase">Проверка подключений</h2>
           <ul className="mt-4 grid gap-2 md:grid-cols-2">
             {checks.map((c) => (
@@ -37,7 +37,7 @@ export default async function SettingsPage() {
       <div className="grid gap-4 md:grid-cols-3">
         {ITEMS.map((it, i) => (
           <Reveal key={it.href} delay={i * 0.05}>
-            <Link href={it.href} className="block h-full rounded-3xl border border-white/[0.07] bg-white/[0.025] p-5 transition-all hover:-translate-y-0.5 hover:border-amber-400/25">
+            <Link href={it.href} className="block h-full rounded-3xl glass p-5 transition-all hover:-translate-y-0.5 hover:border-amber-400/25">
               <span className="text-2xl">{it.icon}</span>
               <h2 className="mt-3 font-semibold">{it.title}</h2>
               <p className="mt-1 text-sm leading-relaxed text-muted">{it.text}</p>

@@ -28,7 +28,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             Демо-режим: база не подключена, данные вымышленные и сбрасываются при перезапуске.
           </div>
         )}
-        <main className="mx-auto max-w-6xl px-4 py-6">
+        <main className="mx-auto max-w-6xl px-4 pt-6 pb-28 md:pb-10">
           <Suspense fallback={<p className="text-muted">Загружаю…</p>}>{children}</Suspense>
         </main>
         </ToastProvider>

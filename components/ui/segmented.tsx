@@ -15,7 +15,7 @@ export function Segmented({ id, items, size = "md" }: { id: string; items: Item[
           {it.active && (
             <motion.span
               layoutId={`seg-${id}`}
-              className="absolute inset-0 rounded-full bg-gradient-to-br from-amber-200 to-amber-400"
+              className="absolute inset-0 rounded-full bg-white"
               transition={{ type: "spring", stiffness: 420, damping: 34 }}
             />
           )}

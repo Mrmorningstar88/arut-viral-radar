@@ -112,7 +112,7 @@ export function StoryboardStudio({ storyboard, vo }: { storyboard: Shot[]; vo: V
                   className="relative overflow-hidden rounded-full bg-white/10 transition hover:bg-white/20"
                   aria-label={`Кадр ${s.n}`}
                 >
-                  <span className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-amber-300 to-orange-500" style={{ width: `${Math.min(1, fill) * 100}%` }} />
+                  <span className="absolute inset-y-0 left-0 rounded-full bg-white/80" style={{ width: `${Math.min(1, fill) * 100}%` }} />
                 </button>
               );
             })}
@@ -123,7 +123,7 @@ export function StoryboardStudio({ storyboard, vo }: { storyboard: Shot[]; vo: V
               whileHover={{ scale: 1.06 }}
               whileTap={{ scale: 0.92 }}
               onClick={() => setPlaying((p) => !p)}
-              className="grid size-12 place-items-center rounded-full bg-gradient-to-br from-amber-300 to-orange-500 text-lg text-black shadow-[0_8px_24px_-6px_rgba(245,158,11,0.6)]"
+              className="grid size-12 place-items-center rounded-full bg-white text-lg text-black shadow-[0_8px_24px_-12px_rgba(255,255,255,0.5)]"
               aria-label={playing ? "Пауза" : "Играть"}
             >
               {playing ? "❚❚" : "▶"}

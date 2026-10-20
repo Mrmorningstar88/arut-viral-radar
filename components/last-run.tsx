@@ -17,8 +17,8 @@ export function LastRun({ run }: { run: Run | undefined }) {
   if (!run) return <p className="text-sm text-muted">Прогонов ещё не было.</p>;
   const running = !run.finishedAt;
   return (
-    <p className="flex flex-wrap items-center gap-2 text-sm text-muted">
-      <span className={`size-2 rounded-full ${running ? "animate-pulse bg-amber-400" : run.errors.length ? "bg-rose-400" : "bg-emerald-400"}`} />
+    <p className="flex items-baseline gap-2 text-sm text-muted">
+      <span className={`size-2 shrink-0 translate-y-[-1px] rounded-full ${running ? "animate-pulse bg-amber-400" : run.errors.length ? "bg-rose-400" : "bg-emerald-400"}`} />
       {running ? `Идёт поиск, начал ${dubaiDate(run.startedAt)}. Обнови страницу через пару минут` : `Последний прогон ${dubaiDate(run.startedAt)}: ${runSummary(run)}`}
       {run.errors.length > 0 && <a href="/runs" className="text-rose-300 underline-offset-4 hover:underline">ошибки: {run.errors.length}</a>}
     </p>

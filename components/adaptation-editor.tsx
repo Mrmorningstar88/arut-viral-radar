@@ -29,7 +29,7 @@ export function AdaptationEditor({ id, hook, vo }: { id: string; hook: string; v
     });
 
   return (
-    <div className="rounded-3xl border border-amber-400/15 bg-amber-400/[0.03] p-5">
+    <div className="glass rounded-3xl p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="font-medium">Хочешь по-своему?</p>

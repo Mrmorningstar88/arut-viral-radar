@@ -33,7 +33,7 @@ export default async function ReelsPage({ searchParams }: PageProps<"/reels">) {
       </Reveal>
 
       {open.length > 0 && (
-        <Reveal className="space-y-2 rounded-3xl border border-white/[0.07] bg-white/[0.025] p-4">
+        <Reveal className="space-y-2 rounded-3xl glass p-4">
           <div className="flex items-center justify-between gap-3">
             <p className="text-sm font-medium">Твои ссылки</p>
             {!running && open.some((q) => q.status === "pending") && <RetryQueueButton />}
@@ -76,13 +76,13 @@ export default async function ReelsPage({ searchParams }: PageProps<"/reels">) {
 function GettingStarted({ hasCreators }: { hasCreators: boolean }) {
   return (
     <Reveal delay={0.05} className="grid gap-4 md:grid-cols-2">
-      <section className="rounded-3xl border border-amber-400/20 bg-gradient-to-br from-amber-400/[0.08] to-transparent p-6">
+      <section className="glass rounded-3xl p-6">
         <p className="text-xs font-semibold tracking-widest text-amber-300 uppercase">Быстрый тест</p>
         <h2 className="mt-2 font-display text-lg font-semibold">Вставь ссылку на любой Reels</h2>
         <p className="mt-1 mb-4 text-sm text-muted">Через пару минут здесь появится разбор: почему залетело, сценарий под тебя и 3D-раскадровка.</p>
         <AddReelForm compact />
       </section>
-      <section className="rounded-3xl border border-white/[0.07] bg-white/[0.025] p-6">
+      <section className="rounded-3xl glass p-6">
         <p className="text-xs font-semibold tracking-widest text-muted uppercase">Радар ищет сам</p>
         <ol className="mt-3 space-y-3 text-sm">
           <Step n={1}>Нажми «Запустить сейчас»: найду залёты по твоим темам в Instagram. Первый прогон идёт 10–15 минут</Step>
