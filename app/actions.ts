@@ -3,13 +3,12 @@
 import { parseRunOptions } from "@/lib/engine/run-options";
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
-import { processPendingNow } from "@/lib/engine/direct";
+import { processPendingNow, searchNow } from "@/lib/engine/direct";
 import { loadProfile, logCost } from "@/lib/engine/store";
 import { reviseReelAnalysis, type AdaptationEdits } from "@/lib/generate";
 import { MODEL_MAIN } from "@/lib/llm";
 import { learn } from "@/lib/learning";
 import { getRepo, isDemo } from "@/lib/db";
-import { inngest, RUN_REQUESTED } from "@/inngest/client";
 import { REEL_STATUSES, REJECT_REASONS, type RejectReason, type ReelStatus, type StatusChange } from "@/lib/db/types";
 
 function statusChange(formData: FormData): StatusChange {
@@ -68,15 +67,16 @@ export async function setRuleStatus(formData: FormData) {
 }
 
 // Возвращает текст ошибки, а не бросает: в продакшене Next скрывает сообщения брошенных ошибок.
+// Ручной поиск идёт прямо на сайте (не зависит от Inngest); расписание по-прежнему через Inngest.
 export async function runNow(options?: unknown): Promise<{ error?: string }> {
   if (isDemo()) return { error: "В демо-режиме прогон недоступен: подключи базу и ключи" };
-  await getRepo(); // проверяет вход владельца
-  try {
-    await inngest.send({ name: RUN_REQUESTED, data: { options: parseRunOptions(options) } });
-    return {};
-  } catch {
-    return { error: "Не получилось запустить: проверь ключи Inngest" };
-  }
+  const repo = await getRepo(); // проверяет вход владельца
+  const last = (await repo.listRuns())[0];
+  if (last && !last.finishedAt && Date.now() - Date.parse(last.startedAt) < 10 * 60_000) return { error: "Поиск уже идёт, подожди пару минут" };
+  const ws = process.env.WORKSPACE_ID!;
+  after(() => searchNow(ws, parseRunOptions(options)).catch((e) => console.error("searchNow", e)));
+  revalidatePath("/reels");
+  return {};
 }
 
 export async function addCreator(formData: FormData): Promise<{ error?: string }> {
