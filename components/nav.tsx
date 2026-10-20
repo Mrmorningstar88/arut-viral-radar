@@ -26,8 +26,8 @@ export function Nav() {
             className="flex items-center gap-2 whitespace-nowrap"
           >
             <span className="relative grid size-7 place-items-center">
-              <span className="absolute inset-0 animate-ping rounded-full bg-white/20 [animation-duration:2.5s]" />
-              <span className="size-3 rounded-full bg-white shadow-[0_0_12px_rgba(255,255,255,0.6)]" />
+              <span className="absolute inset-0 animate-ping rounded-full bg-[#ff7a2f]/30 [animation-duration:2.5s]" />
+              <span className="size-3 rounded-full bg-[#ff7a2f] shadow-[0_0_14px_rgba(255,122,47,0.8)]" />
             </span>
             <span className="font-display text-sm font-semibold tracking-wide">
               VIRAL RADAR

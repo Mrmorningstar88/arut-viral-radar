@@ -89,7 +89,7 @@ function Tile({ reel: r, index, onOpen }: { reel: ReelCard; index: number; onOpe
       }}
       onClick={onOpen}
       style={{ rotateX: rx, rotateY: ry, transformPerspective: 900 }}
-      className="glass sheen group relative aspect-[9/16] overflow-hidden rounded-2xl text-left transition-shadow duration-500 hover:shadow-[0_40px_80px_-30px_rgba(0,0,0,1),0_0_70px_-20px_rgba(255,255,255,0.22)]"
+      className="glass sheen group relative aspect-[9/16] overflow-hidden rounded-2xl text-left transition-shadow duration-500 hover:shadow-[0_40px_80px_-30px_rgba(0,0,0,1),0_0_70px_-20px_rgba(255,122,47,0.35)]"
     >
       <Cover reel={r} />
       <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />

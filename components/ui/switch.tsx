@@ -35,14 +35,14 @@ export function Switch({
       <span
         className={`relative flex h-[26px] w-[44px] shrink-0 items-center rounded-full p-[3px] transition-colors duration-300 ${
           checked
-            ? "justify-end bg-white shadow-[0_0_18px_-4px_rgba(255,255,255,0.55)]"
+            ? "justify-end bg-[linear-gradient(180deg,#ff9a55,#ff7a2f)] shadow-[inset_0_1px_0_rgba(255,255,255,0.45),0_0_20px_-4px_rgba(255,122,47,0.7)]"
             : "justify-start bg-white/[0.1] ring-1 ring-white/10"
         }`}
       >
         <motion.span
           layout
           transition={{ type: "spring", stiffness: 600, damping: 34 }}
-          className={`size-5 rounded-full shadow-[0_2px_6px_rgba(0,0,0,0.35)] ${checked ? "bg-black" : "bg-white/80"}`}
+          className={`size-5 rounded-full shadow-[0_2px_6px_rgba(0,0,0,0.35)] ${checked ? "bg-white" : "bg-white/80"}`}
         />
       </span>
     </button>

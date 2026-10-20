@@ -123,7 +123,7 @@ export function StoryboardStudio({ storyboard, vo }: { storyboard: Shot[]; vo: V
               whileHover={{ scale: 1.06 }}
               whileTap={{ scale: 0.92 }}
               onClick={() => setPlaying((p) => !p)}
-              className="grid size-12 place-items-center rounded-full bg-white text-lg text-black shadow-[0_8px_24px_-12px_rgba(255,255,255,0.5)]"
+              className="grid size-12 place-items-center rounded-full bg-[linear-gradient(180deg,#ff9a55,#ff7a2f)] text-lg text-black shadow-[inset_0_1px_0_rgba(255,255,255,0.5),0_8px_28px_-8px_rgba(255,122,47,0.8)]"
               aria-label={playing ? "Пауза" : "Играть"}
             >
               {playing ? "❚❚" : "▶"}

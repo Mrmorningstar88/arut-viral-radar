@@ -96,8 +96,8 @@ export function RadarConsole({ reels }: { reels: ReelCard[] }) {
         <div className="flex flex-wrap items-center gap-x-6 gap-y-3 px-5 py-4">
           <button type="button" onClick={() => setOpen(!open)} className="flex items-center gap-2.5">
             <span className="relative grid size-2.5 place-items-center">
-              <span className="absolute inset-0 animate-ping rounded-full bg-white/40 [animation-duration:2.4s]" />
-              <span className="size-2.5 rounded-full bg-white" />
+              <span className="absolute inset-0 animate-ping rounded-full bg-[#ff7a2f]/50 [animation-duration:2.4s]" />
+              <span className="size-2.5 rounded-full bg-[#ff7a2f] shadow-[0_0_12px_rgba(255,122,47,0.9)]" />
             </span>
             <span className="font-display text-sm font-semibold tracking-wide">Пульт</span>
           </button>
