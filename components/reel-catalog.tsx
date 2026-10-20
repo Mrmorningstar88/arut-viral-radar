@@ -8,7 +8,7 @@ import { StatusControls } from "@/components/status-controls";
 import type { ReelCard } from "@/lib/db/types";
 import { compact, igEmbed } from "@/lib/format";
 
-const LANE: Record<string, string> = { viral: "🔥", rising: "📈", queue: "✋" };
+const LANE: Record<string, string> = { viral: "🔥", rising: "📈", trending: "⚡", queue: "✋" };
 
 // Каталог как полка в iTunes: обложки сеткой, нажал — карточка раскрылась поверх.
 export function ReelCatalog({ reels }: { reels: ReelCard[] }) {

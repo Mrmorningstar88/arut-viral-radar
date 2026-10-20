@@ -9,6 +9,7 @@ type Kind = "morning" | "evening" | "manual";
 
 const CREATORS_PER_RUN = 12;
 const URLS_PER_QUERY = 6;
+const TAGS_PER_RUN = 6;
 
 function workspace() {
   const ws = process.env.WORKSPACE_ID;
@@ -53,6 +54,18 @@ const radarRun = async ({ step, kind }: { step: Parameters<Parameters<typeof inn
   }
 
   const { queries } = await step.run("load-queries", () => store.loadProfile(ws));
+
+  // Сам ищет залёты по хэштегам тем автора: не нужны ни ссылки, ни список креаторов.
+  const seed = Math.floor(Date.now() / 43_200_000);
+  for (const tag of pipeline.tagsForRun(queries, TAGS_PER_RUN, seed)) {
+    try {
+      found.push(...(await step.run(`tag-${tag}`, () => pipeline.scanHashtag(tag))));
+      stats.scanned++;
+    } catch (e) {
+      errors.push(`#${tag}: ${pipeline.errorRu(e)}`);
+    }
+  }
+
   for (const [i, q] of queries.entries()) {
     try {
       const urls = await step.run(`search-${i}`, () => pipeline.searchQuery(q));

@@ -7,6 +7,7 @@ import type { InstagramSource, ProfileReel, ReelDetails } from "./types";
 const REELS_ACTOR = "apify~instagram-reel-scraper";
 const POST_ACTOR = "apify~instagram-scraper";
 const PROFILE_ACTOR = "apify~instagram-profile-scraper";
+const HASHTAG_ACTOR = "apify~instagram-hashtag-scraper";
 
 type Item = Record<string, unknown>;
 
@@ -23,7 +24,10 @@ export function shortcodeFromUrl(url: string) {
   return url.match(/instagram\.com\/(?:[^/]+\/)?(?:reel|reels|p)\/([A-Za-z0-9_-]+)/)?.[1] ?? null;
 }
 
-export function apifySource(token: string): InstagramSource & { getFollowers(username: string): Promise<number | null> } {
+export function apifySource(token: string): InstagramSource & {
+  getFollowers(username: string): Promise<number | null>;
+  getHashtagReels(tag: string, limit?: number): Promise<(ProfileReel & { author: string })[]>;
+} {
   const run = (actor: string, input: unknown) =>
     fetchJson<Item[]>(`https://api.apify.com/v2/acts/${actor}/run-sync-get-dataset-items?token=${token}&timeout=240`, {
       method: "POST",
@@ -68,6 +72,14 @@ export function apifySource(token: string): InstagramSource & { getFollowers(use
         keywords: ((it.hashtags as string[] | undefined) ?? []).slice(0, 15),
         transcript: str(it, "transcript", "videoTranscript").slice(0, 4000),
       } satisfies ReelDetails;
+    },
+    // Ролики по хэштегу: так радар сам находит авторов, о которых ты ещё не знаешь.
+    async getHashtagReels(tag: string, limit = 40) {
+      const items = await run(HASHTAG_ACTOR, { hashtags: [tag], resultsType: "reels", resultsLimit: limit });
+      return items
+        .filter((it) => !it.error)
+        .map((it) => ({ ...toReel(it), author: str(it, "ownerUsername", "username") }))
+        .filter((r) => r.author && r.date);
     },
     async getFollowers(username) {
       const [it] = await run(PROFILE_ACTOR, { usernames: [username] });

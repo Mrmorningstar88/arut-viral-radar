@@ -83,13 +83,13 @@ function GettingStarted({ hasCreators }: { hasCreators: boolean }) {
         <AddReelForm compact />
       </section>
       <section className="rounded-3xl border border-white/[0.07] bg-white/[0.025] p-6">
-        <p className="text-xs font-semibold tracking-widest text-muted uppercase">Чтобы радар искал сам</p>
+        <p className="text-xs font-semibold tracking-widest text-muted uppercase">Радар ищет сам</p>
         <ol className="mt-3 space-y-3 text-sm">
-          <Step n={1} done={hasCreators}>
-            <Link href="/sources" className="font-medium text-amber-200 hover:underline">Добавь 3–5 авторов</Link>, чей формат тебе близок
+          <Step n={1}>Нажми «Запустить сейчас»: найду залёты по твоим темам в Instagram. Первый прогон идёт 10–15 минут</Step>
+          <Step n={2}>Дальше ищу сам каждый день в 09:00 и 20:00 по Дубаю</Step>
+          <Step n={3} done={hasCreators}>
+            Если хочешь, <Link href="/sources" className="font-medium text-amber-200 hover:underline">добавь любимых авторов</Link>, буду следить и за ними
           </Step>
-          <Step n={2}>Нажми «Запустить сейчас» или жди 09:00 и 20:00</Step>
-          <Step n={3}>Отмечай ролики «В работе» или «Не подходит», так я учусь твоему вкусу</Step>
         </ol>
       </section>
     </Reveal>

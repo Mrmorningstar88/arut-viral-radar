@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { lanesFor, pickTop } from "../lib/selection";
+import { lanesFor, pickTop, pickWithFallback } from "../lib/selection";
 
 const now = new Date("2026-10-19T12:00:00Z");
 const daysAgo = (d: number) => new Date(now.getTime() - d * 86_400_000);
@@ -32,4 +32,15 @@ test("отбор: без дублей, свежие первыми, при ра�
   ];
   const ids = pickTop(c, new Set(["dup"]), 4, now).map((x) => x.igId);
   assert.deepEqual(ids, ["fresh-high", "fresh-low", "mid", "mid2"]);
+});
+
+test("добор: если строгих залётов мало, берём свежие от 1M по просмотрам", () => {
+  const c = [
+    { igId: "viral", views: 12e6, postedAt: daysAgo(5), authorFollowers: 1e6 },
+    { igId: "t-small", views: 1.5e6, postedAt: daysAgo(10), authorFollowers: 1e6 },
+    { igId: "t-big", views: 2.5e6, postedAt: daysAgo(20), authorFollowers: 1e6 },
+    { igId: "too-old", views: 9e6, postedAt: daysAgo(40), authorFollowers: 1e6 },
+    { igId: "too-small", views: 0.5e6, postedAt: daysAgo(1), authorFollowers: 1e6 },
+  ];
+  assert.deepEqual(pickWithFallback(c, new Set(), 3, now).map((x) => x.igId), ["viral", "t-big", "t-small"]);
 });

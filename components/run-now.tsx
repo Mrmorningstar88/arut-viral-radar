@@ -17,7 +17,7 @@ export function RunNowButton() {
         start(async () => {
           const { error } = await runNow();
           if (error) toast(error, "error");
-          else toast("Запустил поиск. Новые разборы появятся здесь 🚀");
+          else toast("Запустил поиск по твоим темам. Займёт 10–15 минут, разборы появятся здесь 🚀");
         })
       }
       className="group relative inline-flex items-center gap-2 overflow-hidden rounded-full bg-gradient-to-br from-amber-300 to-orange-500 px-5 py-2.5 text-sm font-semibold text-black shadow-[0_10px_30px_-10px_rgba(245,158,11,0.8)] disabled:opacity-60"

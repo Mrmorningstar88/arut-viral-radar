@@ -3,6 +3,9 @@ export const VIRAL_MAX_AGE_DAYS = 90;
 export const RISING_MIN_VIEWS = 3_000_000;
 export const RISING_MAX_AGE_DAYS = 7;
 export const MAX_NEW_PER_RUN = 4;
+// Запасная полоса: если строгих залётов мало, добираем самые сильные свежие ролики, чтобы прогон не был пустым.
+export const TRENDING_MIN_VIEWS = 1_000_000;
+export const TRENDING_MAX_AGE_DAYS = 30;
 
 export type Candidate = {
   igId: string;
@@ -11,7 +14,7 @@ export type Candidate = {
   authorFollowers: number | null;
 };
 
-export type Lane = "viral" | "rising";
+export type Lane = "viral" | "rising" | "trending";
 
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -43,4 +46,26 @@ export function pickTop<T extends Candidate>(
 
 function ratio(c: Candidate) {
   return c.authorFollowers ? (c.views ?? 0) / c.authorFollowers : 0;
+}
+
+// Сначала строгие пороги, потом добор из полосы trending по просмотрам.
+export function pickWithFallback<T extends Candidate>(
+  candidates: T[],
+  existingIds: Set<string>,
+  limit = MAX_NEW_PER_RUN,
+  now = new Date(),
+): T[] {
+  const strict = pickTop(candidates, existingIds, limit, now);
+  if (strict.length >= limit) return strict;
+  const taken = new Set(strict.map((c) => c.igId));
+  const extra = candidates
+    .filter((c) => !existingIds.has(c.igId) && !taken.has(c.igId) && isTrending(c, now))
+    .sort((a, b) => (b.views ?? 0) - (a.views ?? 0))
+    .slice(0, limit - strict.length);
+  return [...strict, ...extra];
+}
+
+export function isTrending(c: Candidate, now = new Date()) {
+  const age = (now.getTime() - c.postedAt.getTime()) / DAY;
+  return (c.views ?? 0) >= TRENDING_MIN_VIEWS && age <= TRENDING_MAX_AGE_DAYS;
 }

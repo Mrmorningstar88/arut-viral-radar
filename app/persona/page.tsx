@@ -19,8 +19,8 @@ export default async function PersonaPage() {
         <input name="name" defaultValue={p.name} className="w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 outline-none transition focus:border-amber-400/50" />
       </label>
       <label className="block space-y-1">
-        <span className="font-medium">Поисковые запросы</span>
-        <span className="block text-sm text-muted">По одному на строку, до 10. По ним каждый прогон ищет новые залёты, кроме креаторов.</span>
+        <span className="font-medium">Темы для поиска</span>
+        <span className="block text-sm text-muted">По одной на строку, до 10, например «трейдинг» или «инфляция». Радар ищет по ним залёты в Instagram сам, плюс по своим хэштегам про деньги и экономику.</span>
         <textarea name="queries" defaultValue={p.queries.join("\n")} rows={5} className="w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 outline-none transition focus:border-amber-400/50" />
       </label>
       {FIELDS.map((f) => (
