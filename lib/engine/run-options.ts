@@ -53,7 +53,8 @@ export function parseRunOptions(raw: unknown): RunOptions {
     strictOnly: bool("strictOnly"),
     depth,
   };
-  // Без языка хэштеги искать не по чему: возвращаем оба.
-  if (!opts.ru && !opts.en) return { ...opts, ru: true, en: true };
+  // Без языка хэштеги искать не по чему, без источника искать негде: возвращаем разумное.
+  if (!opts.ru && !opts.en) Object.assign(opts, { ru: true, en: true });
+  if (!opts.hashtags && !opts.creators && !opts.search) opts.hashtags = true;
   return opts;
 }

@@ -61,3 +61,9 @@ test("настройки пульта: мусор превращается в з
   const noLang = parseRunOptions({ ru: false, en: false });
   assert.ok(noLang.ru && noLang.en);
 });
+
+test("настройки пульта: без источников включаются хэштеги", async () => {
+  const { parseRunOptions } = await import("../lib/engine/run-options");
+  const o = parseRunOptions({ hashtags: false, creators: false, search: false });
+  assert.ok(o.hashtags);
+});

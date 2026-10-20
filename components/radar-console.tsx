@@ -14,6 +14,7 @@ import {
   type Depth,
 } from "@/lib/engine/run-options";
 import { compact } from "@/lib/format";
+import { useToast } from "@/components/ui/toast";
 import { useStored } from "@/lib/use-stored";
 
 type Sort = "views" | "fit" | "fresh";
@@ -56,10 +57,16 @@ export function RadarConsole({ reels }: { reels: ReelCard[] }) {
     DEFAULT_RUN_OPTIONS,
     parseRunOptions,
   );
+  const toast = useToast();
   const [open, setOpen] = useStored("radar.console-open", false);
   const patch = (p: Partial<View>) => setView({ ...view, ...p });
-  const patchRun = (p: Partial<typeof run>) =>
-    setRun(parseRunOptions({ ...run, ...p }));
+  // Последний источник выключить нельзя: иначе поиск пойдёт вхолостую.
+  const patchRun = (p: Partial<typeof run>) => {
+    const next = { ...run, ...p };
+    if (!next.hashtags && !next.creators && !next.search)
+      return toast("Хотя бы один источник должен быть включён", "error");
+    setRun(parseRunOptions(next));
+  };
 
   const shown = useMemo(() => {
     const lanesOn = (r: ReelCard) => {
@@ -94,21 +101,32 @@ export function RadarConsole({ reels }: { reels: ReelCard[] }) {
     <div className="space-y-5">
       <section className="glass-strong overflow-hidden rounded-3xl">
         <div className="flex flex-wrap items-center gap-x-6 gap-y-3 px-5 py-4">
-          <button type="button" onClick={() => setOpen(!open)} className="flex items-center gap-2.5">
+          <button
+            type="button"
+            onClick={() => setOpen(!open)}
+            className="flex items-center gap-2.5"
+          >
             <span className="relative grid size-2.5 place-items-center">
               <span className="absolute inset-0 animate-ping rounded-full bg-[#ff7a2f]/50 [animation-duration:2.4s]" />
               <span className="size-2.5 rounded-full bg-[#ff7a2f] shadow-[0_0_12px_rgba(255,122,47,0.9)]" />
             </span>
-            <span className="font-display text-sm font-semibold tracking-wide">Пульт</span>
+            <span className="font-display text-sm font-semibold tracking-wide">
+              Пульт
+            </span>
           </button>
           <Stat label="на экране">
             <AnimatedNumber value={shown.length} />
           </Stat>
           <Stat label="просмотров">
-            <AnimatedNumber value={totalViews} format={(n) => compact(Math.round(n))} />
+            <AnimatedNumber
+              value={totalViews}
+              format={(n) => compact(Math.round(n))}
+            />
           </Stat>
           <Stat label="в работе">
-            <AnimatedNumber value={shown.filter((r) => r.status === "in_work").length} />
+            <AnimatedNumber
+              value={shown.filter((r) => r.status === "in_work").length}
+            />
           </Stat>
           <div className="ml-auto flex items-center gap-2">
             {!open && <RunNowButton />}
@@ -274,7 +292,7 @@ export function RadarConsole({ reels }: { reels: ReelCard[] }) {
         <ReelCatalog reels={shown} />
       ) : (
         <div className="rounded-3xl border border-dashed border-white/10 p-12 text-center text-sm text-muted">
-          С такими тумблерами ничего не видно.{" "}
+          Тумблеры скрыли {reels.length} {plural(reels.length)}.{" "}
           <button
             type="button"
             onClick={() => setView(DEFAULT_VIEW)}
@@ -333,4 +351,12 @@ function Field({
       {children}
     </div>
   );
+}
+
+function plural(n: number) {
+  const d = n % 10;
+  const h = n % 100;
+  if (d === 1 && h !== 11) return "ролик";
+  if (d >= 2 && d <= 4 && (h < 12 || h > 14)) return "ролика";
+  return "роликов";
 }
