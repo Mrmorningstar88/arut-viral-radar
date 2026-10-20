@@ -1,6 +1,8 @@
 import { MAX_NEW_PER_RUN } from "@/lib/selection";
 import * as pipeline from "@/lib/engine/pipeline";
 import * as store from "@/lib/engine/store";
+import { learn } from "@/lib/learning";
+import { collectMetrics } from "@/lib/learning/metrics";
 import { inngest, RUN_REQUESTED } from "./client";
 
 type Kind = "morning" | "evening" | "manual";
@@ -100,4 +102,21 @@ export const manual = inngest.createFunction(
   ({ step }) => radarRun({ step, kind: "manual" }),
 );
 
-export const functions = [morning, evening, manual];
+// Метрики своих роликов раз в день, обучение по воскресеньям.
+export const metricsDaily = inngest.createFunction(
+  { id: "own-metrics-daily", triggers: [{ cron: "TZ=Asia/Dubai 0 8 * * *" }] },
+  ({ step }) => step.run("collect", () => collectMetrics(workspace())),
+);
+
+export const learnWeekly = inngest.createFunction(
+  { id: "learn-weekly", triggers: [{ cron: "TZ=Asia/Dubai 0 10 * * 0" }] },
+  async ({ step }) => {
+    const ws = workspace();
+    const r = await step.run("learn", () => learn(ws));
+    if (r.usd > 0) await step.run("cost", () => store.logCost(ws, null, "anthropic", r.usd));
+    if (r.proposed > 0) await step.run("notify", () => store.notify(ws, "rules", `Новых правил на одобрение: ${r.proposed}`));
+    return r;
+  },
+);
+
+export const functions = [morning, evening, manual, metricsDaily, learnWeekly];

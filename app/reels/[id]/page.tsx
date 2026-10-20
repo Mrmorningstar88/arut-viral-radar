@@ -12,6 +12,9 @@ import { Segmented } from "@/components/ui/segmented";
 import { getRepo } from "@/lib/db";
 import { compact, dubaiDate, igEmbed } from "@/lib/format";
 
+// Пересборка через Claude идёт прямо в запросе и может занять до пары минут.
+export const maxDuration = 300;
+
 export default async function ReelPage({ params, searchParams }: PageProps<"/reels/[id]">) {
   const { id } = await params;
   const lang = (await searchParams).lang === "en" ? "en" : "ru";

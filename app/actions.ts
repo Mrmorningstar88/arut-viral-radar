@@ -6,6 +6,7 @@ import { processPendingNow } from "@/lib/engine/direct";
 import { loadProfile, logCost } from "@/lib/engine/store";
 import { reviseReelAnalysis, type AdaptationEdits } from "@/lib/generate";
 import { MODEL_MAIN } from "@/lib/llm";
+import { learn } from "@/lib/learning";
 import { getRepo, isDemo } from "@/lib/db";
 import { inngest, RUN_REQUESTED } from "@/inngest/client";
 import { REEL_STATUSES, REJECT_REASONS, type RejectReason, type ReelStatus, type StatusChange } from "@/lib/db/types";
@@ -125,4 +126,18 @@ export async function reviseAdaptation(id: string, edits: AdaptationEdits): Prom
   revalidatePath(`/reels/${id}`);
   revalidatePath("/reels");
   return {};
+}
+
+export async function learnNow(): Promise<{ error?: string; message?: string }> {
+  if (isDemo()) return { error: "В демо-режиме обучение недоступно" };
+  await getRepo(); // проверяет вход владельца
+  try {
+    const ws = process.env.WORKSPACE_ID!;
+    const r = await learn(ws);
+    if (r.usd > 0) await logCost(ws, null, "anthropic", r.usd);
+    revalidatePath("/learning");
+    return { message: r.skipped ?? (r.proposed > 0 ? `Готово. Новых правил: ${r.proposed}` : "Профиль вкуса обновил, новых правил нет") };
+  } catch (e) {
+    return { error: `Не получилось: ${e instanceof Error ? e.message.slice(0, 160) : "ошибка"}` };
+  }
 }
