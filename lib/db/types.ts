@@ -111,6 +111,7 @@ export interface Repo {
   listReels(status?: ReelStatus): Promise<ReelCard[]>;
   getReel(id: string): Promise<ReelWithAnalysis | null>;
   setReelStatus(id: string, change: StatusChange): Promise<void>;
+  saveReelAnalysis(id: string, analysis: ReelAnalysis, model: string): Promise<void>;
   listRedpill(): Promise<RedPill[]>;
   getRedpill(id: string): Promise<RedPillWithStory | null>;
   setRedpillStatus(id: string, change: StatusChange): Promise<void>;

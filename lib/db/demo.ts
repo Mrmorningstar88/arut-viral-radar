@@ -64,6 +64,9 @@ export const demoRepo: Repo = {
     r.status = change.status;
     if (change.publishedUrl) r.publishedUrl = change.publishedUrl;
   },
+  async saveReelAnalysis(id, analysis) {
+    analyses[id] = analysis;
+  },
   async listQueue() {
     return queue;
   },

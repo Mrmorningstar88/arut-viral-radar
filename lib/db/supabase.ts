@@ -87,6 +87,9 @@ export function supabaseRepo(url: string, key: string, ws: string): Repo {
         );
       }
     },
+    async saveReelAnalysis(id, analysis, model) {
+      check(await db.from("analyses").insert({ workspace_id: ws, reel_id: id, payload: analysis, model }));
+    },
     async listRedpill() {
       const rows = check(
         await db.from("redpill").select("*, analyses(payload, created_at)").eq("workspace_id", ws).order("created_at", { ascending: false }).limit(60),

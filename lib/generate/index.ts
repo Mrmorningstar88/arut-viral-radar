@@ -39,8 +39,32 @@ export async function generateReelAnalysis(
     .filter(Boolean)
     .join("\n\n");
 
+  const r = await structuredAnalysis(buildSystemPrompt(persona, learned), userContent);
+  return { analysis: r.analysis, usd: usd + r.usd };
+}
+
+// Правка автора: его текст входит дословно, раскадровка и сцены пересобираются под него.
+export type AdaptationEdits = { hook: string; vo: { t: string; text: string }[]; instruction: string };
+
+export async function reviseReelAnalysis(current: ReelAnalysis, edits: AdaptationEdits, persona: Persona, learned: Learned) {
+  const userContent = [
+    "ТЕКУЩИЙ РАЗБОР (JSON):",
+    JSON.stringify(current),
+    "ПРАВКИ АВТОРА (RU, это его решение, текст бери дословно):",
+    `Хук: ${edits.hook}`,
+    `Озвучка:\n${edits.vo.map((v) => `${v.t}: ${v.text}`).join("\n")}`,
+    edits.instruction && `Что ещё поменять: ${edits.instruction}`,
+    "Верни полный разбор заново. original и why оставь как есть. В adaptation поставь хук и озвучку автора, допиши только то, что нужно для связности, и пересобери storyboard: кадры, оверлеи, промпты и scene под новый текст и его пожелания. Тайм-коды и dur подгони под длину озвучки. EN-версию переведи с новой RU. expert и risks обнови, если смысл изменился.",
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+  return structuredAnalysis(buildSystemPrompt(persona, learned), userContent);
+}
+
+async function structuredAnalysis(systemText: string, userContent: string): Promise<{ analysis: ReelAnalysis; usd: number }> {
+  let usd = 0;
   const messages: Anthropic.Beta.BetaMessageParam[] = [{ role: "user", content: userContent }];
-  const system = [{ type: "text" as const, text: buildSystemPrompt(persona, learned), cache_control: { type: "ephemeral" as const } }];
+  const system = [{ type: "text" as const, text: systemText, cache_control: { type: "ephemeral" as const } }];
 
   for (let attempt = 0; attempt < 2; attempt++) {
     let problem: string;

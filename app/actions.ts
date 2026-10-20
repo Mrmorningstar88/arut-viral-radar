@@ -3,6 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 import { processPendingNow } from "@/lib/engine/direct";
+import { loadProfile, logCost } from "@/lib/engine/store";
+import { reviseReelAnalysis, type AdaptationEdits } from "@/lib/generate";
+import { MODEL_MAIN } from "@/lib/llm";
 import { getRepo, isDemo } from "@/lib/db";
 import { inngest, RUN_REQUESTED } from "@/inngest/client";
 import { REEL_STATUSES, REJECT_REASONS, type RejectReason, type ReelStatus, type StatusChange } from "@/lib/db/types";
@@ -89,5 +92,37 @@ export async function processQueueNow(): Promise<{ error?: string }> {
   await getRepo(); // проверяет вход владельца
   const ws = process.env.WORKSPACE_ID!;
   after(() => processPendingNow(ws).catch((e) => console.error("processPendingNow", e)));
+  return {};
+}
+
+// Автор правит хук и озвучку, Claude пересобирает раскадровку под его текст. Новая версия сохраняется рядом со старой.
+export async function reviseAdaptation(id: string, edits: AdaptationEdits): Promise<{ error?: string }> {
+  const repo = await getRepo();
+  const reel = await repo.getReel(id);
+  if (!reel?.analysis) return { error: "Разбор не найден" };
+  const clean: AdaptationEdits = {
+    hook: edits.hook.trim().slice(0, 300),
+    vo: edits.vo.map((v) => ({ t: v.t.slice(0, 12), text: v.text.trim().slice(0, 600) })).filter((v) => v.text).slice(0, 12),
+    instruction: edits.instruction.trim().slice(0, 600),
+  };
+  if (!clean.hook || clean.vo.length === 0) return { error: "Нужны хук и хотя бы одна строка озвучки" };
+
+  if (isDemo()) {
+    const a = structuredClone(reel.analysis);
+    for (const loc of [a, a.i18n.ru]) Object.assign(loc.adaptation, { hook: clean.hook, vo: clean.vo });
+    await repo.saveReelAnalysis(id, a, "demo");
+  } else {
+    try {
+      const ws = process.env.WORKSPACE_ID!;
+      const profile = await loadProfile(ws);
+      const { analysis, usd } = await reviseReelAnalysis(reel.analysis, clean, profile.persona, profile);
+      await repo.saveReelAnalysis(id, analysis, MODEL_MAIN);
+      await logCost(ws, null, "anthropic", usd);
+    } catch (e) {
+      return { error: `Не получилось пересобрать: ${e instanceof Error ? e.message.slice(0, 160) : "ошибка"}` };
+    }
+  }
+  revalidatePath(`/reels/${id}`);
+  revalidatePath("/reels");
   return {};
 }

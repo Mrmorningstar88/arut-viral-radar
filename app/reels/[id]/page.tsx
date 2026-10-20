@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { AdaptationEditor } from "@/components/adaptation-editor";
 import { StoryboardStudio } from "@/components/previz/storyboard-studio";
 import { StatusBadge } from "@/components/status-badge";
 import { StatusControls } from "@/components/status-controls";
@@ -113,6 +114,12 @@ export default async function ReelPage({ params, searchParams }: PageProps<"/ree
               <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-white/[0.05] px-3 py-1 font-mono text-sm tracking-widest">{a.adaptation.keyword}</div>
             </Panel>
           </Reveal>
+
+          {lang === "ru" && (
+            <Reveal delay={0.08}>
+              <AdaptationEditor key={a.adaptation.hook + a.adaptation.vo.length} id={reel.id} hook={a.adaptation.hook} vo={a.adaptation.vo} />
+            </Reveal>
+          )}
 
           <Reveal delay={0.1}>
             <Panel title="Твоя раскадровка" subtitle="Как это снять тебе: 3D-превью из простых фигур, камера, план и подача по каждому кадру">
