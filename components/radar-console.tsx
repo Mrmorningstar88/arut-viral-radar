@@ -311,7 +311,7 @@ function Group({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-2xl bg-white/[0.025] p-2 pb-4 ring-1 ring-white/[0.05]">
+    <div className="glass-inset rounded-2xl p-2 pb-4">
       <p className="px-3 pt-2 pb-1 text-xs font-semibold tracking-widest text-muted uppercase">
         {title}
       </p>

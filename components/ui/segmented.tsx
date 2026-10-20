@@ -9,7 +9,7 @@ type Item = { href: string; label: string; active: boolean; count?: number };
 export function Segmented({ id, items, size = "md" }: { id: string; items: Item[]; size?: "sm" | "md" }) {
   const pad = size === "sm" ? "px-2.5 py-1 text-xs" : "px-3.5 py-1.5 text-sm";
   return (
-    <div className="inline-flex max-w-full overflow-x-auto rounded-full border border-white/10 bg-white/[0.03] p-1 backdrop-blur">
+    <div className="inline-flex max-w-full overflow-x-auto glass rounded-full p-1">
       {items.map((it) => (
         <Link key={it.href} href={it.href} scroll={false} className={`relative whitespace-nowrap rounded-full ${pad} font-medium transition-colors ${it.active ? "text-black" : "text-muted hover:text-foreground"}`}>
           {it.active && (

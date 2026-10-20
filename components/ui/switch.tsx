@@ -62,7 +62,7 @@ export function Pills<T extends string>({
   options: { value: T; label: string }[];
 }) {
   return (
-    <div className="flex rounded-full bg-white/[0.04] p-1 ring-1 ring-white/[0.08]">
+    <div className="glass-inset flex rounded-full p-1">
       {options.map((o) => (
         <button
           key={o.value}

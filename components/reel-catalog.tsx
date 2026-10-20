@@ -40,7 +40,7 @@ export function ReelCatalog({ reels }: { reels: ReelCard[] }) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setOpenId(null)}
-            className="fixed inset-0 z-40 overflow-y-auto bg-black/70 p-3 backdrop-blur-md md:p-8"
+            className="fixed inset-0 z-40 overflow-y-auto bg-black/55 p-3 backdrop-blur-xl md:p-8"
           >
             <motion.article
               layoutId={`tile-${open.id}`}
@@ -64,7 +64,7 @@ function Tile({ reel: r, index, onOpen }: { reel: ReelCard; index: number; onOpe
   const my = useMotionValue(50);
   const rx = useSpring(0, { stiffness: 220, damping: 20 });
   const ry = useSpring(0, { stiffness: 220, damping: 20 });
-  const glow = useMotionTemplate`radial-gradient(420px circle at ${mx}% ${my}%, rgba(255,255,255,0.16), transparent 45%)`;
+  const glow = useMotionTemplate`radial-gradient(420px circle at ${mx}% ${my}%, rgba(255,255,255,0.24), transparent 45%)`;
   return (
     <motion.button
       layout
@@ -89,10 +89,11 @@ function Tile({ reel: r, index, onOpen }: { reel: ReelCard; index: number; onOpe
       }}
       onClick={onOpen}
       style={{ rotateX: rx, rotateY: ry, transformPerspective: 900 }}
-      className="group relative aspect-[9/16] overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.03] text-left shadow-[0_20px_50px_-30px_rgba(0,0,0,0.9)] transition-[border-color,box-shadow] duration-300 hover:border-white/20 hover:shadow-[0_30px_70px_-30px_rgba(0,0,0,1)]"
+      className="glass sheen group relative aspect-[9/16] overflow-hidden rounded-2xl text-left transition-shadow duration-500 hover:shadow-[0_40px_80px_-30px_rgba(0,0,0,1),0_0_70px_-20px_rgba(255,255,255,0.22)]"
     >
       <Cover reel={r} />
       <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-1/3 rounded-t-2xl bg-gradient-to-b from-white/[0.12] to-transparent" />
       <motion.div style={{ background: glow }} className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
       <div className="absolute top-2 left-2 flex items-center gap-1">
         <StatusBadge status={r.status} />

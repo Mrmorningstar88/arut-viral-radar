@@ -19,7 +19,7 @@ export function Nav() {
   const path = usePathname();
   return (
     <>
-      <header className="sticky top-0 z-20 border-b border-white/[0.06] bg-black/40 backdrop-blur-2xl backdrop-saturate-150">
+      <header className="sticky top-0 z-20 border-b border-white/[0.06] bg-black/30 backdrop-blur-2xl backdrop-saturate-[1.8] shadow-[inset_0_-1px_0_rgba(255,255,255,0.06),0_10px_40px_-20px_rgba(0,0,0,0.8)]">
         <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3">
           <Link
             href="/reels"
