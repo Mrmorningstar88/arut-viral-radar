@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, motion, useMotionTemplate, useMotionValue, useSpring } from "motion/react";
 import { useEffect, useState } from "react";
 import { StatusBadge } from "@/components/status-badge";
 import { StatusControls } from "@/components/status-controls";
@@ -25,31 +25,11 @@ export function ReelCatalog({ reels }: { reels: ReelCard[] }) {
   return (
     <>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        {reels.map((r, i) => (
-          <motion.button
-            key={r.id}
-            layoutId={`tile-${r.id}`}
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0, transition: { delay: Math.min(i * 0.04, 0.4) } }}
-            whileHover={{ y: -4 }}
-            onClick={() => setOpenId(r.id)}
-            className="group relative aspect-[9/16] overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.03] text-left"
-          >
-            <Cover reel={r} />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
-            <div className="absolute top-2 left-2 flex items-center gap-1">
-              <StatusBadge status={r.status} />
-            </div>
-            {r.fitScore != null && (
-              <span className="absolute top-2 right-2 rounded-full bg-black/60 px-2 py-0.5 text-xs font-semibold text-amber-200 backdrop-blur">{r.fitScore}</span>
-            )}
-            <div className="absolute inset-x-0 bottom-0 space-y-1 p-3">
-              <p className="text-xs font-semibold text-amber-200">{r.lanes.map((l) => LANE[l]).join(" ")} {compact(r.views)}</p>
-              <p className="line-clamp-3 text-sm leading-snug font-semibold">{r.summary?.hook ?? r.caption ?? r.url}</p>
-              <p className="text-xs text-white/50">@{r.author}</p>
-            </div>
-          </motion.button>
-        ))}
+        <AnimatePresence mode="popLayout">
+          {reels.map((r, i) => (
+            <Tile key={r.id} reel={r} index={i} onOpen={() => setOpenId(r.id)} />
+          ))}
+        </AnimatePresence>
       </div>
 
       <AnimatePresence>
@@ -75,6 +55,57 @@ export function ReelCatalog({ reels }: { reels: ReelCard[] }) {
         )}
       </AnimatePresence>
     </>
+  );
+}
+
+// Плитка с объёмом: наклоняется за курсором, по стеклу скользит блик.
+function Tile({ reel: r, index, onOpen }: { reel: ReelCard; index: number; onOpen: () => void }) {
+  const mx = useMotionValue(50);
+  const my = useMotionValue(50);
+  const rx = useSpring(0, { stiffness: 220, damping: 20 });
+  const ry = useSpring(0, { stiffness: 220, damping: 20 });
+  const glow = useMotionTemplate`radial-gradient(420px circle at ${mx}% ${my}%, rgba(255,255,255,0.16), transparent 45%)`;
+  return (
+    <motion.button
+      layout
+      layoutId={`tile-${r.id}`}
+      initial={{ opacity: 0, y: 18, scale: 0.97 }}
+      animate={{ opacity: 1, y: 0, scale: 1, transition: { delay: Math.min(index * 0.045, 0.4), duration: 0.5, ease: [0.22, 1, 0.36, 1] } }}
+      exit={{ opacity: 0, scale: 0.92, transition: { duration: 0.2 } }}
+      whileTap={{ scale: 0.97 }}
+      onPointerMove={(e) => {
+        if (e.pointerType !== "mouse") return;
+        const b = e.currentTarget.getBoundingClientRect();
+        const px = (e.clientX - b.left) / b.width;
+        const py = (e.clientY - b.top) / b.height;
+        mx.set(px * 100);
+        my.set(py * 100);
+        ry.set((px - 0.5) * 10);
+        rx.set((0.5 - py) * 10);
+      }}
+      onPointerLeave={() => {
+        rx.set(0);
+        ry.set(0);
+      }}
+      onClick={onOpen}
+      style={{ rotateX: rx, rotateY: ry, transformPerspective: 900 }}
+      className="group relative aspect-[9/16] overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.03] text-left shadow-[0_20px_50px_-30px_rgba(0,0,0,0.9)] transition-[border-color,box-shadow] duration-300 hover:border-white/20 hover:shadow-[0_30px_70px_-30px_rgba(0,0,0,1)]"
+    >
+      <Cover reel={r} />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+      <motion.div style={{ background: glow }} className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+      <div className="absolute top-2 left-2 flex items-center gap-1">
+        <StatusBadge status={r.status} />
+      </div>
+      {r.fitScore != null && (
+        <span className="absolute top-2 right-2 rounded-full bg-black/50 px-2 py-0.5 text-xs font-semibold text-amber-200 ring-1 ring-white/10 backdrop-blur-md">{r.fitScore}</span>
+      )}
+      <div className="absolute inset-x-0 bottom-0 space-y-1 p-3 transition-transform duration-500 group-hover:-translate-y-1">
+        <p className="text-xs font-semibold text-amber-200">{r.lanes.map((l) => LANE[l]).join(" ")} {compact(r.views)}</p>
+        <p className="line-clamp-3 text-sm leading-snug font-semibold">{r.summary?.hook ?? r.caption ?? r.url}</p>
+        <p className="text-xs text-white/50">@{r.author}</p>
+      </div>
+    </motion.button>
   );
 }
 

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { AddReelForm, RetryQueueButton } from "@/components/add-forms";
 import { LastRun } from "@/components/last-run";
-import { ReelCatalog } from "@/components/reel-catalog";
+import { RadarConsole } from "@/components/radar-console";
 import { RunNowButton } from "@/components/run-now";
 import { Reveal } from "@/components/ui/reveal";
 import { Segmented } from "@/components/ui/segmented";
@@ -29,7 +29,7 @@ export default async function ReelsPage({ searchParams }: PageProps<"/reels">) {
           <p className="mt-1 mb-2 text-sm text-muted">Залетевшие Reels со сценарием под тебя. Сам ищу в 09:00 и 20:00 по Дубаю</p>
           <LastRun run={runs[0]} />
         </div>
-        <RunNowButton />
+        {all.length === 0 && <RunNowButton label="Запустить сейчас" />}
       </Reveal>
 
       {open.length > 0 && (
@@ -68,7 +68,7 @@ export default async function ReelsPage({ searchParams }: PageProps<"/reels">) {
         <Reveal className="rounded-3xl border border-dashed border-white/10 p-12 text-center text-muted">В этом статусе пока ничего.</Reveal>
       )}
 
-      {reels.length > 0 && <ReelCatalog reels={reels} />}
+      {reels.length > 0 && <RadarConsole reels={reels} />}
     </div>
   );
 }

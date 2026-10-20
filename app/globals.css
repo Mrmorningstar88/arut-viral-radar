@@ -73,3 +73,43 @@ body {
     inset 0 1px 0 rgba(255, 255, 255, 0.08),
     0 24px 80px -30px rgba(0, 0, 0, 0.85);
 }
+
+/* Ползунок пульта: тонкий трек, заполненная часть белая, бегунок как стеклянная капля. */
+.range {
+  appearance: none;
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(to right, rgba(255, 255, 255, 0.85) var(--fill, 0%), rgba(255, 255, 255, 0.1) var(--fill, 0%));
+  outline: none;
+}
+.range::-webkit-slider-thumb {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.08), 0 4px 14px rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+.range::-webkit-slider-thumb:active {
+  transform: scale(1.15);
+}
+.range::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border: 0;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.08), 0 4px 14px rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+}
+
+/* Медленный дрейф пятен света на фоне. */
+@keyframes drift {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(4%, 3%, 0) scale(1.08); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ambient * { animation: none !important; }
+}

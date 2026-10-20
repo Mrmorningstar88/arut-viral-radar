@@ -1,15 +1,14 @@
-import { MAX_NEW_PER_RUN } from "@/lib/selection";
 import * as pipeline from "@/lib/engine/pipeline";
 import * as store from "@/lib/engine/store";
 import { learn } from "@/lib/learning";
 import { collectMetrics } from "@/lib/learning/metrics";
+import { DEFAULT_RUN_OPTIONS, DEPTH, parseRunOptions, type RunOptions } from "@/lib/engine/run-options";
 import { inngest, RUN_REQUESTED } from "./client";
 
 type Kind = "morning" | "evening" | "manual";
 
 const CREATORS_PER_RUN = 12;
 const URLS_PER_QUERY = 6;
-const TAGS_PER_RUN = 6;
 
 function workspace() {
   const ws = process.env.WORKSPACE_ID;
@@ -19,8 +18,18 @@ function workspace() {
 
 // Один прогон: очередь Арута, мониторинг креаторов, поиск, отбор, разбор.
 // Каждый step.run выполняется отдельным вызовом, поэтому прогон не упирается в лимит функции Vercel.
-const radarRun = async ({ step, kind }: { step: Parameters<Parameters<typeof inngest.createFunction>[1]>[0]["step"]; kind: Kind }) => {
+// Ручной прогон берёт настройки с пульта, плановые идут с настройками по умолчанию.
+const radarRun = async ({
+  step,
+  kind,
+  options = DEFAULT_RUN_OPTIONS,
+}: {
+  step: Parameters<Parameters<typeof inngest.createFunction>[1]>[0]["step"];
+  kind: Kind;
+  options?: RunOptions;
+}) => {
   const ws = workspace();
+  const depth = DEPTH[options.depth];
   const runId = await step.run("start", () => store.startRun(ws, kind));
   const errors: string[] = [];
   const stats = { queue: 0, queue_errors: 0, scanned: 0, found: 0, selected: 0, excluded: 0 };
@@ -43,7 +52,7 @@ const radarRun = async ({ step, kind }: { step: Parameters<Parameters<typeof inn
   }
 
   const found: pipeline.Found[] = [];
-  const creators = await step.run("load-creators", () => store.creatorsToCheck(ws, CREATORS_PER_RUN));
+  const creators = options.creators ? await step.run("load-creators", () => store.creatorsToCheck(ws, CREATORS_PER_RUN)) : [];
   for (const c of creators) {
     try {
       found.push(...(await step.run(`creator-${c.username}`, () => pipeline.scanCreator(ws, c))));
@@ -57,7 +66,8 @@ const radarRun = async ({ step, kind }: { step: Parameters<Parameters<typeof inn
 
   // Сам ищет залёты по хэштегам тем автора: не нужны ни ссылки, ни список креаторов.
   const seed = Math.floor(Date.now() / 43_200_000);
-  for (const tag of pipeline.tagsForRun(queries, TAGS_PER_RUN, seed)) {
+  const tags = options.hashtags ? pipeline.tagsForRun(queries, depth.tags, seed, options) : [];
+  for (const tag of tags) {
     try {
       found.push(...(await step.run(`tag-${tag}`, () => pipeline.scanHashtag(tag))));
       stats.scanned++;
@@ -66,7 +76,7 @@ const radarRun = async ({ step, kind }: { step: Parameters<Parameters<typeof inn
     }
   }
 
-  for (const [i, q] of queries.entries()) {
+  for (const [i, q] of (options.search ? queries : []).entries()) {
     try {
       const urls = await step.run(`search-${i}`, () => pipeline.searchQuery(q));
       for (const url of urls.slice(0, URLS_PER_QUERY)) {
@@ -79,9 +89,9 @@ const radarRun = async ({ step, kind }: { step: Parameters<Parameters<typeof inn
   }
   stats.found = found.length;
 
-  const ranked = await step.run("rank", () => pipeline.rank(ws, found));
+  const ranked = await step.run("rank", () => pipeline.rank(ws, found, depth.take, options.strictOnly));
   for (const f of ranked) {
-    if (stats.selected >= MAX_NEW_PER_RUN) break;
+    if (stats.selected >= depth.take) break;
     try {
       const r = await step.run(`analyze-${f.extId}`, () => pipeline.analyzeCandidate(ws, runId, f));
       if (r.accepted) stats.selected++;
@@ -112,7 +122,7 @@ export const evening = inngest.createFunction(
 
 export const manual = inngest.createFunction(
   { id: "radar-manual", triggers: [{ event: RUN_REQUESTED }], concurrency: { limit: 1 } },
-  ({ step }) => radarRun({ step, kind: "manual" }),
+  ({ step, event }) => radarRun({ step, kind: "manual", options: parseRunOptions(event.data?.options) }),
 );
 
 // Метрики своих роликов раз в день, обучение по воскресеньям.

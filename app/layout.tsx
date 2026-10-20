@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Unbounded } from "next/font/google";
+import { Ambient } from "@/components/ui/ambient";
+import { MotionRoot } from "@/components/ui/motion-root";
 import { ToastProvider } from "@/components/ui/toast";
 import { Nav } from "@/components/nav";
 import { Suspense } from "react";
@@ -18,7 +20,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   const demo = isDemo();
   return (
     <html lang="ru" className={`${inter.variable} ${unbounded.variable} h-full antialiased`}>
-      <body className="min-h-full font-sans">
+      <body className="relative isolate min-h-full font-sans">
+        <Ambient />
+        <MotionRoot>
         <ToastProvider>
         <Suspense fallback={<div className="h-14 border-b border-border" />}>
           <Nav />
@@ -32,6 +36,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <Suspense fallback={<p className="text-muted">Загружаю…</p>}>{children}</Suspense>
         </main>
         </ToastProvider>
+        </MotionRoot>
       </body>
     </html>
   );

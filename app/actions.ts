@@ -1,5 +1,6 @@
 "use server";
 
+import { parseRunOptions } from "@/lib/engine/run-options";
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 import { processPendingNow } from "@/lib/engine/direct";
@@ -67,11 +68,11 @@ export async function setRuleStatus(formData: FormData) {
 }
 
 // Возвращает текст ошибки, а не бросает: в продакшене Next скрывает сообщения брошенных ошибок.
-export async function runNow(): Promise<{ error?: string }> {
+export async function runNow(options?: unknown): Promise<{ error?: string }> {
   if (isDemo()) return { error: "В демо-режиме прогон недоступен: подключи базу и ключи" };
   await getRepo(); // проверяет вход владельца
   try {
-    await inngest.send({ name: RUN_REQUESTED, data: {} });
+    await inngest.send({ name: RUN_REQUESTED, data: { options: parseRunOptions(options) } });
     return {};
   } catch {
     return { error: "Не получилось запустить: проверь ключи Inngest" };

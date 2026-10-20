@@ -3,7 +3,7 @@ import { generateReelAnalysis } from "@/lib/generate";
 import { MODEL_MAIN, RefusalError } from "@/lib/llm";
 import { proposeTopic, researchStory, writeStory } from "@/lib/redpill";
 import { embed } from "@/lib/sources/embeddings";
-import { lanesFor, MAX_NEW_PER_RUN, pickWithFallback, VIRAL_MIN_VIEWS, type Candidate } from "@/lib/selection";
+import { lanesFor, MAX_NEW_PER_RUN, pickTop, pickWithFallback, VIRAL_MIN_VIEWS, type Candidate } from "@/lib/selection";
 import { classifyReel } from "@/lib/selection/classify";
 import { apifySource, shortcodeFromUrl } from "@/lib/sources/apify";
 import { SourceError } from "@/lib/sources/http";
@@ -72,18 +72,7 @@ export async function scanCreator(ws: string, c: store.CreatorRow): Promise<Foun
     .map((r) => ({ extId: r.id, url: r.url, author: c.username, views: r.views, postedAt: r.date, followers }));
 }
 
-// Хэштеги по умолчанию под темы автора; запросы из «Твоего образа» идут первыми.
-const DEFAULT_TAGS = [
-  "money", "finance", "economy", "investing", "trading", "stockmarket", "crypto", "bitcoin", "wealth", "financialfreedom",
-  "business", "macroeconomics", "деньги", "финансы", "трейдинг", "экономика", "инвестиции", "бизнес",
-];
-
-export function tagsForRun(queries: string[], count: number, seed: number) {
-  const own = queries.map((q) => q.toLowerCase().replace(/[#\s]+/g, "")).filter(Boolean);
-  const pool = [...new Set([...own, ...DEFAULT_TAGS])];
-  // Каждый прогон берёт следующую порцию, чтобы за день обойти все хэштеги и не тратить Apify на одни и те же.
-  return Array.from({ length: Math.min(count, pool.length) }, (_, i) => pool[(seed * count + i) % pool.length]);
-}
+export { tagsForRun } from "./tags";
 
 export async function scanHashtag(tag: string): Promise<Found[]> {
   const reels = await store.cached(`tag:${tag}`, () => apify().getHashtagReels(tag));
@@ -103,14 +92,15 @@ export async function inspectUrl(url: string): Promise<Found | null> {
 }
 
 // Отбор без сети: пороги, дубли и приоритет. Берём вдвое больше лимита, часть отсеет фильтр.
-export async function rank(ws: string, found: Found[]): Promise<Found[]> {
+export async function rank(ws: string, found: Found[], take = MAX_NEW_PER_RUN, strictOnly = false): Promise<Found[]> {
   const existing = new Set(await store.existingIds(ws));
   const unique = [...new Map(found.map((f) => [f.extId, f])).values()];
   const byId = new Map(unique.map((f) => [f.extId, f]));
   const candidates: Candidate[] = unique.map((f) => ({
     igId: f.extId, views: f.views, postedAt: new Date(f.postedAt), authorFollowers: f.followers,
   }));
-  return pickWithFallback(candidates, existing, MAX_NEW_PER_RUN * 2).map((c) => byId.get(c.igId)!);
+  const pick = strictOnly ? pickTop : pickWithFallback;
+  return pick(candidates, existing, take * 2).map((c) => byId.get(c.igId)!);
 }
 
 export async function analyzeCandidate(ws: string, runId: string, f: Found) {

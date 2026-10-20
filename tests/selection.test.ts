@@ -44,3 +44,20 @@ test("добор: если строгих залётов мало, берём с
   ];
   assert.deepEqual(pickWithFallback(c, new Set(), 3, now).map((x) => x.igId), ["viral", "t-big", "t-small"]);
 });
+
+test("хэштеги фильтруются по языку", async () => {
+  const { tagsForRun } = await import("../lib/engine/tags");
+  const ru = tagsForRun([], 50, 0, { ru: true, en: false });
+  assert.ok(ru.length > 0 && ru.every((t) => /[а-яё]/.test(t)));
+  const en = tagsForRun(["Макро"], 50, 0, { ru: false, en: true });
+  assert.ok(en.length > 0 && en.every((t) => !/[а-яё]/.test(t)));
+});
+
+test("настройки пульта: мусор превращается в значения по умолчанию", async () => {
+  const { parseRunOptions, DEFAULT_RUN_OPTIONS } = await import("../lib/engine/run-options");
+  assert.deepEqual(parseRunOptions("x"), DEFAULT_RUN_OPTIONS);
+  assert.equal(parseRunOptions({ depth: "deep", hashtags: false }).depth, "deep");
+  assert.equal(parseRunOptions({ depth: "huge" }).depth, "normal");
+  const noLang = parseRunOptions({ ru: false, en: false });
+  assert.ok(noLang.ru && noLang.en);
+});
