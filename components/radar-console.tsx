@@ -107,8 +107,8 @@ export function RadarConsole({ reels }: { reels: ReelCard[] }) {
             className="flex items-center gap-2.5"
           >
             <span className="relative grid size-2.5 place-items-center">
-              <span className="absolute inset-0 animate-ping rounded-full bg-[#ff7a2f]/50 [animation-duration:2.4s]" />
-              <span className="size-2.5 rounded-full bg-[#ff7a2f] shadow-[0_0_12px_rgba(255,122,47,0.9)]" />
+              <span className="absolute inset-0 animate-ping rounded-full bg-accent/50 [animation-duration:2.4s]" />
+              <span className="size-2.5 rounded-full bg-accent " />
             </span>
             <span className="font-display text-sm font-semibold tracking-wide">
               Пульт
@@ -133,7 +133,7 @@ export function RadarConsole({ reels }: { reels: ReelCard[] }) {
             <button
               type="button"
               onClick={() => setOpen(!open)}
-              className="flex items-center gap-2 rounded-full bg-white/[0.06] px-3.5 py-2 text-xs font-medium text-muted ring-1 ring-white/[0.08] transition-colors hover:bg-white/[0.1] hover:text-foreground"
+              className="flex items-center gap-2 rounded-full bg-ink/[0.06] px-3.5 py-2 text-xs font-medium text-muted ring-1 ring-ink/[0.08] transition-colors hover:bg-ink/[0.1] hover:text-foreground"
               aria-expanded={open}
             >
               {open ? "Свернуть" : "Тумблеры"}
@@ -150,7 +150,7 @@ export function RadarConsole({ reels }: { reels: ReelCard[] }) {
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
             >
-              <div className="grid gap-4 border-t border-white/[0.06] p-4 md:grid-cols-2 md:p-5">
+              <div className="grid gap-4 border-t border-ink/[0.06] p-4 md:grid-cols-2 md:p-5">
                 <Group title="Что показывать">
                   <Switch
                     label="🔥 Вирусные"
@@ -276,7 +276,7 @@ export function RadarConsole({ reels }: { reels: ReelCard[] }) {
                       wide
                       label={`Подтянуть топ · до ${DEPTH[run.depth].take} новых`}
                     />
-                    <p className="mt-2 text-center text-xs text-white/35">
+                    <p className="mt-2 text-center text-xs text-ink/35">
                       Плановые поиски в 09:00 и 20:00 идут со стандартными
                       настройками
                     </p>
@@ -291,7 +291,7 @@ export function RadarConsole({ reels }: { reels: ReelCard[] }) {
       {shown.length > 0 ? (
         <ReelCatalog reels={shown} />
       ) : (
-        <div className="rounded-3xl border border-dashed border-white/10 p-12 text-center text-sm text-muted">
+        <div className="rounded-3xl border border-dashed border-ink/10 p-12 text-center text-sm text-muted">
           Тумблеры скрыли {reels.length} {plural(reels.length)}.{" "}
           <button
             type="button"

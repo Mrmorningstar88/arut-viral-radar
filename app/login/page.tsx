@@ -7,7 +7,7 @@ import { Suspense, useActionState, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { sendMagicLink, signIn, signUp } from "./actions";
 
-const INPUT = "w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 outline-none transition placeholder:text-white/30 focus:border-[#ff7a2f]/60";
+const INPUT = "w-full rounded-2xl border border-ink/10 bg-paper/30 px-4 py-3 outline-none transition placeholder:text-ink/30 focus:border-accent/60";
 
 export default function LoginPage() {
   return (
@@ -42,7 +42,7 @@ function Login() {
             key={m}
             type="button"
             onClick={() => setMode(m)}
-            className={`rounded-full py-2 transition ${mode === m ? "bg-white text-black" : "text-muted hover:text-foreground"}`}
+            className={`rounded-full py-2 transition ${mode === m ? "neo-on" : "text-muted hover:text-foreground"}`}
           >
             {m === "signup" ? "Регистрация" : "Вход"}
           </button>

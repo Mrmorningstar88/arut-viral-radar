@@ -20,11 +20,11 @@ export function GenerateScripts() {
         value={wish}
         onChange={(e) => setWish(e.target.value)}
         placeholder="Пожелание к темам (необязательно)"
-        className="w-full rounded-full border border-white/10 bg-black/30 px-4 py-2.5 text-sm outline-none transition placeholder:text-white/30 focus:border-amber-400/50 sm:w-64"
+        className="w-full rounded-full border border-ink/10 bg-paper/30 px-4 py-2.5 text-sm outline-none transition placeholder:text-ink/30 focus:border-accent/50 sm:w-64"
       />
-      <div className="flex shrink-0 rounded-full bg-white/[0.05] p-0.5 text-sm">
+      <div className="flex shrink-0 rounded-full bg-ink/[0.05] p-0.5 text-sm">
         {COUNTS.map((n) => (
-          <button key={n} type="button" onClick={() => setCount(n)} className={`rounded-full px-3 py-2 ${count === n ? "bg-white text-black" : "text-muted hover:text-foreground"}`}>
+          <button key={n} type="button" onClick={() => setCount(n)} className={`rounded-full px-3 py-2 ${count === n ? "neo-on" : "text-muted hover:text-foreground"}`}>
             {n}
           </button>
         ))}
@@ -40,9 +40,9 @@ export function GenerateScripts() {
             toast(`Пишу ${count} сценариев, через 2–3 минуты появятся в первой колонке`);
           })
         }
-        className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-[linear-gradient(180deg,#ff9a55,#ff7a2f_55%,#f06a20)] px-5 py-2.5 text-sm font-semibold text-black shadow-[inset_0_1px_0_rgba(255,255,255,0.55),0_10px_40px_-12px_rgba(255,122,47,0.75)] transition disabled:opacity-60"
+        className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full neo-primary px-5 py-2.5 text-sm font-semibold text-white transition disabled:opacity-60"
       >
-        {waiting && <span className="size-2 animate-ping rounded-full bg-black" />}
+        {waiting && <span className="size-2 animate-ping rounded-full bg-white" />}
         {pending ? "Запускаю…" : waiting ? "Пишу сценарии…" : "✦ Новые сценарии"}
       </button>
     </div>

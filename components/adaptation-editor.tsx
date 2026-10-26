@@ -8,7 +8,7 @@ import { useToast } from "@/components/ui/toast";
 
 type Line = { t: string; text: string };
 
-const AREA = "w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm leading-relaxed outline-none transition placeholder:text-white/30 focus:border-amber-400/50";
+const AREA = "w-full rounded-2xl border border-ink/10 bg-paper/30 px-4 py-3 text-sm leading-relaxed outline-none transition placeholder:text-ink/30 focus:border-accent/50";
 
 // Правка адаптации: свой хук и текст, а раскадровку и 3D-превью Claude пересобирает под них.
 export function AdaptationEditor({ id, hook, vo }: { id: string; hook: string; vo: Line[] }) {

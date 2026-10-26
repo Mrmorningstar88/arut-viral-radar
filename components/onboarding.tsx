@@ -14,7 +14,7 @@ const STAGES = [
   "Подбираю механики залетевших роликов",
 ];
 
-const INPUT = "w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 outline-none transition placeholder:text-white/30 focus:border-[#ff7a2f]/60";
+const INPUT = "w-full rounded-2xl border border-ink/10 bg-paper/40 px-4 py-3 outline-none transition placeholder:text-ink/30 focus:border-accent/60";
 
 function Field({ label, hint, children, dictate }: { label: string; hint?: string; children: React.ReactNode; dictate?: (t: string) => void }) {
   return (
@@ -51,7 +51,7 @@ export function Onboarding({ first }: { first: boolean }) {
   return (
     <div className="mx-auto max-w-2xl pt-4 md:pt-10">
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="text-center">
-        <p className="text-xs font-semibold tracking-widest text-[#ff7a2f] uppercase">{first ? "Первый шаг" : "Новая организация"}</p>
+        <p className="text-xs font-semibold tracking-widest text-accent uppercase">{first ? "Первый шаг" : "Новая организация"}</p>
         <h1 className="mt-3 font-display text-3xl font-semibold md:text-4xl">Расскажи о своей организации</h1>
         <p className="mt-3 text-muted">YOOMP изучит всё, соберёт паспорт организации и сразу предложит первые сценарии роликов.</p>
       </motion.div>
@@ -87,16 +87,16 @@ export function Onboarding({ first }: { first: boolean }) {
             <Field label="О себе" hint="кто лицо бренда, как ты говоришь" dictate={add(setMe)}>
               <textarea name="me" rows={3} value={me} onChange={(e) => setMe(e.target.value)} placeholder="Необязательно" className={`${INPUT} resize-none text-sm`} />
             </Field>
-            <button className="w-full rounded-2xl bg-[linear-gradient(180deg,#ff9a55,#ff7a2f_55%,#f06a20)] py-4 font-semibold text-black shadow-[inset_0_1px_0_rgba(255,255,255,0.55),0_14px_44px_-12px_rgba(255,122,47,0.9)] transition hover:-translate-y-0.5">
+            <button className="w-full rounded-2xl neo-primary py-4 font-semibold text-white transition hover:-translate-y-0.5">
               Создать организацию
             </button>
           </motion.form>
         ) : (
           <motion.div key="progress" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-8 space-y-3 rounded-[28px] glass p-6">
             {STAGES.map((s, i) => (
-              <div key={s} className={`flex items-center gap-3 text-sm transition ${i <= stage ? "text-foreground" : "text-white/30"}`}>
-                <span className={`grid size-6 place-items-center rounded-full text-xs ${i < stage ? "bg-[#ff7a2f] text-black" : i === stage ? "ring-2 ring-[#ff7a2f]" : "ring-1 ring-white/15"}`}>
-                  {i < stage ? "✓" : i === stage ? <span className="size-2 animate-ping rounded-full bg-[#ff7a2f]" /> : ""}
+              <div key={s} className={`flex items-center gap-3 text-sm transition ${i <= stage ? "text-foreground" : "text-ink/30"}`}>
+                <span className={`grid size-6 place-items-center rounded-full text-xs ${i < stage ? "bg-accent text-white" : i === stage ? "ring-2 ring-accent" : "ring-1 ring-ink/15"}`}>
+                  {i < stage ? "✓" : i === stage ? <span className="size-2 animate-ping rounded-full bg-accent" /> : ""}
                 </span>
                 {s}
               </div>

@@ -7,6 +7,7 @@ import { serviceDb } from "@/lib/engine/store";
 // Документация: help.metricool.com/basic-guide-for-api-integration-r97af
 
 const API = "https://app.metricool.com/api";
+const TIMEOUT_MS = 20_000;
 
 export type MetricoolLink = { token: string; userId: string; brands: Record<string, string> };
 export type Brand = { blogId: string; label: string; networks: string[] };
@@ -22,7 +23,9 @@ async function call(link: Pick<MetricoolLink, "token" | "userId">, path: string,
   const url = new URL(API + path);
   url.searchParams.set("userId", link.userId);
   for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
-  const res = await fetch(url, { ...init, headers: { "X-Mc-Auth": link.token, "Content-Type": "application/json", ...init.headers }, cache: "no-store" });
+  const res = await fetch(url, { ...init, headers: { "X-Mc-Auth": link.token, "Content-Type": "application/json", ...init.headers }, cache: "no-store", signal: AbortSignal.timeout(TIMEOUT_MS) }).catch((e: Error) => {
+    throw new Error(e.name === "TimeoutError" ? "Metricool не ответил за 20 секунд, попробуй ещё раз" : "Не получилось связаться с Metricool");
+  });
   const text = await res.text();
   if (!res.ok) throw new Error(res.status === 401 || res.status === 403 ? "Metricool не принял токен: проверь токен и userId" : `Metricool ответил ${res.status}: ${text.slice(0, 160)}`);
   try {

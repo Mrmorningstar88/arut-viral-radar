@@ -26,9 +26,9 @@ export default async function SourcesPage() {
           {queue.length > 0 && (
             <ul className="mt-5 space-y-2 text-sm">
               {queue.slice(0, 8).map((q) => (
-                <li key={q.id} className="rounded-2xl bg-white/[0.03] px-3 py-2">
+                <li key={q.id} className="rounded-2xl bg-ink/[0.03] px-3 py-2">
                   <div className="flex items-center justify-between gap-2">
-                    <a href={q.url} target="_blank" rel="noreferrer" className="truncate text-white/80 hover:text-foreground">{q.url.replace(/^https:\/\/(www\.)?/, "")}</a>
+                    <a href={q.url} target="_blank" rel="noreferrer" className="truncate text-ink/80 hover:text-foreground">{q.url.replace(/^https:\/\/(www\.)?/, "")}</a>
                     <span className="shrink-0 text-xs text-muted">{QUEUE_LABEL[q.status]}</span>
                   </div>
                   {q.errorRu && <p className="mt-1 text-xs text-rose-300">{q.errorRu}</p>}
@@ -43,7 +43,7 @@ export default async function SourcesPage() {
           <ul className="mt-5 space-y-2 text-sm">
             {creators.length === 0 && <li className="text-muted">Пока никого. Добавь 3–5 авторов, чей формат тебе близок.</li>}
             {creators.map((c) => (
-              <li key={c.username} className="flex items-center justify-between gap-2 rounded-2xl bg-white/[0.03] px-3 py-2">
+              <li key={c.username} className="flex items-center justify-between gap-2 rounded-2xl bg-ink/[0.03] px-3 py-2">
                 <a href={`https://www.instagram.com/${c.username}/`} target="_blank" rel="noreferrer" className="font-medium hover:text-amber-200">@{c.username}</a>
                 <span className="text-xs text-muted">
                   {c.followers != null ? `${compact(c.followers)} подписчиков · ` : ""}

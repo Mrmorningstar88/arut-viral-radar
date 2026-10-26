@@ -19,10 +19,10 @@ export function CardActions({ id, stage }: { id: string; stage: Stage }) {
   if (stage === "script")
     return (
       <div className="mt-2 flex gap-1.5">
-        <button disabled={pending} onClick={() => run(() => approveScript(id), "Одобрено, рисую сториборд")} className={`${btn} bg-[#ff7a2f]/15 text-[#ffb27f] hover:bg-[#ff7a2f]/25`}>
+        <button disabled={pending} onClick={() => run(() => approveScript(id), "Одобрено, рисую сториборд")} className={`${btn} bg-accent/15 text-[#4b57e8] hover:bg-accent/25`}>
           ✓ Одобрить
         </button>
-        <button disabled={pending} onClick={() => run(() => rejectScript(id), "Отклонено")} className={`${btn} bg-white/[0.05] text-muted hover:text-foreground`}>
+        <button disabled={pending} onClick={() => run(() => rejectScript(id), "Отклонено")} className={`${btn} bg-ink/[0.05] text-muted hover:text-foreground`}>
           ✕ Отклонить
         </button>
       </div>
@@ -30,14 +30,14 @@ export function CardActions({ id, stage }: { id: string; stage: Stage }) {
   if (stage === "storyboard")
     return (
       <div className="mt-2 flex gap-1.5">
-        <button disabled={pending} onClick={() => run(() => approveStoryboard(id), "Отправил в производство")} className={`${btn} bg-[#ff7a2f]/15 text-[#ffb27f] hover:bg-[#ff7a2f]/25`}>
+        <button disabled={pending} onClick={() => run(() => approveStoryboard(id), "Отправил в производство")} className={`${btn} bg-accent/15 text-[#4b57e8] hover:bg-accent/25`}>
           ✓ В производство
         </button>
       </div>
     );
   if (stage === "rejected")
     return (
-      <button disabled={pending} onClick={() => run(() => restoreScript(id), "Вернул в сценарии")} className="shrink-0 rounded-full bg-white/[0.06] px-3 py-1 text-xs hover:bg-white/[0.1] disabled:opacity-40">
+      <button disabled={pending} onClick={() => run(() => restoreScript(id), "Вернул в сценарии")} className="shrink-0 rounded-full bg-ink/[0.06] px-3 py-1 text-xs hover:bg-ink/[0.1] disabled:opacity-40">
         ↩ Вернуть
       </button>
     );

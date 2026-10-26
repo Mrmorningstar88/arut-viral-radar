@@ -39,14 +39,14 @@ export default async function Studio() {
       </Reveal>
       <Reveal delay={0.03} className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-xs font-semibold tracking-widest text-[#ff7a2f] uppercase">Контент-завод</p>
+          <p className="text-xs font-semibold tracking-widest text-accent uppercase">Контент-завод</p>
           <h1 className="font-display text-2xl font-semibold md:text-3xl">{project?.name ?? "Организация"}</h1>
           <p className="mt-1 text-sm text-muted">Сценарии строятся на механиках роликов, которые залетели в Instagram и TikTok. Ты только говоришь «да» или «переделай».</p>
           {used && plan !== "admin" && (
-            <Link href="/settings" className="mt-2 inline-flex items-center gap-2 rounded-full bg-white/[0.05] px-3 py-1 text-xs text-muted hover:text-foreground">
+            <Link href="/settings" className="mt-2 inline-flex items-center gap-2 rounded-full bg-ink/[0.05] px-3 py-1 text-xs text-muted hover:text-foreground">
               <span className="font-semibold text-foreground">{PLANS[plan].name}</span>
               сценариев в этом месяце: {used.scripts} из {PLANS[plan].limits.scripts}
-              {plan === "free" && <span className="text-[#ff7a2f]">· Хочу Pro</span>}
+              {plan === "free" && <span className="text-accent">· Хочу Pro</span>}
             </Link>
           )}
         </div>
@@ -82,8 +82,8 @@ function Board({ scripts, warming }: { scripts: Script[]; warming: boolean }) {
     <>
       <AutoRefresh active={warming || scripts.some((s) => s.busy)} />
       {warming && (
-        <div className="flex items-center gap-3 rounded-2xl bg-[#ff7a2f]/10 px-4 py-3 text-sm ring-1 ring-[#ff7a2f]/25">
-          <span className="size-2 animate-ping rounded-full bg-[#ff7a2f]" />
+        <div className="flex items-center gap-3 rounded-2xl bg-accent/10 px-4 py-3 text-sm ring-1 ring-accent/25">
+          <span className="size-2 animate-ping rounded-full bg-accent" />
           Пишу первые сценарии для этой организации. Они появятся в первой колонке через минуту-две.
         </div>
       )}
@@ -98,11 +98,11 @@ function Board({ scripts, warming }: { scripts: Script[]; warming: boolean }) {
                     <h2 className="font-display text-xs font-semibold tracking-wide uppercase">{STAGE_LABEL[stage]}</h2>
                     <p className="text-[11px] text-muted">{STAGE_HINT[stage]}</p>
                   </div>
-                  <span className="rounded-full bg-white/[0.06] px-2 py-0.5 text-xs tabular-nums">{items.length}</span>
+                  <span className="rounded-full bg-ink/[0.06] px-2 py-0.5 text-xs tabular-nums">{items.length}</span>
                 </header>
                 <div className="flex flex-1 flex-col gap-2">
                   {items.length === 0 ? (
-                    <p className="m-auto px-4 py-8 text-center text-xs text-white/30">{EMPTY[stage]}</p>
+                    <p className="m-auto px-4 py-8 text-center text-xs text-ink/30">{EMPTY[stage]}</p>
                   ) : (
                     items.map((s) => <Card key={s.id} s={s} />)
                   )}
@@ -127,14 +127,14 @@ const EMPTY: Record<Stage, string> = {
 
 function Card({ s }: { s: Script }) {
   return (
-    <div className="rounded-2xl border border-white/[0.06] bg-white/[0.03] p-3 transition hover:border-[#ff7a2f]/40 hover:bg-white/[0.05]">
+    <div className="rounded-2xl border border-ink/[0.06] bg-ink/[0.03] p-3 transition hover:border-accent/40 hover:bg-ink/[0.05]">
       <Link href={`/studio/${s.id}`} className="block">
-        {s.pillar && <span className="text-[10px] font-semibold tracking-wider text-[#ff7a2f] uppercase">{s.pillar}</span>}
+        {s.pillar && <span className="text-[10px] font-semibold tracking-wider text-accent uppercase">{s.pillar}</span>}
         <h3 className="mt-0.5 text-sm leading-snug font-semibold">{s.title}</h3>
         <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted">{s.payload.hook}</p>
         {s.busy && (
           <p className="mt-2 flex items-center gap-1.5 text-[11px] text-amber-200">
-            <span className="size-1.5 animate-ping rounded-full bg-[#ff7a2f]" /> Claude работает…
+            <span className="size-1.5 animate-ping rounded-full bg-accent" /> Claude работает…
           </p>
         )}
         {s.error && !s.busy && <p className="mt-2 text-[11px] text-rose-300">⚠ {s.error}</p>}
@@ -151,8 +151,8 @@ function Declined({ items }: { items: Script[] }) {
       <summary className="cursor-pointer text-sm text-muted">Отклонённые ({items.length})</summary>
       <ul className="mt-3 space-y-1.5">
         {items.map((s) => (
-          <li key={s.id} className="flex items-center gap-3 rounded-xl bg-white/[0.03] px-3 py-2 text-sm">
-            <Link href={`/studio/${s.id}`} className="flex-1 truncate hover:text-[#ff7a2f]">
+          <li key={s.id} className="flex items-center gap-3 rounded-xl bg-ink/[0.03] px-3 py-2 text-sm">
+            <Link href={`/studio/${s.id}`} className="flex-1 truncate hover:text-accent">
               {s.title}
             </Link>
             <CardActions id={s.id} stage="rejected" />

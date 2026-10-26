@@ -16,7 +16,7 @@ export default async function RedPillPage() {
       </Reveal>
 
       {items.length === 0 && (
-        <Reveal className="rounded-3xl border border-dashed border-white/10 p-12 text-center text-muted">Первый сюжет появится после утреннего прогона.</Reveal>
+        <Reveal className="rounded-3xl border border-dashed border-ink/10 p-12 text-center text-muted">Первый сюжет появится после утреннего прогона.</Reveal>
       )}
 
       <div className="grid gap-4 md:grid-cols-2">
@@ -32,7 +32,7 @@ export default async function RedPillPage() {
               </Link>
               {p.era && <p className="mt-1 text-xs text-muted">{p.era}</p>}
               {p.distraction && (
-                <p className="mt-4 text-sm leading-relaxed text-white/75"><span className="text-muted">Пока все смотрели: </span>{p.distraction}</p>
+                <p className="mt-4 text-sm leading-relaxed text-ink/75"><span className="text-muted">Пока все смотрели: </span>{p.distraction}</p>
               )}
               <div className="relative z-10 mt-auto pt-5">
                 <StatusControls id={p.id} status={p.status} kind="redpill" />

@@ -35,7 +35,7 @@ export default async function ScriptPage({ params }: PageProps<"/studio/[id]">) 
           {STAGES.map((st, i) => (
             <li
               key={st}
-              className={`rounded-full px-3 py-1 text-xs ${i === step ? "bg-[#ff7a2f] font-semibold text-black" : i < step ? "bg-white/[0.08] text-foreground" : "bg-white/[0.03] text-white/30"}`}
+              className={`rounded-full px-3 py-1 text-xs ${i === step ? "bg-accent font-semibold text-white" : i < step ? "bg-ink/[0.08] text-foreground" : "bg-ink/[0.03] text-ink/30"}`}
             >
               {i < step ? "✓ " : ""}
               {STAGE_LABEL[st]}
@@ -44,12 +44,12 @@ export default async function ScriptPage({ params }: PageProps<"/studio/[id]">) 
           {s.stage === "rejected" && <li className="rounded-full bg-rose-500/20 px-3 py-1 text-xs text-rose-200">Отклонено</li>}
         </ol>
         <div>
-          {s.pillar && <p className="text-xs font-semibold tracking-widest text-[#ff7a2f] uppercase">{s.pillar}</p>}
+          {s.pillar && <p className="text-xs font-semibold tracking-widest text-accent uppercase">{s.pillar}</p>}
           <h1 className="font-display text-2xl leading-tight font-semibold md:text-3xl">{s.title}</h1>
         </div>
         {s.busy && (
-          <p className="flex items-center gap-2 rounded-2xl bg-amber-400/[0.08] px-4 py-3 text-sm text-amber-100">
-            <span className="size-2 animate-ping rounded-full bg-[#ff7a2f]" /> Claude работает над этой карточкой, страница обновится сама.
+          <p className="flex items-center gap-2 rounded-2xl bg-accent/[0.08] px-4 py-3 text-sm text-accent">
+            <span className="size-2 animate-ping rounded-full bg-accent" /> Claude работает над этой карточкой, страница обновится сама.
           </p>
         )}
         {s.error && !s.busy && <p className="rounded-2xl bg-rose-500/10 px-4 py-3 text-sm text-rose-200">Не получилось: {s.error}</p>}
@@ -77,7 +77,7 @@ export default async function ScriptPage({ params }: PageProps<"/studio/[id]">) 
         <Reveal delay={0.03} className="flex flex-wrap items-center gap-5 rounded-3xl glass p-5">
           <video src={s.videoUrl} controls playsInline className="aspect-[9/16] w-40 rounded-2xl bg-black" />
           {s.renderLog && !s.publishedUrl && <p className="text-sm text-muted">{s.renderLog}</p>}
-          {s.publishedUrl && <a href={s.publishedUrl} target="_blank" rel="noreferrer" className="text-sm text-[#ff7a2f] hover:underline">Пост в соцсети ↗</a>}
+          {s.publishedUrl && <a href={s.publishedUrl} target="_blank" rel="noreferrer" className="text-sm text-accent hover:underline">Пост в соцсети ↗</a>}
         </Reveal>
       )}
 
@@ -91,8 +91,8 @@ export default async function ScriptPage({ params }: PageProps<"/studio/[id]">) 
             </div>
           ) : s.renderStatus === "rendering" ? (
             <p className="mt-2 flex items-start gap-2 text-muted">
-              <span className="mt-1.5 size-2 shrink-0 animate-ping rounded-full bg-[#ff7a2f]" />
-              <span>Opuscar рисует ролик, обычно 30–60 минут.{s.renderLog && <span className="mt-1 block text-xs text-white/50">{s.renderLog}</span>}</span>
+              <span className="mt-1.5 size-2 shrink-0 animate-ping rounded-full bg-accent" />
+              <span>Opuscar рисует ролик, обычно 30–60 минут.{s.renderLog && <span className="mt-1 block text-xs text-ink/50">{s.renderLog}</span>}</span>
             </p>
           ) : (
             <p className="mt-2 text-muted">Ролик в очереди на рендер. Как только освободится рендер-сервер, начнётся сборка, а готовое видео появится здесь.</p>
@@ -111,13 +111,13 @@ export default async function ScriptPage({ params }: PageProps<"/studio/[id]">) 
           <Panel title="Сториборд" subtitle={s.storyboard.music}>
             <ol className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {s.storyboard.shots.map((sh) => (
-                <li key={sh.n} className="flex flex-col rounded-2xl border border-white/[0.06] bg-white/[0.03] p-3">
+                <li key={sh.n} className="flex flex-col rounded-2xl border border-ink/[0.06] bg-ink/[0.03] p-3">
                   <div className="flex items-center justify-between text-xs text-muted">
                     <span className="font-semibold text-foreground">Кадр {sh.n}</span>
                     <span className="tabular-nums">{sh.dur} с</span>
                   </div>
                   <p className="mt-2 flex-1 text-sm leading-relaxed">{sh.frame}</p>
-                  {sh.overlay && <p className="mt-2 rounded-xl bg-[#ff7a2f]/10 px-2.5 py-1.5 text-xs font-medium text-amber-100">«{sh.overlay}»</p>}
+                  {sh.overlay && <p className="mt-2 rounded-xl bg-accent/10 px-2.5 py-1.5 text-xs font-medium text-accent">«{sh.overlay}»</p>}
                 </li>
               ))}
             </ol>
@@ -129,14 +129,14 @@ export default async function ScriptPage({ params }: PageProps<"/studio/[id]">) 
         <Reveal delay={0.06}>
           <Panel title="Хук" subtitle="Первые секунды">
             <p className="text-lg leading-snug font-semibold">{p.hook}</p>
-            {p.sound && <p className="mt-3 rounded-xl bg-white/[0.04] px-3 py-2 text-sm text-muted">🔊 {p.sound}</p>}
+            {p.sound && <p className="mt-3 rounded-xl bg-ink/[0.04] px-3 py-2 text-sm text-muted">🔊 {p.sound}</p>}
           </Panel>
         </Reveal>
         <Reveal delay={0.08}>
           <Panel title="Что взяли из залёта">
             <p className="text-sm leading-relaxed">{p.mechanic}</p>
             {s.sourceReelId && (
-              <Link href={`/reels/${s.sourceReelId}`} className="mt-2 inline-block text-xs text-[#ff7a2f] hover:underline">
+              <Link href={`/reels/${s.sourceReelId}`} className="mt-2 inline-block text-xs text-accent hover:underline">
                 Открыть оригинал →
               </Link>
             )}
@@ -162,7 +162,7 @@ export default async function ScriptPage({ params }: PageProps<"/studio/[id]">) 
           {p.onScreen.length > 0 && (
             <div className="mt-4 flex flex-wrap gap-1.5">
               {p.onScreen.map((t) => (
-                <span key={t} className="rounded-full bg-white/[0.06] px-3 py-1 text-xs">{t}</span>
+                <span key={t} className="rounded-full bg-ink/[0.06] px-3 py-1 text-xs">{t}</span>
               ))}
             </div>
           )}

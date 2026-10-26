@@ -22,15 +22,15 @@ export function Nav({ user }: { user: NavUser }) {
   const TABS = !user ? [] : [FACTORY, ...(user.radar ? [RADAR] : []), PROJECTS, SETTINGS, ...(user.admin ? [ADMIN] : [])];
   return (
     <>
-      <header className="sticky top-0 z-20 border-b border-white/[0.06] bg-black/30 backdrop-blur-2xl backdrop-saturate-[1.8] shadow-[inset_0_-1px_0_rgba(255,255,255,0.06),0_10px_40px_-20px_rgba(0,0,0,0.8)]">
+      <header className="sticky top-0 z-20 border-b border-ink/[0.06] bg-paper/30 backdrop-blur-2xl backdrop-saturate-[1.8] shadow-[inset_0_-1px_0_rgba(255,255,255,0.06),0_10px_40px_-20px_rgba(0,0,0,0.8)]">
         <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3">
           <Link
             href="/"
             className="flex items-center gap-2 whitespace-nowrap"
           >
             <span className="relative grid size-7 place-items-center">
-              <span className="absolute inset-0 animate-ping rounded-full bg-[#ff7a2f]/30 [animation-duration:2.5s]" />
-              <span className="size-3 rounded-full bg-[#ff7a2f] shadow-[0_0_14px_rgba(255,122,47,0.8)]" />
+              <span className="absolute inset-0 animate-ping rounded-full bg-accent/30 [animation-duration:2.5s]" />
+              <span className="size-3 rounded-full bg-accent " />
             </span>
             <span className="font-display text-sm font-semibold tracking-wide">
               YOOMP
@@ -43,12 +43,13 @@ export function Nav({ user }: { user: NavUser }) {
                 <Link
                   key={t.href}
                   href={t.href}
+                  aria-current={active ? "page" : undefined}
                   className={`relative rounded-full px-3 py-1.5 whitespace-nowrap transition-colors ${active ? "text-foreground" : "text-muted hover:text-foreground"}`}
                 >
                   {active && (
                     <motion.span
                       layoutId="nav-pill"
-                      className="absolute inset-0 rounded-full bg-white/[0.08] ring-1 ring-white/10"
+                      className="absolute inset-0 rounded-full glass-inset"
                       transition={{
                         type: "spring",
                         stiffness: 420,
@@ -63,10 +64,10 @@ export function Nav({ user }: { user: NavUser }) {
           </nav>
           {!user && (
             <div className="ml-auto flex items-center gap-2 text-sm">
-              <Link href="/login" className="rounded-full px-3 py-1.5 text-muted hover:text-foreground">
+              <Link href="/login" className="rounded-full px-3 py-2 text-muted hover:text-foreground">
                 Войти
               </Link>
-              <Link href="/login?mode=signup" className="rounded-full bg-white px-4 py-1.5 font-medium text-black">
+              <Link href="/login?mode=signup" className="rounded-full neo-primary px-4 py-2 font-medium text-white">
                 Начать бесплатно
               </Link>
             </div>
@@ -81,12 +82,13 @@ export function Nav({ user }: { user: NavUser }) {
             <Link
               key={t.href}
               href={t.href}
-              className={`relative flex-1 rounded-full px-2 py-2 text-center whitespace-nowrap ${active ? "text-black" : "text-muted"}`}
+              aria-current={active ? "page" : undefined}
+              className={`relative flex min-h-11 flex-1 items-center justify-center rounded-full px-2 text-center whitespace-nowrap ${active ? "font-semibold text-accent" : "text-muted"}`}
             >
               {active && (
                 <motion.span
                   layoutId="nav-pill-m"
-                  className="absolute inset-0 rounded-full bg-white"
+                  className="absolute inset-0 rounded-full glass-inset"
                   transition={{ type: "spring", stiffness: 420, damping: 34 }}
                 />
               )}

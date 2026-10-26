@@ -22,7 +22,7 @@ export function PublishForm({ id, videoUrl }: { id: string; videoUrl: string }) 
   const toast = useToast();
   return (
     <div className="space-y-3">
-      <a href={videoUrl} download className="inline-flex rounded-xl bg-white px-4 py-2 text-sm font-semibold text-black">
+      <a href={videoUrl} download className="inline-flex rounded-xl bg-paper px-4 py-2 text-sm font-semibold text-ink">
         ↓ Скачать ролик
       </a>
       <div className="flex flex-col gap-2 sm:flex-row">
@@ -30,7 +30,7 @@ export function PublishForm({ id, videoUrl }: { id: string; videoUrl: string }) 
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           placeholder="Ссылка на пост в Instagram или TikTok"
-          className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-2.5 text-sm outline-none placeholder:text-white/30 focus:border-amber-400/50"
+          className="w-full rounded-2xl border border-ink/10 bg-paper/30 px-4 py-2.5 text-sm outline-none placeholder:text-ink/30 focus:border-accent/50"
         />
         <Button
           variant="primary"
@@ -57,16 +57,16 @@ export function ReleaseForm({ id, networks }: { id: string; networks: { id: stri
   const toast = useToast();
   if (networks.length === 0)
     return (
-      <p className="rounded-2xl bg-white/[0.04] px-4 py-3 text-sm text-muted">
+      <p className="rounded-2xl bg-ink/[0.04] px-4 py-3 text-sm text-muted">
         Чтобы выпускать ролики одной кнопкой, подключи соцсети организации в{" "}
-        <a href="/settings" className="text-[#ff7a2f] hover:underline">
+        <a href="/settings" className="text-accent hover:underline">
           Настройках
         </a>
         .
       </p>
     );
   return (
-    <div className="space-y-3 rounded-2xl bg-[#ff7a2f]/[0.07] p-4 ring-1 ring-[#ff7a2f]/25">
+    <div className="space-y-3 rounded-2xl bg-accent/[0.07] p-4 ring-1 ring-accent/25">
       <p className="text-sm font-medium">Выпустить в:</p>
       <div className="flex flex-wrap gap-2">
         {networks.map((n) => {
@@ -76,7 +76,7 @@ export function ReleaseForm({ id, networks }: { id: string; networks: { id: stri
               key={n.id}
               type="button"
               onClick={() => setPicked((xs) => (on ? xs.filter((x) => x !== n.id) : [...xs, n.id]))}
-              className={`rounded-full px-4 py-1.5 text-sm transition ${on ? "bg-white text-black" : "bg-white/[0.06] text-muted"}`}
+              className={`rounded-full px-4 py-1.5 text-sm transition ${on ? "neo-on" : "bg-ink/[0.06] text-muted"}`}
             >
               {on ? "☑" : "☐"} {n.label}
             </button>

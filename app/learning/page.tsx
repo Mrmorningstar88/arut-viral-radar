@@ -41,8 +41,8 @@ export default async function LearningPage() {
             <div key={g.key} className="rounded-3xl glass p-4">
               <p className="font-display text-2xl font-semibold">{n}<span className="text-base text-muted"> / {g.goal}</span></p>
               <p className="text-sm text-muted">{g.label}</p>
-              <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
-                <div className="h-full rounded-full bg-white/80" style={{ width: `${Math.min(100, (n / g.goal) * 100)}%` }} />
+              <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-ink/[0.06]">
+                <div className="h-full rounded-full bg-ink/80" style={{ width: `${Math.min(100, (n / g.goal) * 100)}%` }} />
               </div>
             </div>
           );

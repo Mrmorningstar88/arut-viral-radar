@@ -71,7 +71,7 @@ export function StageActions({ id, stage, busy, edit }: { id: string; stage: Sta
             value={feedback}
             onChange={(e) => setFeedback(e.target.value)}
             placeholder="Что поменять: короче, другой хук, больше юмора…"
-            className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-2.5 text-sm outline-none placeholder:text-white/30 focus:border-amber-400/50"
+            className="w-full rounded-2xl border border-ink/10 bg-paper/30 px-4 py-2.5 text-sm outline-none placeholder:text-ink/30 focus:border-accent/50"
           />
           <Button
             variant="primary"

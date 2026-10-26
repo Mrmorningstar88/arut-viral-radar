@@ -19,7 +19,7 @@ export function StylePicker({ id, style, editable }: { id: string; style: string
       <div className="flex flex-wrap items-center gap-4">
         {current && (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={OPUS_FRAME(current.slug)} alt={current.name} className="h-24 w-40 rounded-2xl object-cover ring-1 ring-white/10" />
+          <img src={OPUS_FRAME(current.slug)} alt={current.name} className="h-24 w-40 rounded-2xl object-cover ring-1 ring-ink/10" />
         )}
         <div className="min-w-0 flex-1">
           <p className="text-xs font-semibold tracking-widest text-muted uppercase">Стиль ролика</p>
@@ -27,7 +27,7 @@ export function StylePicker({ id, style, editable }: { id: string; style: string
           {current && <p className="text-sm text-muted">{current.category} · {current.uses.join(", ")}</p>}
         </div>
         {editable && (
-          <button onClick={() => setOpen((v) => !v)} className="rounded-full glass-inset px-4 py-2 text-sm hover:bg-white/[0.08]">
+          <button onClick={() => setOpen((v) => !v)} className="rounded-full glass-inset px-4 py-2 text-sm hover:bg-ink/[0.08]">
             {open ? "Свернуть" : "Сменить стиль"}
           </button>
         )}
@@ -51,7 +51,7 @@ export function StylePicker({ id, style, editable }: { id: string; style: string
                           toast(`Стиль: ${s.name}`);
                         })
                       }
-                      className={`group overflow-hidden rounded-2xl text-left ring-1 transition ${s.slug === style ? "ring-2 ring-[#ff7a2f]" : "ring-white/10 hover:ring-white/30"}`}
+                      className={`group overflow-hidden rounded-2xl text-left ring-1 transition ${s.slug === style ? "ring-2 ring-accent" : "ring-ink/10 hover:ring-ink/30"}`}
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={OPUS_FRAME(s.slug)} alt="" loading="lazy" className="aspect-video w-full object-cover transition group-hover:scale-[1.03]" />

@@ -7,7 +7,7 @@ import { useToast } from "@/components/ui/toast";
 
 type Brand = { blogId: string; label: string; networks: string[] };
 const LABEL: Record<string, string> = { instagram: "Instagram", tiktok: "TikTok", youtube: "YouTube", facebook: "Facebook" };
-const INPUT = "w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-sm outline-none focus:border-[#ff7a2f]/60";
+const INPUT = "w-full rounded-xl border border-ink/10 bg-paper/30 px-3 py-2 text-sm outline-none focus:border-accent/60";
 
 // Соцсети организации через Metricool: один раз токен аккаунта, потом бренд Metricool для каждой организации.
 export function MetricoolCard({ org, connected, brands, chosen, error }: { org: string; connected: boolean; brands: Brand[]; chosen: string | null; error: string | null }) {
@@ -49,13 +49,13 @@ export function MetricoolCard({ org, connected, brands, chosen, error }: { org: 
                     toast(r.error ?? `Организация публикуется через «${b.label}»`, r.error ? "error" : undefined);
                   })
                 }
-                className={`flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left transition ${on ? "bg-[#ff7a2f]/15 ring-1 ring-[#ff7a2f]/40" : "bg-white/[0.04] hover:bg-white/[0.07]"}`}
+                className={`flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left transition ${on ? "bg-accent/15 ring-1 ring-accent/40" : "bg-ink/[0.04] hover:bg-ink/[0.07]"}`}
               >
                 <span className="flex-1">
                   <span className="block text-sm font-medium">{b.label}</span>
                   <span className="text-xs text-muted">{b.networks.length > 0 ? b.networks.map((n) => LABEL[n]).join(" · ") : "соцсети не подключены"}</span>
                 </span>
-                {on && <span className="text-xs text-[#ff7a2f]">✓ выбран</span>}
+                {on && <span className="text-xs text-accent">✓ выбран</span>}
               </button>
             </li>
           );

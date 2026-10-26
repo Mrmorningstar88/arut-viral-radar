@@ -19,7 +19,7 @@ export default async function ProjectsPage() {
             <h1 className="font-display text-2xl font-semibold">Организации</h1>
             <p className="mt-1 text-sm text-muted">У каждой организации свой паспорт, свои сценарии, ролики и соцсети.</p>
           </div>
-          <Link href="/welcome" className="rounded-full bg-[#ff7a2f] px-5 py-2.5 text-sm font-semibold text-black">
+          <Link href="/welcome" className="rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-white">
             + Новая организация
           </Link>
         </div>
@@ -28,11 +28,11 @@ export default async function ProjectsPage() {
       <div className="grid gap-4 md:grid-cols-3">
         {projects.map((p, i) => (
           <Reveal key={p.id} delay={i * 0.04}>
-            <div className={`flex h-full flex-col rounded-3xl glass p-5 ${p.id === active ? "ring-1 ring-[#ff7a2f]/60" : ""}`}>
+            <div className={`flex h-full flex-col rounded-3xl glass p-5 ${p.id === active ? "ring-1 ring-accent/60" : ""}`}>
               <h2 className="font-semibold">{p.name}</h2>
               <p className="mt-1 flex-1 text-sm leading-relaxed text-muted">{p.passport?.oneLiner ?? (p.productUrl ? p.productUrl : "Личный блог")}</p>
               {p.id === active ? (
-                <span className="mt-4 text-xs font-medium text-[#ff7a2f]">Открыта сейчас</span>
+                <span className="mt-4 text-xs font-medium text-accent">Открыта сейчас</span>
               ) : (
                 <form action={switchProject} className="mt-4">
                   <input type="hidden" name="id" value={p.id} />
@@ -64,7 +64,7 @@ function PassportView({ project }: { project: Project }) {
         <h2 className="font-display text-xl font-semibold">Паспорт организации: {p.name}</h2>
         <p className="mt-1 text-sm text-muted">{p.oneLiner}</p>
         {project.productUrl && (
-          <a href={project.productUrl} target="_blank" rel="noreferrer" className="mt-1 inline-block text-xs text-[#ff7a2f] hover:underline">
+          <a href={project.productUrl} target="_blank" rel="noreferrer" className="mt-1 inline-block text-xs text-accent hover:underline">
             {project.productUrl}
           </a>
         )}

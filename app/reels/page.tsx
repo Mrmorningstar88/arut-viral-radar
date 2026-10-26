@@ -40,9 +40,9 @@ export default async function ReelsPage({ searchParams }: PageProps<"/reels">) {
           </div>
           <ul className="space-y-1.5 text-sm">
             {open.map((q) => (
-              <li key={q.id} className="rounded-2xl bg-white/[0.03] px-3 py-2">
+              <li key={q.id} className="rounded-2xl bg-ink/[0.03] px-3 py-2">
                 <div className="flex items-center justify-between gap-2">
-                  <a href={q.url} target="_blank" rel="noreferrer" className="truncate text-white/80">{q.url.replace(/^https:\/\/(www\.)?/, "")}</a>
+                  <a href={q.url} target="_blank" rel="noreferrer" className="truncate text-ink/80">{q.url.replace(/^https:\/\/(www\.)?/, "")}</a>
                   <span className="shrink-0 text-xs text-muted">{q.status === "pending" ? (running ? "⏳ Разбираю" : "⏸ Ждёт") : "⚠️ Ошибка"}</span>
                 </div>
                 {q.errorRu && <p className="mt-1 text-xs text-rose-300">{q.errorRu}</p>}
@@ -65,7 +65,7 @@ export default async function ReelsPage({ searchParams }: PageProps<"/reels">) {
       )}
 
       {all.length > 0 && reels.length === 0 && (
-        <Reveal className="rounded-3xl border border-dashed border-white/10 p-12 text-center text-muted">В этом статусе пока ничего.</Reveal>
+        <Reveal className="rounded-3xl border border-dashed border-ink/10 p-12 text-center text-muted">В этом статусе пока ничего.</Reveal>
       )}
 
       {reels.length > 0 && <RadarConsole reels={reels} />}
@@ -99,7 +99,7 @@ function GettingStarted({ hasCreators }: { hasCreators: boolean }) {
 function Step({ n, done, children }: { n: number; done?: boolean; children: React.ReactNode }) {
   return (
     <li className="flex gap-3">
-      <span className={`grid size-6 shrink-0 place-items-center rounded-full text-xs font-semibold ${done ? "bg-emerald-400/20 text-emerald-300" : "bg-white/[0.06] text-muted"}`}>{done ? "✓" : n}</span>
+      <span className={`grid size-6 shrink-0 place-items-center rounded-full text-xs font-semibold ${done ? "bg-emerald-400/20 text-emerald-300" : "bg-ink/[0.06] text-muted"}`}>{done ? "✓" : n}</span>
       <span className="leading-relaxed">{children}</span>
     </li>
   );

@@ -39,8 +39,8 @@ export default async function SettingsPage() {
         <span className="tabular-nums">{Number.isFinite(max) ? `${n} из ${max}` : n}</span>
       </div>
       {Number.isFinite(max) && max > 0 && (
-        <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
-          <div className="h-full rounded-full bg-[#ff7a2f]" style={{ width: `${Math.min(100, (n / max) * 100)}%` }} />
+        <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-ink/[0.06]">
+          <div className="h-full rounded-full bg-accent" style={{ width: `${Math.min(100, (n / max) * 100)}%` }} />
         </div>
       )}
     </div>
@@ -59,7 +59,7 @@ export default async function SettingsPage() {
               <h2 className="font-display text-sm font-semibold tracking-wide uppercase">Аккаунт</h2>
               <p className="mt-1 text-sm text-muted">{user.email}</p>
             </div>
-            <span className="rounded-full bg-[#ff7a2f]/15 px-3 py-1 text-xs font-semibold text-[#ff7a2f]">{PLANS[plan].name}</span>
+            <span className="rounded-full bg-accent/15 px-3 py-1 text-xs font-semibold text-accent">{PLANS[plan].name}</span>
           </div>
           <div className="space-y-3">
             {meter("Организации", used.projects, limits.projects)}
@@ -67,7 +67,7 @@ export default async function SettingsPage() {
             {meter("Ролики в этом месяце", used.videos, limits.videos)}
           </div>
           {plan === "free" && (
-            <div className="rounded-2xl bg-white/[0.04] p-4">
+            <div className="rounded-2xl bg-ink/[0.04] p-4">
               <p className="text-sm font-medium">Pro: готовые ролики, 5 организаций, свежие залёты каждый день</p>
               <div className="mt-3">
                 <RequestPro requested={!!user.app_metadata?.pro_request} />
@@ -113,7 +113,7 @@ export default async function SettingsPage() {
       <div className="grid gap-4 md:grid-cols-3">
         {ITEMS.filter((it) => !it.radar || plan !== "free").map((it, i) => (
           <Reveal key={it.href} delay={0.1 + i * 0.05}>
-            <Link href={it.href} className="block h-full rounded-3xl glass p-5 transition-all hover:-translate-y-0.5 hover:border-amber-400/25">
+            <Link href={it.href} className="block h-full rounded-3xl glass p-5 transition-all hover:-translate-y-0.5 hover:border-accent/25">
               <span className="text-2xl">{it.icon}</span>
               <h2 className="mt-3 font-semibold">{it.title}</h2>
               <p className="mt-1 text-sm leading-relaxed text-muted">{it.text}</p>

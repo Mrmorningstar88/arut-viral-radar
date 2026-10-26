@@ -65,7 +65,7 @@ export default async function AdminPage() {
       <Reveal delay={0.04} className="overflow-x-auto rounded-3xl glass">
         <table className="w-full min-w-[720px] text-sm">
           <thead className="text-left text-xs text-muted">
-            <tr className="border-b border-white/[0.06]">
+            <tr className="border-b border-ink/[0.06]">
               <th className="px-4 py-3 font-medium">Почта</th>
               <th className="px-4 py-3 font-medium">С нами с</th>
               <th className="px-4 py-3 text-right font-medium">Организации</th>
@@ -77,10 +77,10 @@ export default async function AdminPage() {
           </thead>
           <tbody>
             {rows.map((r) => (
-              <tr key={r.id} className="border-b border-white/[0.04] last:border-0">
+              <tr key={r.id} className="border-b border-ink/[0.04] last:border-0">
                 <td className="px-4 py-3">
                   {r.email}
-                  {r.request && r.plan === "free" && <span className="ml-2 rounded-full bg-[#ff7a2f]/15 px-2 py-0.5 text-[11px] text-[#ff7a2f]">просит Pro</span>}
+                  {r.request && r.plan === "free" && <span className="ml-2 rounded-full bg-accent/15 px-2 py-0.5 text-[11px] text-accent">просит Pro</span>}
                 </td>
                 <td className="px-4 py-3 text-muted">{new Date(r.created).toLocaleDateString("ru-RU")}</td>
                 <td className="px-4 py-3 text-right tabular-nums">{r.projects}</td>
@@ -99,7 +99,7 @@ export default async function AdminPage() {
 
 function Stat({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
   return (
-    <div className={`rounded-2xl px-4 py-2 ${accent ? "bg-[#ff7a2f]/15 ring-1 ring-[#ff7a2f]/30" : "glass"}`}>
+    <div className={`rounded-2xl px-4 py-2 ${accent ? "bg-accent/15 ring-1 ring-accent/30" : "glass"}`}>
       <p className="text-[11px] text-muted">{label}</p>
       <p className="font-display font-semibold tabular-nums">{value}</p>
     </div>

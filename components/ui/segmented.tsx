@@ -11,17 +11,17 @@ export function Segmented({ id, items, size = "md" }: { id: string; items: Item[
   return (
     <div className="inline-flex max-w-full overflow-x-auto glass rounded-full p-1">
       {items.map((it) => (
-        <Link key={it.href} href={it.href} scroll={false} className={`relative whitespace-nowrap rounded-full ${pad} font-medium transition-colors ${it.active ? "text-black" : "text-muted hover:text-foreground"}`}>
+        <Link key={it.href} href={it.href} scroll={false} className={`relative whitespace-nowrap rounded-full ${pad} font-medium transition-colors ${it.active ? "text-ink" : "text-muted hover:text-foreground"}`}>
           {it.active && (
             <motion.span
               layoutId={`seg-${id}`}
-              className="absolute inset-0 rounded-full bg-white"
+              className="absolute inset-0 rounded-full bg-paper"
               transition={{ type: "spring", stiffness: 420, damping: 34 }}
             />
           )}
           <span className="relative flex items-center gap-1.5">
             {it.label}
-            {it.count != null && <span className={`tabular-nums ${it.active ? "text-black/60" : "text-white/30"}`}>{it.count}</span>}
+            {it.count != null && <span className={`tabular-nums ${it.active ? "text-ink/60" : "text-ink/30"}`}>{it.count}</span>}
           </span>
         </Link>
       ))}

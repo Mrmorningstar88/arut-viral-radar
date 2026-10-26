@@ -8,7 +8,7 @@ export function ProjectSwitcher({ projects, active }: { projects: Project[]; act
     <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none]">
       {projects.map((p) =>
         p.id === active ? (
-          <span key={p.id} className="shrink-0 rounded-full bg-white px-4 py-1.5 text-sm font-semibold text-black">
+          <span key={p.id} className="shrink-0 rounded-full bg-paper px-4 py-1.5 text-sm font-semibold text-ink">
             {p.name}
           </span>
         ) : (

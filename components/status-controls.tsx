@@ -74,7 +74,7 @@ export function StatusControls({ id, status, kind = "reel" }: { id: string; stat
                   whileTap={{ scale: 0.94 }}
                   disabled={pending}
                   onClick={() => send({ status: "rejected", reason: k })}
-                  className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-sm hover:border-rose-400/40 hover:bg-rose-500/10"
+                  className="rounded-full border border-ink/10 bg-ink/[0.04] px-3 py-1.5 text-sm hover:border-rose-400/40 hover:bg-rose-500/10"
                 >
                   {label}
                 </motion.button>
@@ -94,7 +94,7 @@ export function StatusControls({ id, status, kind = "reel" }: { id: string; stat
             }}
             className="flex flex-wrap items-center gap-2"
           >
-            <input name="publishedUrl" required type="url" autoFocus placeholder="Ссылка на твой ролик" className="min-w-64 flex-1 rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-sm outline-none focus:border-amber-400/50" />
+            <input name="publishedUrl" required type="url" autoFocus placeholder="Ссылка на твой ролик" className="min-w-64 flex-1 rounded-xl border border-ink/10 bg-paper/30 px-3 py-2 text-sm outline-none focus:border-accent/50" />
             <Button variant="success" type="submit" disabled={pending}>Сохранить</Button>
             <button type="button" onClick={() => setMode("idle")} className="px-2 text-sm text-muted hover:text-foreground">Отмена</button>
           </motion.form>

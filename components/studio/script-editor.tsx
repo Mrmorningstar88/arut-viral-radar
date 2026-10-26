@@ -5,7 +5,7 @@ import { editScript, type ScriptEdit } from "@/app/studio/actions";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 
-const INPUT = "w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-sm outline-none focus:border-[#ff7a2f]/60";
+const INPUT = "w-full rounded-xl border border-ink/10 bg-paper/30 px-3 py-2 text-sm outline-none focus:border-accent/60";
 
 // Ручная правка сценария: хук, озвучка по строкам, надписи, подпись.
 export function ScriptEditor({ id, initial, onDone }: { id: string; initial: ScriptEdit; onDone: () => void }) {
@@ -36,7 +36,7 @@ export function ScriptEditor({ id, initial, onDone }: { id: string; initial: Scr
             </button>
           </div>
         ))}
-        <button type="button" onClick={() => setE({ ...e, vo: [...e.vo, { t: "", text: "" }] })} className="text-xs text-[#ff7a2f] hover:underline">
+        <button type="button" onClick={() => setE({ ...e, vo: [...e.vo, { t: "", text: "" }] })} className="text-xs text-accent hover:underline">
           + строка
         </button>
       </div>

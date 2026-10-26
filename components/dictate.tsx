@@ -51,9 +51,9 @@ export function Dictate({ onText }: { onText: (text: string) => void }) {
     <button
       type="button"
       onClick={toggle}
-      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs transition ${on ? "bg-rose-500/20 text-rose-200" : "bg-white/[0.06] text-muted hover:text-foreground"}`}
+      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs transition ${on ? "bg-rose-500/20 text-rose-200" : "bg-ink/[0.06] text-muted hover:text-foreground"}`}
     >
-      <span className={`size-2 rounded-full ${on ? "animate-pulse bg-rose-400" : "bg-[#ff7a2f]"}`} />
+      <span className={`size-2 rounded-full ${on ? "animate-pulse bg-rose-400" : "bg-accent"}`} />
       {on ? "Слушаю… нажми, чтобы остановить" : "Надиктовать"}
     </button>
   );
