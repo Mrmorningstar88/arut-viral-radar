@@ -1,0 +1,12 @@
+{
+  "name": "yoomp-render-worker",
+  "private": true,
+  "type": "module",
+  "description": "Рендер роликов YOOMP: берёт одобренные сториборды из Supabase и делает видео через lemo-opuscar и Claude Agent SDK.",
+  "engines": { "node": ">=20" },
+  "scripts": { "start": "node index.mjs" },
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "0.3.310",
+    "@supabase/supabase-js": "^2.118.0"
+  }
+}

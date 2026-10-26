@@ -1,0 +1,33 @@
+# Рендер-сервер YOOMP
+
+Отдельный сервер, который делает ролики. Сайт на Vercel ставит одобренный сториборд в очередь,
+этот сервер раз в 30 секунд забирает задачу, запускает Claude поверх библиотеки
+[lemo-opuscar](https://github.com/lemomo-ai/lemo-opuscar), кладёт готовый mp4 в Supabase
+и переводит карточку в колонку «Готово».
+
+Расходы: сервер на Railway около $5–20 в месяц, каждый ролик $10–25 токенов Claude.
+Потолок на один ролик задаётся переменной `RENDER_BUDGET_USD` (по умолчанию 25). Если агент
+упрётся в потолок, ролик помечается «не получился», и его можно перезапустить кнопкой.
+
+## Запуск на Railway (один раз)
+
+1. Зайди на [railway.com](https://railway.com) и войди через GitHub.
+2. **New Project → Deploy from GitHub repo →** выбери `arut-viral-radar`.
+3. Открой созданный сервис → **Settings → Source → Root Directory** → впиши `worker` → сохрани.
+4. **Variables → New Variable**, добавь три переменные (значения те же, что в Vercel → Settings → Environment Variables):
+   - `ANTHROPIC_API_KEY`
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `SUPABASE_SERVICE_ROLE_KEY`
+5. Правой кнопкой по сервису → **Attach Volume →** Mount path `/work`. Там лежат рабочие файлы роликов.
+6. Railway сам соберёт и запустит сервер. В **Deployments → Logs** должна появиться строка
+   `YOOMP render worker: жду задачи`.
+
+Ключи вставляются только в Railway, в чат их не пиши.
+
+## Необязательные переменные
+
+| Переменная | По умолчанию | Что делает |
+| --- | --- | --- |
+| `RENDER_BUDGET_USD` | `25` | Потолок в долларах на один ролик |
+| `RENDER_MODEL` | `claude-opus-5-5` | Модель, которая режиссирует ролик |
+| `POLL_SECONDS` | `30` | Как часто проверять очередь |
