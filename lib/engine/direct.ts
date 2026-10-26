@@ -10,6 +10,7 @@ import {
   scanHashtag,
   searchQuery,
   tagsForRun,
+  runRedPill,
   type Found,
 } from "./pipeline";
 import * as store from "./store";
@@ -43,11 +44,16 @@ const SOURCE_TIMEOUT_MS = 150_000;
 const MAX_PARALLEL_TAGS = 6;
 const DIRECT_CREATORS = 4;
 
-export async function searchNow(ws: string, options: RunOptions) {
+export async function searchNow(
+  ws: string,
+  options: RunOptions,
+  existingRunId?: string,
+  kind: "morning" | "evening" | "manual" = "manual",
+) {
   const started = Date.now();
   const left = () => BUDGET_MS - (Date.now() - started);
   const depth = DEPTH[options.depth];
-  const runId = await store.startRun(ws, "manual");
+  const runId = existingRunId ?? (await store.startRun(ws, kind));
   const stats = { scanned: 0, found: 0, selected: 0, excluded: 0 };
   const errors: string[] = [];
 
@@ -132,4 +138,18 @@ function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
       setTimeout(() => reject(new Error("Источник не ответил вовремя")), ms),
     ),
   ]);
+}
+
+// Утренний Red Pill отдельным вызовом: у него свой лимит времени.
+export async function redPillNow(ws: string) {
+  const runId = await store.startRun(ws, "morning");
+  const errors: string[] = [];
+  let redpill = 0;
+  try {
+    await runRedPill(ws, runId);
+    redpill = 1;
+  } catch (e) {
+    errors.push(`Red Pill: ${errorRu(e)}`);
+  }
+  await store.finishRun(runId, { redpill }, errors);
 }

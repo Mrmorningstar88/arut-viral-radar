@@ -142,4 +142,5 @@ export const learnWeekly = inngest.createFunction(
   },
 );
 
-export const functions = [morning, evening, manual, metricsDaily, learnWeekly];
+// Расписание перенесено в Vercel Cron (app/api/cron), здесь остаётся только ручной запуск по событию.
+export const functions = [manual];

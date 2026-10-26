@@ -4,6 +4,8 @@ import { parseRunOptions } from "@/lib/engine/run-options";
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 import { processPendingNow, searchNow } from "@/lib/engine/direct";
+import { errorRu } from "@/lib/engine/pipeline";
+import { startRun } from "@/lib/engine/store";
 import { loadProfile, logCost } from "@/lib/engine/store";
 import { reviseReelAnalysis, type AdaptationEdits } from "@/lib/generate";
 import { MODEL_MAIN } from "@/lib/llm";
@@ -74,7 +76,14 @@ export async function runNow(options?: unknown): Promise<{ error?: string }> {
   const last = (await repo.listRuns())[0];
   if (last && !last.finishedAt && Date.now() - Date.parse(last.startedAt) < 10 * 60_000) return { error: "Поиск уже идёт, подожди пару минут" };
   const ws = process.env.WORKSPACE_ID!;
-  after(() => searchNow(ws, parseRunOptions(options)).catch((e) => console.error("searchNow", e)));
+  // Запись о прогоне создаём сразу: «Идёт поиск» видно после обновления, а ошибка базы придёт в уведомлении.
+  let runId: string;
+  try {
+    runId = await startRun(ws, "manual");
+  } catch (e) {
+    return { error: `Не получилось начать поиск: ${errorRu(e)}` };
+  }
+  after(() => searchNow(ws, parseRunOptions(options), runId).catch((e) => console.error("searchNow", e)));
   revalidatePath("/reels");
   return {};
 }
