@@ -3,11 +3,13 @@ import { redPillNow, searchNow } from "@/lib/engine/direct";
 import * as store from "@/lib/engine/store";
 import { learn } from "@/lib/learning";
 import { collectMetrics } from "@/lib/learning/metrics";
+import { paidWorkspaceIds } from "@/lib/plans";
 import { listProjectIds } from "@/lib/projects";
 
 // Расписание через Vercel Cron (см. vercel.json): поиск в 09:00 и 20:00 по Дубаю, Red Pill утром,
 // метрики своих роликов каждый день, обучение по воскресеньям. Каждая задача идёт по всем проектам.
 // Red Pill только в основном проекте (WORKSPACE_ID): это рубрика твоего блога.
+// Поиск залётов и обучение идут только по проектам админа и Pro-клиентов: у Free они бы жгли деньги.
 export const maxDuration = 300;
 
 export async function GET(request: Request) {
@@ -25,7 +27,9 @@ export async function GET(request: Request) {
     await redPillNow(main);
     return Response.json({ ok: true });
   }
-  const results = await Promise.allSettled((await listProjectIds()).map((ws) => runJob(job, ws)));
+  const [all, paid] = await Promise.all([listProjectIds(), paidWorkspaceIds()]);
+  const targets = all.filter((ws) => ws === main || paid.has(ws));
+  const results = await Promise.allSettled(targets.map((ws) => runJob(job, ws)));
   for (const r of results) if (r.status === "rejected") console.error("cron", job, r.reason);
   return Response.json({ ok: true });
 }

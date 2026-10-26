@@ -3,7 +3,7 @@ import { Inter, Unbounded } from "next/font/google";
 import { Ambient } from "@/components/ui/ambient";
 import { MotionRoot } from "@/components/ui/motion-root";
 import { ToastProvider } from "@/components/ui/toast";
-import { Nav } from "@/components/nav";
+import { NavShell } from "@/components/nav-shell";
 import { Suspense } from "react";
 import { isDemo } from "@/lib/db";
 import "./globals.css";
@@ -25,7 +25,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <MotionRoot>
         <ToastProvider>
         <Suspense fallback={<div className="h-14 border-b border-border" />}>
-          <Nav />
+          <NavShell />
         </Suspense>
         {demo && (
           <div className="border-b border-amber-400/10 bg-amber-400/[0.06] px-4 py-1.5 text-center text-xs text-amber-200/80">

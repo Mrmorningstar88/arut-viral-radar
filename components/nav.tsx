@@ -4,21 +4,22 @@ import Link from "next/link";
 import { motion } from "motion/react";
 import { usePathname } from "next/navigation";
 
-const TABS = [
-  { href: "/", label: "Завод", match: ["/studio"], exact: true },
-  { href: "/reels", label: "Залёты", match: ["/reels", "/sources", "/redpill"] },
-  { href: "/projects", label: "Проекты", match: ["/projects"] },
-  {
-    href: "/settings",
-    label: "⚙ Настройки",
-    match: ["/settings", "/persona", "/learning", "/runs"],
-  },
-];
+type Tab = { href: string; label: string; match: string[]; exact?: boolean };
 
-const isActive = (t: (typeof TABS)[number], path: string) => (t.exact && path === t.href) || t.match.some((m) => path.startsWith(m));
+const FACTORY: Tab = { href: "/", label: "Завод", match: ["/studio"], exact: true };
+const RADAR: Tab = { href: "/reels", label: "Залёты", match: ["/reels", "/sources", "/redpill"] };
+const PROJECTS: Tab = { href: "/projects", label: "Проекты", match: ["/projects", "/welcome"] };
+const SETTINGS: Tab = { href: "/settings", label: "⚙ Настройки", match: ["/settings", "/persona", "/learning", "/runs"] };
+const ADMIN: Tab = { href: "/admin", label: "Клиенты", match: ["/admin"] };
 
-export function Nav() {
+const isActive = (t: Tab, path: string) => (t.exact && path === t.href) || t.match.some((m) => path.startsWith(m));
+
+export type NavUser = { email: string; radar: boolean; admin: boolean } | null;
+
+export function Nav({ user }: { user: NavUser }) {
   const path = usePathname();
+  // Гость видит только логотип и вход; залёты есть у админа и на Pro.
+  const TABS = !user ? [] : [FACTORY, ...(user.radar ? [RADAR] : []), PROJECTS, SETTINGS, ...(user.admin ? [ADMIN] : [])];
   return (
     <>
       <header className="sticky top-0 z-20 border-b border-white/[0.06] bg-black/30 backdrop-blur-2xl backdrop-saturate-[1.8] shadow-[inset_0_-1px_0_rgba(255,255,255,0.06),0_10px_40px_-20px_rgba(0,0,0,0.8)]">
@@ -60,8 +61,19 @@ export function Nav() {
               );
             })}
           </nav>
+          {!user && (
+            <div className="ml-auto flex items-center gap-2 text-sm">
+              <Link href="/login" className="rounded-full px-3 py-1.5 text-muted hover:text-foreground">
+                Войти
+              </Link>
+              <Link href="/login?mode=signup" className="rounded-full bg-white px-4 py-1.5 font-medium text-black">
+                Начать бесплатно
+              </Link>
+            </div>
+          )}
         </div>
       </header>
+      {TABS.length > 0 && (
       <nav className="fixed inset-x-3 bottom-3 z-30 flex justify-around rounded-full glass-strong p-1.5 text-xs md:hidden">
         {TABS.map((t) => {
           const active = isActive(t, path);
@@ -83,6 +95,7 @@ export function Nav() {
           );
         })}
       </nav>
+      )}
     </>
   );
 }

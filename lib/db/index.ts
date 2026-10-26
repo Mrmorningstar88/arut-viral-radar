@@ -1,6 +1,5 @@
 import "server-only";
 import { connection } from "next/server";
-import { requireOwner } from "@/lib/auth/server";
 import { currentWorkspace } from "@/lib/projects";
 import { demoRepo } from "./demo";
 import { supabaseRepo } from "./supabase";
@@ -18,7 +17,6 @@ export function isDemo() {
 export async function getRepo(): Promise<Repo> {
   await connection();
   if (isDemo()) return demoRepo;
-  await requireOwner();
   const ws = await currentWorkspace();
   let repo = repos.get(ws);
   if (!repo) {
