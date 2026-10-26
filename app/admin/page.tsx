@@ -68,7 +68,7 @@ export default async function AdminPage() {
             <tr className="border-b border-white/[0.06]">
               <th className="px-4 py-3 font-medium">Почта</th>
               <th className="px-4 py-3 font-medium">С нами с</th>
-              <th className="px-4 py-3 text-right font-medium">Проекты</th>
+              <th className="px-4 py-3 text-right font-medium">Организации</th>
               <th className="px-4 py-3 text-right font-medium">Сценарии</th>
               <th className="px-4 py-3 text-right font-medium">Ролики</th>
               <th className="px-4 py-3 text-right font-medium">Расход</th>

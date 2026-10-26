@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { authClient, requireAdmin, requireUser } from "@/lib/auth/server";
 import { serviceDb } from "@/lib/engine/store";
+import { linkOf, listBrands, saveLink } from "@/lib/metricool";
+import { currentWorkspace } from "@/lib/projects";
 
 type Result = { error?: string; message?: string };
 
@@ -36,5 +38,39 @@ export async function setPlan(userId: string, plan: "free" | "pro"): Promise<Res
   const res = await d.auth.admin.updateUserById(userId, { app_metadata: meta });
   if (res.error) return { error: res.error.message };
   revalidatePath("/admin");
+  return {};
+}
+
+// Metricool: токен и userId аккаунта проверяются запросом списка брендов, потом бренд выбирается для организации.
+export async function connectMetricool(_: Result | null, fd: FormData): Promise<Result> {
+  const user = await requireUser();
+  const token = String(fd.get("token") ?? "").trim();
+  const userId = String(fd.get("userId") ?? "").trim();
+  if (!token || !/^\d+$/.test(userId)) return { error: "Нужны токен API и userId (только цифры)" };
+  try {
+    const brands = await listBrands({ token, userId });
+    if (brands.length === 0) return { error: "В этом аккаунте Metricool нет брендов" };
+    await saveLink(user, { token, userId, brands: linkOf(user)?.brands ?? {} });
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Не получилось подключиться" };
+  }
+  revalidatePath("/settings");
+  return { message: "Metricool подключён. Теперь выбери бренд для организации." };
+}
+
+export async function chooseBrand(blogId: string): Promise<Result> {
+  const user = await requireUser();
+  const link = linkOf(user);
+  if (!link) return { error: "Сначала подключи Metricool" };
+  const ws = await currentWorkspace();
+  await saveLink(user, { ...link, brands: { ...link.brands, [ws]: blogId } });
+  revalidatePath("/settings");
+  return {};
+}
+
+export async function disconnectMetricool(): Promise<Result> {
+  const user = await requireUser();
+  await saveLink(user, null);
+  revalidatePath("/settings");
   return {};
 }

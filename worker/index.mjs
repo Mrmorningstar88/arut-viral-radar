@@ -62,6 +62,7 @@ function brief(s) {
     "СТОРИБОРД (одобрен автором):",
     ...(sb?.shots ?? []).map((sh) => `${sh.n}. ${sh.dur} с · ${sh.frame}${sh.overlay ? ` · надпись: «${sh.overlay}»` : ""}`),
     sb?.music ? `МУЗЫКА И ТЕМП: ${sb.music}` : "",
+    p.sound ? `ЗВУК ИЗ МЕХАНИКИ ЗАЛЁТА: ${p.sound}` : "",
   ]
     .filter((x) => x !== "")
     .join("\n");

@@ -1,24 +1,28 @@
 import { switchProject } from "@/app/actions";
-import { NewProjectForm } from "@/components/new-project-form";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/ui/reveal";
 import { getRepo, isDemo } from "@/lib/db";
 import { currentWorkspace, listProjects, type Project } from "@/lib/projects";
 
-// Сборка паспорта читает сайт продукта: до пары минут.
-export const maxDuration = 300;
-
 export default async function ProjectsPage() {
   await getRepo(); // проверяет вход владельца
-  if (isDemo()) return <p className="text-muted">Проекты появятся, когда подключена база.</p>;
+  if (isDemo()) return <p className="text-muted">Организации появятся, когда подключена база.</p>;
   const [projects, active] = await Promise.all([listProjects(), currentWorkspace()]);
   const current = projects.find((p) => p.id === active);
 
   return (
     <div className="space-y-6">
       <Reveal>
-        <h1 className="font-display text-2xl font-semibold">Проекты</h1>
-        <p className="mt-1 text-sm text-muted">У каждого проекта свои залёты, сценарии и обучение. Открытый проект видно во всех вкладках.</p>
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h1 className="font-display text-2xl font-semibold">Организации</h1>
+            <p className="mt-1 text-sm text-muted">У каждой организации свой паспорт, свои сценарии, ролики и соцсети.</p>
+          </div>
+          <Link href="/welcome" className="rounded-full bg-[#ff7a2f] px-5 py-2.5 text-sm font-semibold text-black">
+            + Новая организация
+          </Link>
+        </div>
       </Reveal>
 
       <div className="grid gap-4 md:grid-cols-3">
@@ -26,9 +30,9 @@ export default async function ProjectsPage() {
           <Reveal key={p.id} delay={i * 0.04}>
             <div className={`flex h-full flex-col rounded-3xl glass p-5 ${p.id === active ? "ring-1 ring-[#ff7a2f]/60" : ""}`}>
               <h2 className="font-semibold">{p.name}</h2>
-              <p className="mt-1 flex-1 text-sm leading-relaxed text-muted">{p.passport?.oneLiner ?? (p.productUrl ? p.productUrl : "Твой личный блог")}</p>
+              <p className="mt-1 flex-1 text-sm leading-relaxed text-muted">{p.passport?.oneLiner ?? (p.productUrl ? p.productUrl : "Личный блог")}</p>
               {p.id === active ? (
-                <span className="mt-4 text-xs font-medium text-[#ff7a2f]">Открыт сейчас</span>
+                <span className="mt-4 text-xs font-medium text-[#ff7a2f]">Открыта сейчас</span>
               ) : (
                 <form action={switchProject} className="mt-4">
                   <input type="hidden" name="id" value={p.id} />
@@ -39,12 +43,6 @@ export default async function ProjectsPage() {
           </Reveal>
         ))}
       </div>
-
-      <Reveal delay={0.05} className="rounded-3xl glass p-5 md:p-6">
-        <h2 className="font-display text-sm font-semibold tracking-wide uppercase">Новый проект по ссылке</h2>
-        <p className="mt-1 mb-4 text-xs text-muted">Вставь ссылку на продукт. Я прочитаю сайт, соберу паспорт и сразу начну искать залёты в этой нише.</p>
-        <NewProjectForm />
-      </Reveal>
 
       {current?.passport && <PassportView project={current} />}
     </div>
@@ -63,7 +61,7 @@ function PassportView({ project }: { project: Project }) {
   return (
     <Reveal delay={0.08} className="space-y-4">
       <div>
-        <h2 className="font-display text-xl font-semibold">Паспорт: {p.name}</h2>
+        <h2 className="font-display text-xl font-semibold">Паспорт организации: {p.name}</h2>
         <p className="mt-1 text-sm text-muted">{p.oneLiner}</p>
         {project.productUrl && (
           <a href={project.productUrl} target="_blank" rel="noreferrer" className="mt-1 inline-block text-xs text-[#ff7a2f] hover:underline">
@@ -97,7 +95,7 @@ function PassportView({ project }: { project: Project }) {
           <p className="mt-3 text-xs text-muted">Хэштеги для поиска залётов: {p.searchQueries.join(", ")}</p>
         </div>
       </div>
-      <p className="text-xs text-muted">Поправить тексты можно в ⚙ Настройки → Образ проекта.</p>
+      <p className="text-xs text-muted">Поправить тексты можно в ⚙ Настройки → Паспорт организации.</p>
     </Reveal>
   );
 }

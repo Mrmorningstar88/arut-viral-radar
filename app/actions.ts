@@ -173,26 +173,32 @@ export async function learnNow(): Promise<{ error?: string; message?: string }> 
   }
 }
 
-// Новый проект по ссылке: Claude читает сайт, собирает паспорт продукта и образ проекта.
+// Новая организация: название, ссылки, описание и рассказ о себе. Claude всё читает и собирает паспорт.
 export async function createProject(formData: FormData): Promise<{ error?: string }> {
-  if (isDemo()) return { error: "В демо-режиме проекты недоступны" };
+  if (isDemo()) return { error: "В демо-режиме организации недоступны" };
   const user = await requireUser();
   const limit = await overLimit(user, "projects");
   if (limit) return { error: limit };
-  const url = String(formData.get("url") ?? "").trim();
-  if (!/^https?:\/\/[^\s]+\.[^\s]+/.test(url)) return { error: "Нужна ссылка на сайт продукта" };
-  const note = String(formData.get("note") ?? "").trim().slice(0, 600);
+  const text = (k: string, max: number) => String(formData.get(k) ?? "").trim().slice(0, max);
+  const links = text("links", 2000)
+    .split(/[\s,]+/)
+    .filter((l) => /^https?:\/\/[^\s]+\.[^\s]+/.test(l))
+    .slice(0, 8);
+  const input = { name: text("name", 120), links, about: text("about", 3000), me: text("me", 3000) };
+  if (!input.name) return { error: "Впиши название организации" };
+  if (links.length === 0 && input.about.length < 40) return { error: "Добавь ссылку или расскажи об организации хотя бы парой предложений" };
+  const url = links[0] ?? "";
   try {
-    const { passport, usd } = await buildPassport(url, note);
-    const id = await insertProject(user.id, url, passport);
+    const { passport, usd } = await buildPassport(input);
+    const id = await insertProject(user.id, url, { ...passport, name: input.name, input } as typeof passport);
     await logCost(id, null, "anthropic", usd);
     await selectProject(id);
     // Мастер первого запуска сразу заказывает первые сценарии, чтобы доска не была пустой.
-    if (formData.get("start") === "1" && !(await overLimit(user, "scripts", 5))) {
-      after(() => generateScripts(id, 5, "").catch((e) => console.error("generateScripts", e)));
+    if (formData.get("start") === "1" && !(await overLimit(user, "scripts", 10))) {
+      after(() => generateScripts(id, 10, "").catch((e) => console.error("generateScripts", e)));
     }
   } catch (e) {
-    return { error: `Не получилось собрать проект: ${e instanceof Error ? e.message.slice(0, 160) : "ошибка"}` };
+    return { error: `Не получилось собрать организацию: ${e instanceof Error ? e.message.slice(0, 160) : "ошибка"}` };
   }
   revalidatePath("/", "layout");
   return {};

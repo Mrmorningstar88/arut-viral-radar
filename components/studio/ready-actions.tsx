@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { markPublished, retryRender } from "@/app/studio/actions";
+import { markPublished, releaseVideo, retryRender } from "@/app/studio/actions";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 
@@ -46,6 +46,55 @@ export function PublishForm({ id, videoUrl }: { id: string; videoUrl: string }) 
           ✓ Опубликовано
         </Button>
       </div>
+    </div>
+  );
+}
+
+// «Выпустить»: отмечаешь площадки, подключённые к организации, и ролик уходит туда через Metricool.
+export function ReleaseForm({ id, networks }: { id: string; networks: { id: string; label: string }[] }) {
+  const [picked, setPicked] = useState<string[]>(networks.map((n) => n.id));
+  const [pending, start] = useTransition();
+  const toast = useToast();
+  if (networks.length === 0)
+    return (
+      <p className="rounded-2xl bg-white/[0.04] px-4 py-3 text-sm text-muted">
+        Чтобы выпускать ролики одной кнопкой, подключи соцсети организации в{" "}
+        <a href="/settings" className="text-[#ff7a2f] hover:underline">
+          Настройках
+        </a>
+        .
+      </p>
+    );
+  return (
+    <div className="space-y-3 rounded-2xl bg-[#ff7a2f]/[0.07] p-4 ring-1 ring-[#ff7a2f]/25">
+      <p className="text-sm font-medium">Выпустить в:</p>
+      <div className="flex flex-wrap gap-2">
+        {networks.map((n) => {
+          const on = picked.includes(n.id);
+          return (
+            <button
+              key={n.id}
+              type="button"
+              onClick={() => setPicked((xs) => (on ? xs.filter((x) => x !== n.id) : [...xs, n.id]))}
+              className={`rounded-full px-4 py-1.5 text-sm transition ${on ? "bg-white text-black" : "bg-white/[0.06] text-muted"}`}
+            >
+              {on ? "☑" : "☐"} {n.label}
+            </button>
+          );
+        })}
+      </div>
+      <Button
+        variant="primary"
+        disabled={pending || picked.length === 0}
+        onClick={() =>
+          start(async () => {
+            const r = await releaseVideo(id, picked);
+            toast(r.error ?? "Ролик отправлен, через пару минут он выйдет", r.error ? "error" : undefined);
+          })
+        }
+      >
+        {pending ? "Отправляю…" : "🚀 Выпустить"}
+      </Button>
     </div>
   );
 }

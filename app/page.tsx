@@ -11,7 +11,8 @@ import { PLANS, planOf, usage } from "@/lib/plans";
 import { isDemo } from "@/lib/db";
 import { currentWorkspace, listProjects } from "@/lib/projects";
 import { STAGE_HINT, STAGE_LABEL, STAGES, type Stage } from "@/lib/studio/schema";
-import { listScripts, type Script } from "@/lib/studio/store";
+import { listDeclined, listScripts, type Script } from "@/lib/studio/store";
+import { CardActions } from "@/components/studio/card-actions";
 
 // Генерация сценариев идёт в фоне после ответа.
 export const maxDuration = 300;
@@ -23,7 +24,12 @@ export default async function Studio() {
   if (!user) return <Landing />;
   const ws = await currentWorkspace(); // без проектов отправит в мастер первого запуска
   const plan = planOf(user);
-  const [projects, scripts, used] = await Promise.all([listProjects(), listScripts(ws).catch(() => null), plan === "admin" ? null : usage(user.id)]);
+  const [projects, scripts, used, declined] = await Promise.all([
+    listProjects(),
+    listScripts(ws).catch(() => null),
+    plan === "admin" ? null : usage(user.id),
+    listDeclined(ws).catch(() => []),
+  ]);
   const project = projects.find((p) => p.id === ws);
 
   return (
@@ -34,7 +40,7 @@ export default async function Studio() {
       <Reveal delay={0.03} className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-xs font-semibold tracking-widest text-[#ff7a2f] uppercase">Контент-завод</p>
-          <h1 className="font-display text-2xl font-semibold md:text-3xl">{project?.name ?? "Проект"}</h1>
+          <h1 className="font-display text-2xl font-semibold md:text-3xl">{project?.name ?? "Организация"}</h1>
           <p className="mt-1 text-sm text-muted">Сценарии строятся на механиках роликов, которые залетели в Instagram и TikTok. Ты только говоришь «да» или «переделай».</p>
           {used && plan !== "admin" && (
             <Link href="/settings" className="mt-2 inline-flex items-center gap-2 rounded-full bg-white/[0.05] px-3 py-1 text-xs text-muted hover:text-foreground">
@@ -58,7 +64,10 @@ export default async function Studio() {
           )}
         </Reveal>
       ) : (
-        <Board scripts={scripts} warming={scripts.length === 0 && !!project && justCreated(project.createdAt)} />
+        <>
+          <Board scripts={scripts} warming={scripts.length === 0 && !!project && justCreated(project.createdAt)} />
+          {declined.length > 0 && <Declined items={declined} />}
+        </>
       )}
     </div>
   );
@@ -75,7 +84,7 @@ function Board({ scripts, warming }: { scripts: Script[]; warming: boolean }) {
       {warming && (
         <div className="flex items-center gap-3 rounded-2xl bg-[#ff7a2f]/10 px-4 py-3 text-sm ring-1 ring-[#ff7a2f]/25">
           <span className="size-2 animate-ping rounded-full bg-[#ff7a2f]" />
-          Пишу первые 5 сценариев для этого проекта. Они появятся в первой колонке через минуту-две.
+          Пишу первые сценарии для этой организации. Они появятся в первой колонке через минуту-две.
         </div>
       )}
       <div className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-4 [scrollbar-width:none] lg:mx-0 lg:grid lg:grid-cols-5 lg:overflow-visible lg:px-0">
@@ -108,7 +117,7 @@ function Board({ scripts, warming }: { scripts: Script[]; warming: boolean }) {
 }
 
 const EMPTY: Record<Stage, string> = {
-  script: "Нажми «Придумать 5 сценариев»",
+  script: "Нажми «Новые сценарии»",
   storyboard: "Одобри сценарий, и здесь появится сториборд",
   production: "Пока пусто",
   ready: "Пока пусто",
@@ -118,19 +127,38 @@ const EMPTY: Record<Stage, string> = {
 
 function Card({ s }: { s: Script }) {
   return (
-    <Link
-      href={`/studio/${s.id}`}
-      className="group block rounded-2xl border border-white/[0.06] bg-white/[0.03] p-3 transition hover:-translate-y-0.5 hover:border-[#ff7a2f]/40 hover:bg-white/[0.05]"
-    >
-      {s.pillar && <span className="text-[10px] font-semibold tracking-wider text-[#ff7a2f] uppercase">{s.pillar}</span>}
-      <h3 className="mt-0.5 text-sm leading-snug font-semibold">{s.title}</h3>
-      <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted">{s.payload.hook}</p>
-      {s.busy && (
-        <p className="mt-2 flex items-center gap-1.5 text-[11px] text-amber-200">
-          <span className="size-1.5 animate-ping rounded-full bg-[#ff7a2f]" /> Claude работает…
-        </p>
-      )}
-      {s.error && !s.busy && <p className="mt-2 text-[11px] text-rose-300">⚠ {s.error}</p>}
-    </Link>
+    <div className="rounded-2xl border border-white/[0.06] bg-white/[0.03] p-3 transition hover:border-[#ff7a2f]/40 hover:bg-white/[0.05]">
+      <Link href={`/studio/${s.id}`} className="block">
+        {s.pillar && <span className="text-[10px] font-semibold tracking-wider text-[#ff7a2f] uppercase">{s.pillar}</span>}
+        <h3 className="mt-0.5 text-sm leading-snug font-semibold">{s.title}</h3>
+        <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted">{s.payload.hook}</p>
+        {s.busy && (
+          <p className="mt-2 flex items-center gap-1.5 text-[11px] text-amber-200">
+            <span className="size-1.5 animate-ping rounded-full bg-[#ff7a2f]" /> Claude работает…
+          </p>
+        )}
+        {s.error && !s.busy && <p className="mt-2 text-[11px] text-rose-300">⚠ {s.error}</p>}
+      </Link>
+      {!s.busy && <CardActions id={s.id} stage={s.stage} />}
+    </div>
+  );
+}
+
+// Отклонённые «не сейчас»: свёрнуты под доской, любой можно вернуть.
+function Declined({ items }: { items: Script[] }) {
+  return (
+    <details className="rounded-3xl glass p-4">
+      <summary className="cursor-pointer text-sm text-muted">Отклонённые ({items.length})</summary>
+      <ul className="mt-3 space-y-1.5">
+        {items.map((s) => (
+          <li key={s.id} className="flex items-center gap-3 rounded-xl bg-white/[0.03] px-3 py-2 text-sm">
+            <Link href={`/studio/${s.id}`} className="flex-1 truncate hover:text-[#ff7a2f]">
+              {s.title}
+            </Link>
+            <CardActions id={s.id} stage="rejected" />
+          </li>
+        ))}
+      </ul>
+    </details>
   );
 }

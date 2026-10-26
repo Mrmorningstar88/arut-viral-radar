@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AutoRefresh } from "@/components/studio/auto-refresh";
-import { PublishForm, RetryRender } from "@/components/studio/ready-actions";
+import { PublishForm, ReleaseForm, RetryRender } from "@/components/studio/ready-actions";
 import { StageActions } from "@/components/studio/stage-actions";
 import { StylePicker } from "@/components/studio/style-picker";
 import { CopyButton } from "@/components/ui/copy-button";
 import { Panel } from "@/components/ui/panel";
 import { Reveal } from "@/components/ui/reveal";
-import { getRepo } from "@/lib/db";
+import { requireUser } from "@/lib/auth/server";
+import { linkOf, listBrands, NETWORKS } from "@/lib/metricool";
 import { currentWorkspace } from "@/lib/projects";
 import { STAGE_LABEL, STAGES } from "@/lib/studio/schema";
 import { getScript } from "@/lib/studio/store";
@@ -17,9 +18,10 @@ export const maxDuration = 300;
 
 export default async function ScriptPage({ params }: PageProps<"/studio/[id]">) {
   const { id } = await params;
-  await getRepo(); // проверяет вход владельца
-  const s = await getScript(await currentWorkspace(), id);
+  const ws = await currentWorkspace(); // проверяет вход и доступ к организации
+  const s = await getScript(ws, id);
   if (!s) notFound();
+  const networks = s.stage === "ready" ? await releaseTargets(ws) : [];
   const p = s.payload;
   const rendering = s.stage === "production" && (s.renderStatus === "queued" || s.renderStatus === "rendering");
   const step = STAGES.indexOf(s.stage as (typeof STAGES)[number]);
@@ -51,7 +53,7 @@ export default async function ScriptPage({ params }: PageProps<"/studio/[id]">) 
           </p>
         )}
         {s.error && !s.busy && <p className="rounded-2xl bg-rose-500/10 px-4 py-3 text-sm text-rose-200">Не получилось: {s.error}</p>}
-        <StageActions id={s.id} stage={s.stage} busy={s.busy} />
+        <StageActions id={s.id} stage={s.stage} busy={s.busy} edit={{ title: s.title, hook: p.hook, vo: p.vo, onScreen: p.onScreen, caption: p.caption, cta: p.cta }} />
       </Reveal>
 
       {s.stage === "ready" && s.videoUrl && (
@@ -59,8 +61,14 @@ export default async function ScriptPage({ params }: PageProps<"/studio/[id]">) 
           <video src={s.videoUrl} controls playsInline className="aspect-[9/16] w-full rounded-2xl bg-black" />
           <div className="space-y-3">
             <h2 className="font-display text-sm font-semibold tracking-wide uppercase">Ролик готов</h2>
-            <p className="text-sm text-muted">Посмотри. Если всё хорошо, скачай и выложи, потом вставь ссылку на пост. Автопостинг подключим после того, как Instagram будет привязан.</p>
-            <PublishForm id={s.id} videoUrl={s.videoUrl} />
+            <p className="text-sm text-muted">Посмотри. Нравится? Отметь площадки и выпусти.</p>
+            <ReleaseForm id={s.id} networks={networks} />
+            <details className="text-sm">
+              <summary className="cursor-pointer text-xs text-muted">Выложить вручную</summary>
+              <div className="mt-3">
+                <PublishForm id={s.id} videoUrl={s.videoUrl} />
+              </div>
+            </details>
           </div>
         </Reveal>
       )}
@@ -68,6 +76,7 @@ export default async function ScriptPage({ params }: PageProps<"/studio/[id]">) 
       {s.stage === "published" && s.videoUrl && (
         <Reveal delay={0.03} className="flex flex-wrap items-center gap-5 rounded-3xl glass p-5">
           <video src={s.videoUrl} controls playsInline className="aspect-[9/16] w-40 rounded-2xl bg-black" />
+          {s.renderLog && !s.publishedUrl && <p className="text-sm text-muted">{s.renderLog}</p>}
           {s.publishedUrl && <a href={s.publishedUrl} target="_blank" rel="noreferrer" className="text-sm text-[#ff7a2f] hover:underline">Пост в соцсети ↗</a>}
         </Reveal>
       )}
@@ -120,6 +129,7 @@ export default async function ScriptPage({ params }: PageProps<"/studio/[id]">) 
         <Reveal delay={0.06}>
           <Panel title="Хук" subtitle="Первые секунды">
             <p className="text-lg leading-snug font-semibold">{p.hook}</p>
+            {p.sound && <p className="mt-3 rounded-xl bg-white/[0.04] px-3 py-2 text-sm text-muted">🔊 {p.sound}</p>}
           </Panel>
         </Reveal>
         <Reveal delay={0.08}>
@@ -167,4 +177,13 @@ export default async function ScriptPage({ params }: PageProps<"/studio/[id]">) 
       </Reveal>
     </article>
   );
+}
+
+// Площадки, подключённые к организации через Metricool. Ошибка Metricool не должна ронять страницу.
+async function releaseTargets(ws: string) {
+  const link = linkOf(await requireUser());
+  const blogId = link?.brands[ws];
+  if (!link || !blogId) return [];
+  const brand = (await listBrands(link).catch(() => [])).find((b) => b.blogId === blogId);
+  return (brand?.networks ?? []).map((n) => ({ id: n, label: NETWORKS[n] }));
 }

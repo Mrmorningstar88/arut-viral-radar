@@ -87,8 +87,8 @@ export async function createProject(userId: string, url: string, passport: Passp
 }
 
 export async function selectProject(id: string) {
-  if (!UUID.test(id)) throw new Error("Неизвестный проект");
+  if (!UUID.test(id)) throw new Error("Неизвестная организация");
   const ids = await myProjectIds(await requireUser());
-  if (!ids.includes(id)) throw new Error("Нет доступа к проекту");
+  if (!ids.includes(id)) throw new Error("Нет доступа к организации");
   (await cookies()).set(PROJECT_COOKIE, id, { httpOnly: true, sameSite: "lax", secure: true, path: "/", maxAge: 60 * 60 * 24 * 365 });
 }

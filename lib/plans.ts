@@ -15,13 +15,13 @@ export const PLANS: Record<PlanId, { name: string; price: string; limits: Limits
     name: "Free",
     price: "0 $",
     limits: { projects: 1, scripts: 10, videos: 0 },
-    perks: ["1 проект по ссылке", "10 сценариев в месяц", "Сториборды и стили", "Ролики: на Pro"],
+    perks: ["1 организация", "10 сценариев в месяц", "Сториборды и стили", "Готовые ролики: на Pro"],
   },
   pro: {
     name: "Pro",
     price: "по запросу",
     limits: { projects: 5, scripts: 200, videos: 20 },
-    perks: ["5 проектов", "200 сценариев в месяц", "20 готовых роликов в месяц", "Свежие залёты по твоей нише каждый день"],
+    perks: ["5 организаций", "200 сценариев в месяц", "20 готовых роликов в месяц", "Свежие залёты по твоей нише каждый день"],
   },
   admin: {
     name: "Владелец",
@@ -54,7 +54,7 @@ export async function usage(userId: string): Promise<Limits> {
 }
 
 const LIMIT_TEXT: Record<keyof Limits, string> = {
-  projects: "На твоём тарифе больше проектов не помещается.",
+  projects: "На твоём тарифе больше организаций не помещается.",
   scripts: "Лимит сценариев на этот месяц исчерпан.",
   videos: "Готовые ролики доступны на тарифе Pro.",
 };

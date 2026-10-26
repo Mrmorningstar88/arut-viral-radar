@@ -13,7 +13,7 @@ const unbounded = Unbounded({ variable: "--font-unbounded", subsets: ["latin", "
 
 export const metadata: Metadata = {
   title: "YOOMP",
-  description: "Контент-завод: залёты, сценарии и ролики для твоих проектов",
+  description: "Контент-завод: залёты, сценарии и ролики для твоих организаций",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
