@@ -23,6 +23,15 @@ export default async function ReelsPage({ searchParams }: PageProps<"/reels">) {
 
   return (
     <div className="space-y-6">
+      <Reveal>
+        <Segmented
+          id="reels-view"
+          items={[
+            { href: "/reels", label: "Каталог", active: true },
+            { href: "/formats", label: "Форматы", active: false },
+          ]}
+        />
+      </Reveal>
       <Reveal className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl font-semibold">Ролики для тебя</h1>

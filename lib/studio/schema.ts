@@ -41,7 +41,8 @@ export const ScriptDraft = z.object({
   style: z.enum(STYLE_SLUGS).describe("Визуальный стиль lemo-opuscar, который лучше всего подходит ролику"),
 });
 // forever: автор убрал сценарий навсегда, похожие больше не предлагаем.
-export type ScriptDraft = z.infer<typeof ScriptDraft> & { forever?: boolean };
+// format / formatX: формат залёта-источника и его отрыв от медианы ниши (из рейтинга форматов).
+export type ScriptDraft = z.infer<typeof ScriptDraft> & { forever?: boolean; format?: string; formatX?: number };
 
 export const ScriptBatch = z.object({ scripts: z.array(ScriptDraft).min(1).max(12) });
 

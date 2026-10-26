@@ -8,7 +8,7 @@ import { usePathname } from "next/navigation";
 type Tab = { href: string; label: string; match: string[]; exact?: boolean };
 
 const FACTORY: Tab = { href: "/", label: "Завод", match: ["/studio"], exact: true };
-const RADAR: Tab = { href: "/reels", label: "Залёты", match: ["/reels", "/sources", "/redpill"] };
+const RADAR: Tab = { href: "/reels", label: "Залёты", match: ["/reels", "/formats", "/sources", "/redpill"] };
 const PROJECTS: Tab = { href: "/projects", label: "Организации", match: ["/projects", "/welcome"] };
 const SETTINGS: Tab = { href: "/settings", label: "⚙ Настройки", match: ["/settings", "/persona", "/learning", "/runs"] };
 const ADMIN: Tab = { href: "/admin", label: "Клиенты", match: ["/admin"] };

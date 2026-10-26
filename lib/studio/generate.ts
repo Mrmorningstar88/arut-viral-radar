@@ -5,7 +5,7 @@ import { loadProfile, logCost, serviceDb } from "@/lib/engine/store";
 import { costUsd, llm, MODEL_MAIN, RefusalError } from "@/lib/llm";
 import { ScriptBatch, Storyboard } from "./schema";
 import { OPUS_STYLES, styleBySlug } from "./styles";
-import { foreverTitles, getScript, insertScripts, listScripts, topFormulas, updateScript } from "./store";
+import { foreverTitles, getScript, insertScripts, listScripts, topFormulas, updateScript, type Formula } from "./store";
 
 async function parse<T extends z.ZodType>(schema: T, system: string, user: string, effort: "medium" | "high" = "high") {
   const res = await llm().beta.messages.parse({
@@ -67,11 +67,11 @@ export async function generateScripts(ws: string, count = 10, wish = "") {
   return made;
 }
 
-async function scriptChunk(ws: string, b: string, formulas: { id: string; line: string }[], titles: string[], wish: string, count: number, note: string) {
+async function scriptChunk(ws: string, b: string, formulas: Formula[], titles: string[], wish: string, count: number, note: string) {
   const user = [
     b,
     formulas.length > 0
-      ? `ЗАЛЁТЫ В НИШЕ (механики для переноса):\n${formulas.map((f, i) => `${i + 1}. ${f.line}`).join("\n\n")}`
+      ? `ЗАЛЁТЫ В НИШЕ (механики для переноса; выше в списке форматы с самым большим отрывом от медианы ниши, бери их чаще):\n${formulas.map((f, i) => `${i + 1}. ${f.line}`).join("\n\n")}`
       : "Залётов в нише пока нет: опирайся на проверенные форматы коротких роликов (хук-вопрос, миф и разоблачение, до/после, список, история клиента).",
     titles.length > 0 && `УЖЕ ЕСТЬ (не повторяй темы):\n- ${titles.slice(0, 60).join("\n- ")}`,
     wish && `ПОЖЕЛАНИЕ АВТОРА: ${wish}`,
@@ -83,7 +83,13 @@ async function scriptChunk(ws: string, b: string, formulas: { id: string; line: 
     .join("\n\n");
   const { out, usd } = await parse(ScriptBatch, `Ты главный сценарист контент-завода. Делаешь короткие вертикальные ролики, которые набирают просмотры за счёт проверенных механик.\n${RULES}`, user, "medium");
   const drafts = out.scripts.slice(0, count);
-  await insertScripts(ws, drafts.map((draft) => ({ draft, sourceReelId: formulas[draft.sourceReel - 1]?.id ?? null })));
+  await insertScripts(
+    ws,
+    drafts.map((draft) => {
+      const f = formulas[draft.sourceReel - 1];
+      return { draft: f?.format ? { ...draft, format: f.format, formatX: f.multiple } : draft, sourceReelId: f?.id ?? null };
+    }),
+  );
   await logCost(ws, null, "anthropic", usd);
   return drafts.length;
 }

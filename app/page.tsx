@@ -12,6 +12,7 @@ import { isDemo } from "@/lib/db";
 import { currentWorkspace, listProjects } from "@/lib/projects";
 import { STAGE_HINT, STAGE_LABEL, STAGES, type Stage } from "@/lib/studio/schema";
 import { STAGE_TONE } from "@/lib/studio/stage-tone";
+import { fmtMultiple, formatLabel } from "@/lib/formats/catalog";
 import { listDeclined, listScripts, type Script } from "@/lib/studio/store";
 import { CardActions } from "@/components/studio/card-actions";
 
@@ -42,7 +43,12 @@ export default async function Studio() {
         <div>
           <p className="text-xs font-semibold tracking-widest text-accent uppercase">Контент-завод</p>
           <h1 className="font-display text-2xl font-semibold md:text-3xl">{project?.name ?? "Организация"}</h1>
-          <p className="mt-1 text-sm text-muted">Сценарии строятся на механиках роликов, которые залетели в Instagram и TikTok. Ты только говоришь «да» или «переделай».</p>
+          <p className="mt-1 text-sm text-muted">
+            Сценарии строятся на механиках роликов, которые залетели в Instagram и TikTok. Ты только говоришь «да» или «переделай».{" "}
+            <Link href="/formats" className="font-medium text-accent hover:underline">
+              Какие форматы залетают →
+            </Link>
+          </p>
           {used && plan !== "admin" && (
             <Link href="/settings" className="mt-2 inline-flex items-center gap-2 rounded-full bg-ink/[0.05] px-3 py-1 text-xs text-muted hover:text-foreground">
               <span className="font-semibold text-foreground">{PLANS[plan].name}</span>
@@ -133,7 +139,15 @@ function Card({ s }: { s: Script }) {
   return (
     <div className={`relative overflow-hidden rounded-2xl neo-btn p-3 pl-4 before:absolute before:inset-y-3 before:left-0 before:w-1 before:rounded-r-full ${STAGE_TONE[s.stage].bar}`}>
       <Link href={`/studio/${s.id}`} className="block">
-        {s.pillar && <span className="text-[10px] font-semibold tracking-wider text-accent uppercase">{s.pillar}</span>}
+        <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          {s.pillar && <span className="text-[10px] font-semibold tracking-wider text-accent uppercase">{s.pillar}</span>}
+          {s.payload.format && (
+            <span className="rounded-full bg-st-prod/15 px-2 py-0.5 text-[10px] font-semibold text-st-prod-ink" title="Формат залёта-источника и его отрыв от медианы ниши">
+              {formatLabel(s.payload.format)}
+              {s.payload.formatX ? ` ${fmtMultiple(s.payload.formatX)}` : ""}
+            </span>
+          )}
+        </span>
         <h3 className="mt-0.5 text-sm leading-snug font-semibold">{s.title}</h3>
         <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted">{s.payload.hook}</p>
         {s.busy && (

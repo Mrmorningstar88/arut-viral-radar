@@ -14,6 +14,7 @@ import {
   type Found,
 } from "./pipeline";
 import * as store from "./store";
+import { classifyMissing } from "@/lib/formats/store";
 
 // Разбор ссылок сразу после добавления, без Inngest: тест работает, даже если расписание ещё не подключено.
 export async function processPendingNow(ws: string) {
@@ -35,6 +36,12 @@ export async function processPendingNow(ws: string) {
     errors.push(errorRu(e));
   }
   await store.finishRun(runId, stats, errors);
+  if (stats.queue > 0) await labelFormats(ws);
+}
+
+// Новые залёты сразу получают формат, чтобы рейтинг форматов был свежим. Сбой разметки не ломает прогон.
+async function labelFormats(ws: string) {
+  await classifyMissing(ws).catch((e) => console.error("classifyMissing", e));
 }
 
 // Ручной поиск прямо на сайте, без Inngest. Всё, что можно, идёт параллельно,
@@ -128,8 +135,10 @@ export async function searchNow(
   }
 
   await store.finishRun(runId, stats, errors);
-  if (stats.selected > 0)
+  if (stats.selected > 0) {
     await store.notify(ws, "run", `Готово: ${stats.selected} новых разборов`);
+    await labelFormats(ws);
+  }
 }
 
 function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
