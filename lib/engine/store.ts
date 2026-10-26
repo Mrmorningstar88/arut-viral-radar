@@ -19,14 +19,17 @@ function check<T>(res: { data: T; error: { message: string } | null }): T {
   return res.data;
 }
 
-export type WorkspaceProfile = { persona: Persona; queries: string[]; taste: string; rules: string[] };
+// isProduct: проект про продукт (есть паспорт), а не про автора-эксперта по деньгам.
+export type WorkspaceProfile = { persona: Persona; queries: string[]; taste: string; rules: string[]; isProduct: boolean };
 
 export async function loadProfile(ws: string): Promise<WorkspaceProfile> {
   const d = serviceDb();
-  const [p, t, r] = await Promise.all([
+  const [p, t, r, w] = await Promise.all([
     d.from("persona").select("*").eq("workspace_id", ws).maybeSingle(),
     d.from("taste_profile").select("summary").eq("workspace_id", ws).maybeSingle(),
     d.from("learned_rules").select("text").eq("workspace_id", ws).eq("status", "approved"),
+    // Колонки passport может ещё не быть в базе: тогда это обычный проект автора.
+    d.from("workspaces").select("passport").eq("id", ws).maybeSingle(),
   ]);
   const row = check(p) as Record<string, unknown> | null;
   return {
@@ -40,6 +43,7 @@ export async function loadProfile(ws: string): Promise<WorkspaceProfile> {
     queries: (row?.search_queries as string[]) ?? [],
     taste: (check(t) as { summary: string } | null)?.summary ?? "",
     rules: ((check(r) as { text: string }[]) ?? []).map((x) => x.text),
+    isProduct: !w.error && (w.data as { passport: unknown } | null)?.passport != null,
   };
 }
 

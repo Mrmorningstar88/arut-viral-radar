@@ -62,11 +62,11 @@ const radarRun = async ({
     }
   }
 
-  const { queries } = await step.run("load-queries", () => store.loadProfile(ws));
+  const { queries, isProduct } = await step.run("load-queries", () => store.loadProfile(ws));
 
   // Сам ищет залёты по хэштегам тем автора: не нужны ни ссылки, ни список креаторов.
   const seed = Math.floor(Date.now() / 43_200_000);
-  const tags = options.hashtags ? pipeline.tagsForRun(queries, depth.tags, seed, options) : [];
+  const tags = options.hashtags ? pipeline.tagsForRun(queries, depth.tags, seed, options, !isProduct) : [];
   for (const tag of tags) {
     try {
       found.push(...(await step.run(`tag-${tag}`, () => pipeline.scanHashtag(tag))));

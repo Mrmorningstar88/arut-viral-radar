@@ -67,3 +67,9 @@ test("настройки пульта: без источников включа�
   const o = parseRunOptions({ hashtags: false, creators: false, search: false });
   assert.ok(o.hashtags);
 });
+
+test("проект-продукт ищет только по своим хэштегам", async () => {
+  const { tagsForRun } = await import("../lib/engine/tags");
+  assert.deepEqual(tagsForRun(["BrainX", "nootropics"], 10, 0, { ru: true, en: true }, false).sort(), ["brainx", "nootropics"]);
+  assert.deepEqual(tagsForRun([], 10, 0, { ru: true, en: true }, false), []);
+});

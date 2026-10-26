@@ -67,6 +67,7 @@ export async function searchNow(
         Math.min(depth.tags, MAX_PARALLEL_TAGS),
         seed,
         options,
+        !profile.isProduct,
       )) {
         sources.push({ label: `#${tag}`, scan: () => scanHashtag(tag) });
       }
