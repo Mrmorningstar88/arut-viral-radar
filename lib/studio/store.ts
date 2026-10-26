@@ -53,6 +53,17 @@ export async function listScripts(ws: string): Promise<Script[]> {
   return (rows as Row[]).map(toScript);
 }
 
+// Отклонённые «не сейчас»: их можно вернуть. «Убранные навсегда» помечены payload.forever.
+export async function listDeclined(ws: string): Promise<Script[]> {
+  const rows = check(await serviceDb().from("scripts").select("*").eq("workspace_id", ws).eq("stage", "rejected").order("updated_at", { ascending: false }).limit(100));
+  return (rows as Row[]).map(toScript).filter((s) => !s.payload.forever);
+}
+
+export async function foreverTitles(ws: string): Promise<string[]> {
+  const rows = check(await serviceDb().from("scripts").select("title").eq("workspace_id", ws).eq("stage", "rejected").eq("payload->>forever", "true").limit(60));
+  return (rows as Row[]).map((r) => r.title as string);
+}
+
 export async function getScript(ws: string, id: string): Promise<Script | null> {
   const row = check(await serviceDb().from("scripts").select("*").eq("workspace_id", ws).eq("id", id).maybeSingle());
   return row ? toScript(row as Row) : null;

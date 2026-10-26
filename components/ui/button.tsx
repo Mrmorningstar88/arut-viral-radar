@@ -2,22 +2,21 @@
 
 import { motion, type HTMLMotionProps } from "motion/react";
 
+// Нажатие рисует CSS (вдавливание за 100 мс), чтобы реакция не ждала пружинной анимации.
+
 type Variant = "primary" | "ghost" | "danger" | "success";
 
 const STYLES: Record<Variant, string> = {
-  primary: "bg-[linear-gradient(180deg,#ff9a55,#ff7a2f_55%,#f06a20)] text-black shadow-[inset_0_1px_0_rgba(255,255,255,0.55),inset_0_-1px_0_rgba(0,0,0,0.18),0_10px_36px_-14px_rgba(255,122,47,0.75)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.6),0_14px_44px_-12px_rgba(255,122,47,0.95)]",
-  ghost: "glass-inset text-foreground hover:bg-white/[0.08]",
-  danger: "border border-rose-400/20 bg-rose-500/10 text-rose-200 hover:bg-rose-500/20",
-  success: "border border-emerald-400/20 bg-emerald-500/10 text-emerald-200 hover:bg-emerald-500/20",
+  primary: "neo-primary text-white",
+  ghost: "neo-btn text-foreground",
+  danger: "neo-btn text-rose-200",
+  success: "neo-btn text-emerald-200",
 };
 
 export function Button({ variant = "ghost", className = "", ...props }: HTMLMotionProps<"button"> & { variant?: Variant }) {
   return (
     <motion.button
-      whileHover={{ y: -1 }}
-      whileTap={{ scale: 0.96 }}
-      transition={{ type: "spring", stiffness: 500, damping: 30 }}
-      className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50 ${STYLES[variant]} ${className}`}
+      className={`inline-flex items-center gap-2 min-h-11 rounded-2xl px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50 ${STYLES[variant]} ${className}`}
       {...props}
     />
   );

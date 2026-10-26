@@ -62,7 +62,7 @@ export default async function ReelPage({ params, searchParams }: PageProps<"/ree
           <Reveal delay={0.03}>
             <Panel title="Оригинал и что из него берём" subtitle={a.original?.summary}>
               <div className="grid gap-5 md:grid-cols-[280px_1fr]">
-                {embed && <iframe src={embed} className="aspect-[9/16] w-full rounded-2xl bg-white" loading="lazy" allowFullScreen title="Оригинал в Instagram" />}
+                {embed && <iframe src={embed} className="aspect-[9/16] w-full rounded-2xl bg-paper" loading="lazy" allowFullScreen title="Оригинал в Instagram" />}
                 <div className="space-y-5">
                   {a.original?.beats && (
                     <ol className="space-y-2 text-sm">
@@ -75,16 +75,16 @@ export default async function ReelPage({ params, searchParams }: PageProps<"/ree
                     </ol>
                   )}
                   {a.original?.mechanic && (
-                    <div className="overflow-hidden rounded-2xl border border-white/[0.07]">
-                      <div className="grid grid-cols-[6.5rem_1fr_1fr] bg-white/[0.04] px-3 py-2 text-xs text-muted">
+                    <div className="overflow-hidden rounded-2xl border border-ink/[0.07]">
+                      <div className="grid grid-cols-[6.5rem_1fr_1fr] bg-ink/[0.04] px-3 py-2 text-xs text-muted">
                         <span />
                         <span>У них</span>
                         <span className="text-amber-200">У тебя</span>
                       </div>
                       {a.original.mechanic.map((m) => (
-                        <div key={m.element} className="grid grid-cols-[6.5rem_1fr_1fr] gap-3 border-t border-white/[0.05] px-3 py-2.5 text-sm">
+                        <div key={m.element} className="grid grid-cols-[6.5rem_1fr_1fr] gap-3 border-t border-ink/[0.05] px-3 py-2.5 text-sm">
                           <span className="font-medium text-muted">{m.element}</span>
-                          <span className="text-white/70">{m.theirs}</span>
+                          <span className="text-ink/70">{m.theirs}</span>
                           <span>{m.yours}</span>
                         </div>
                       ))}
@@ -114,7 +114,7 @@ export default async function ReelPage({ params, searchParams }: PageProps<"/ree
                 <Row k="Формат" v={a.adaptation.format} />
                 <Row k="CTA" v={a.adaptation.cta} />
               </dl>
-              <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-white/[0.05] px-3 py-1 font-mono text-sm tracking-widest">{a.adaptation.keyword}</div>
+              <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-ink/[0.05] px-3 py-1 font-mono text-sm tracking-widest">{a.adaptation.keyword}</div>
             </Panel>
           </Reveal>
 

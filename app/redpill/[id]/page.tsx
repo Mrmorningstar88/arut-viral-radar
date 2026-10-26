@@ -55,7 +55,7 @@ export default async function RedPillStoryPage({ params, searchParams }: PagePro
         <>
           <Reveal delay={0.05} className="grid gap-4 md:grid-cols-[1.1fr_1fr]">
             <Panel title="Что было на самом деле">
-              <p className="mb-4 rounded-2xl bg-white/[0.03] p-3 text-sm leading-relaxed"><span className="text-muted">Пока все смотрели: </span>{a.distraction}</p>
+              <p className="mb-4 rounded-2xl bg-ink/[0.03] p-3 text-sm leading-relaxed"><span className="text-muted">Пока все смотрели: </span>{a.distraction}</p>
               <ol className="space-y-3">
                 {a.facts.map((f, i) => (
                   <li key={i} className="flex gap-3">
@@ -72,7 +72,7 @@ export default async function RedPillStoryPage({ params, searchParams }: PagePro
                 <Row k="Формат" v={a.adaptation.format} />
                 <Row k="CTA" v={a.adaptation.cta} />
               </dl>
-              <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-white/[0.05] px-3 py-1 font-mono text-sm tracking-widest">{a.adaptation.keyword}</div>
+              <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-ink/[0.05] px-3 py-1 font-mono text-sm tracking-widest">{a.adaptation.keyword}</div>
             </Panel>
           </Reveal>
 
@@ -81,7 +81,7 @@ export default async function RedPillStoryPage({ params, searchParams }: PagePro
               <ul className="grid gap-2 md:grid-cols-2">
                 {s.sources.map((src) => (
                   <li key={src.url}>
-                    <a href={src.url} target="_blank" rel="noreferrer" className="flex h-full flex-col gap-1 rounded-2xl border border-white/[0.07] bg-white/[0.02] p-3 transition-colors hover:border-rose-300/30 hover:bg-white/[0.04]">
+                    <a href={src.url} target="_blank" rel="noreferrer" className="flex h-full flex-col gap-1 rounded-2xl border border-ink/[0.07] bg-ink/[0.02] p-3 transition-colors hover:border-rose-300/30 hover:bg-ink/[0.04]">
                       <span className="text-xs text-rose-300">{SOURCE_KIND[src.kind]}</span>
                       <span className="text-sm leading-snug">{src.title} ↗</span>
                       <span className="truncate text-xs text-muted">{host(src.url)}</span>

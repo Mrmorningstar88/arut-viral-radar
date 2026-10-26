@@ -7,8 +7,11 @@ import { requireUser } from "@/lib/auth/server";
 import { overLimit } from "@/lib/plans";
 import { currentWorkspace } from "@/lib/projects";
 import { buildStoryboard, generateScripts, reviseScript } from "@/lib/studio/generate";
-import { updateScript } from "@/lib/studio/store";
+import { linkOf, NETWORKS, publishVideo } from "@/lib/metricool";
+import { getScript, updateScript } from "@/lib/studio/store";
 import { styleBySlug } from "@/lib/studio/styles";
+import { z } from "zod";
+import type { ScriptDraft } from "@/lib/studio/schema";
 
 type Result = { error?: string };
 
@@ -29,12 +32,13 @@ function background(ws: string, id: string, job: () => Promise<void>) {
   after(() => job().catch((e) => updateScript(ws, id, { busy: false, error: msg(e) }).catch(console.error)));
 }
 
-export async function createScripts(wish: string): Promise<Result> {
+export async function createScripts(wish: string, count = 10): Promise<Result> {
+  const n = [5, 10, 30].includes(count) ? count : 10;
   try {
     const ws = await workspace();
-    const limit = await overLimit(await requireUser(), "scripts", 5);
+    const limit = await overLimit(await requireUser(), "scripts", n);
     if (limit) return { error: limit };
-    after(() => generateScripts(ws, 5, wish.trim().slice(0, 400)).catch((e) => console.error("generateScripts", e)));
+    after(() => generateScripts(ws, n, wish.trim().slice(0, 400)).catch((e) => console.error("generateScripts", e)));
     return {};
   } catch (e) {
     return { error: msg(e) };
@@ -94,10 +98,97 @@ export async function approveStoryboard(id: string, style?: string): Promise<Res
   }
 }
 
+// «Отклонить» убирает с доски, но сценарий можно вернуть. «Навсегда» ещё и учит генератор не предлагать похожее.
 export async function rejectScript(id: string): Promise<Result> {
   try {
     const ws = await workspace();
     await updateScript(ws, id, { stage: "rejected", busy: false });
+    refresh(id);
+    return {};
+  } catch (e) {
+    return { error: msg(e) };
+  }
+}
+
+export async function rejectForever(id: string): Promise<Result> {
+  try {
+    const ws = await workspace();
+    const s = await getScript(ws, id);
+    if (!s) return { error: "Сценарий не найден" };
+    await updateScript(ws, id, { stage: "rejected", busy: false, payload: { ...s.payload, forever: true } });
+    refresh(id);
+    return {};
+  } catch (e) {
+    return { error: msg(e) };
+  }
+}
+
+export async function restoreScript(id: string): Promise<Result> {
+  try {
+    const ws = await workspace();
+    await updateScript(ws, id, { stage: "script", busy: false, error: null });
+    refresh(id);
+    return {};
+  } catch (e) {
+    return { error: msg(e) };
+  }
+}
+
+// Ручная правка сценария: автор сам меняет текст, остальное (механика, стиль) остаётся.
+export type ScriptEdit = Pick<ScriptDraft, "title" | "hook" | "vo" | "onScreen" | "caption" | "cta">;
+
+// Данные из браузера проверяются на сервере: тип в TypeScript ничего не гарантирует.
+const EditInput = z.object({
+  title: z.string().max(400),
+  hook: z.string().max(2000),
+  vo: z.array(z.object({ t: z.string().max(40), text: z.string().max(2000) })).max(30),
+  onScreen: z.array(z.string().max(400)).max(30),
+  caption: z.string().max(5000),
+  cta: z.string().max(1000),
+});
+
+export async function editScript(id: string, input: ScriptEdit): Promise<Result> {
+  const parsed = EditInput.safeParse(input);
+  if (!parsed.success) return { error: "Не получилось прочитать правку, попробуй ещё раз" };
+  const edit = parsed.data;
+  if (!edit.title.trim() || !edit.hook.trim() || edit.vo.every((v) => !v.text.trim())) return { error: "Название, хук и озвучка не могут быть пустыми" };
+  try {
+    const ws = await workspace();
+    const s = await getScript(ws, id);
+    if (!s) return { error: "Сценарий не найден" };
+    if (s.stage !== "script") return { error: "Править можно только сценарий до сториборда" };
+    const payload = {
+      ...s.payload,
+      title: edit.title.trim().slice(0, 120),
+      hook: edit.hook.trim().slice(0, 600),
+      vo: edit.vo.filter((v) => v.text.trim()).map((v) => ({ t: v.t.trim(), text: v.text.trim() })).slice(0, 12),
+      onScreen: edit.onScreen.map((x) => x.trim()).filter(Boolean).slice(0, 8),
+      caption: edit.caption.trim().slice(0, 2200),
+      cta: edit.cta.trim().slice(0, 300),
+    };
+    await updateScript(ws, id, { payload, title: payload.title, error: null });
+    refresh(id);
+    return {};
+  } catch (e) {
+    return { error: msg(e) };
+  }
+}
+
+// «Выпустить»: ролик уходит в выбранные соцсети организации через Metricool.
+export async function releaseVideo(id: string, picked: string[]): Promise<Result> {
+  const networks = [...new Set(picked)].filter((n) => n in NETWORKS);
+  if (networks.length === 0) return { error: "Выбери хотя бы одну площадку" };
+  try {
+    const ws = await workspace();
+    const user = await requireUser();
+    const link = linkOf(user);
+    const blogId = link?.brands[ws];
+    if (!link || !blogId) return { error: "Сначала подключи соцсети организации в настройках" };
+    const s = await getScript(ws, id);
+    if (!s?.videoUrl) return { error: "Ролик ещё не готов" };
+    if (s.stage === "published") return { error: "Этот ролик уже выпущен" }; // повторное нажатие не публикует дубль
+    await publishVideo(link, blogId, { videoUrl: s.videoUrl, text: [s.payload.caption, s.payload.cta].filter(Boolean).join("\n\n"), networks });
+    await updateScript(ws, id, { stage: "published", published_url: null, render_log: `Отправлено в ${networks.join(", ")} через Metricool` });
     refresh(id);
     return {};
   } catch (e) {

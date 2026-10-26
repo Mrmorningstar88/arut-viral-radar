@@ -21,7 +21,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   return (
     <Ctx.Provider value={push}>
       {children}
-      <div className="pointer-events-none fixed inset-x-0 bottom-6 z-50 flex flex-col items-center gap-2 px-4">
+      <div role="status" aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-6 z-50 flex flex-col items-center gap-2 px-4">
         <AnimatePresence>
           {items.map((t) => (
             <motion.div
@@ -30,7 +30,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               initial={{ opacity: 0, y: 20, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 10, scale: 0.95 }}
-              className={`rounded-2xl border px-4 py-2.5 text-sm font-medium shadow-2xl backdrop-blur-xl ${t.tone === "ok" ? "border-white/10 bg-zinc-900/90" : "border-rose-400/30 bg-rose-950/90 text-rose-100"}`}
+              className={`rounded-2xl glass-strong px-4 py-2.5 text-sm font-medium ${t.tone === "ok" ? "text-foreground" : "text-rose-200"}`}
             >
               {t.text}
             </motion.div>

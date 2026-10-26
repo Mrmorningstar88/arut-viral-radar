@@ -5,7 +5,7 @@ import { addCreator, addToQueue, processQueueNow } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 
-const INPUT = "w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 outline-none transition placeholder:text-white/30 focus:border-amber-400/50";
+const INPUT = "w-full rounded-2xl border border-ink/10 bg-paper/30 px-4 py-3 outline-none transition placeholder:text-ink/30 focus:border-accent/50";
 
 export function AddReelForm({ compact = false }: { compact?: boolean }) {
   const [pending, start] = useTransition();

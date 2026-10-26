@@ -40,14 +40,14 @@ export function ReelCatalog({ reels }: { reels: ReelCard[] }) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setOpenId(null)}
-            className="fixed inset-0 z-40 overflow-y-auto bg-black/55 p-3 backdrop-blur-xl md:p-8"
+            className="fixed inset-0 z-40 overflow-y-auto bg-paper/55 p-3 backdrop-blur-xl md:p-8"
           >
             <motion.article
               layoutId={`tile-${open.id}`}
               onClick={(e) => e.stopPropagation()}
               className="relative mx-auto grid max-w-5xl gap-5 overflow-hidden rounded-3xl glass-strong p-4 md:grid-cols-[320px_1fr] md:p-6"
             >
-              <button onClick={() => setOpenId(null)} className="absolute top-3 right-3 z-10 grid size-8 place-items-center rounded-full bg-white/10 text-sm hover:bg-white/20" aria-label="Закрыть">✕</button>
+              <button onClick={() => setOpenId(null)} className="absolute top-3 right-3 z-10 grid size-8 place-items-center rounded-full bg-ink/10 text-sm hover:bg-ink/20" aria-label="Закрыть">✕</button>
               <Original reel={open} />
               <Details reel={open} />
             </motion.article>
@@ -89,22 +89,22 @@ function Tile({ reel: r, index, onOpen }: { reel: ReelCard; index: number; onOpe
       }}
       onClick={onOpen}
       style={{ rotateX: rx, rotateY: ry, transformPerspective: 900 }}
-      className="glass sheen group relative aspect-[9/16] overflow-hidden rounded-2xl text-left transition-shadow duration-500 hover:shadow-[0_40px_80px_-30px_rgba(0,0,0,1),0_0_70px_-20px_rgba(255,122,47,0.35)]"
+      className="glass sheen group relative aspect-[9/16] overflow-hidden rounded-2xl text-left transition-shadow duration-500 hover:shadow-[0_40px_80px_-30px_rgba(0,0,0,1),0_0_70px_-20px_rgba(91,108,255,0.35)]"
     >
       <Cover reel={r} />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-1/3 rounded-t-2xl bg-gradient-to-b from-white/[0.12] to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-t from-paper/90 via-paper/20 to-transparent" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-1/3 rounded-t-2xl bg-gradient-to-b from-ink/[0.12] to-transparent" />
       <motion.div style={{ background: glow }} className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
       <div className="absolute top-2 left-2 flex items-center gap-1">
         <StatusBadge status={r.status} />
       </div>
       {r.fitScore != null && (
-        <span className="absolute top-2 right-2 rounded-full bg-black/50 px-2 py-0.5 text-xs font-semibold text-amber-200 ring-1 ring-white/10 backdrop-blur-md">{r.fitScore}</span>
+        <span className="absolute top-2 right-2 rounded-full bg-paper/50 px-2 py-0.5 text-xs font-semibold text-amber-200 ring-1 ring-ink/10 backdrop-blur-md">{r.fitScore}</span>
       )}
       <div className="absolute inset-x-0 bottom-0 space-y-1 p-3 transition-transform duration-500 group-hover:-translate-y-1">
         <p className="text-xs font-semibold text-amber-200">{r.lanes.map((l) => LANE[l]).join(" ")} {compact(r.views)}</p>
         <p className="line-clamp-3 text-sm leading-snug font-semibold">{r.summary?.hook ?? r.caption ?? r.url}</p>
-        <p className="text-xs text-white/50">@{r.author}</p>
+        <p className="text-xs text-ink/50">@{r.author}</p>
       </div>
     </motion.button>
   );
@@ -124,7 +124,7 @@ function Original({ reel }: { reel: ReelCard }) {
     <div className="space-y-2">
       <p className="text-xs font-semibold tracking-widest text-muted uppercase">Оригинал</p>
       {embed ? (
-        <iframe src={embed} className="aspect-[9/16] w-full rounded-2xl bg-white" loading="lazy" allowFullScreen title="Оригинал в Instagram" />
+        <iframe src={embed} className="aspect-[9/16] w-full rounded-2xl bg-paper" loading="lazy" allowFullScreen title="Оригинал в Instagram" />
       ) : (
         <div className="relative aspect-[9/16] overflow-hidden rounded-2xl"><Cover reel={reel} /></div>
       )}
@@ -142,22 +142,22 @@ function Details({ reel }: { reel: ReelCard }) {
           @{reel.author} · <span className="font-semibold text-amber-200">{compact(reel.views)}</span> просмотров · {compact(reel.likes)} лайков
         </p>
         <h2 className="font-display text-xl leading-snug font-semibold">«{s?.hook ?? reel.caption}»</h2>
-        {s && <p className="text-sm leading-relaxed text-white/75">{s.concept}</p>}
+        {s && <p className="text-sm leading-relaxed text-ink/75">{s.concept}</p>}
       </div>
 
       {s && s.mechanic.length > 0 && (
         <div>
           <p className="mb-2 text-xs font-semibold tracking-widest text-muted uppercase">Что берём из залёта</p>
-          <div className="overflow-hidden rounded-2xl border border-white/[0.07]">
-            <div className="grid grid-cols-[6.5rem_1fr_1fr] bg-white/[0.04] px-3 py-2 text-xs text-muted">
+          <div className="overflow-hidden rounded-2xl border border-ink/[0.07]">
+            <div className="grid grid-cols-[6.5rem_1fr_1fr] bg-ink/[0.04] px-3 py-2 text-xs text-muted">
               <span />
               <span>У них</span>
               <span className="text-amber-200">У тебя</span>
             </div>
             {s.mechanic.map((m) => (
-              <div key={m.element} className="grid grid-cols-[6.5rem_1fr_1fr] gap-3 border-t border-white/[0.05] px-3 py-2.5 text-sm">
+              <div key={m.element} className="grid grid-cols-[6.5rem_1fr_1fr] gap-3 border-t border-ink/[0.05] px-3 py-2.5 text-sm">
                 <span className="font-medium text-muted">{m.element}</span>
-                <span className="text-white/70">{m.theirs}</span>
+                <span className="text-ink/70">{m.theirs}</span>
                 <span>{m.yours}</span>
               </div>
             ))}
@@ -174,9 +174,9 @@ function Details({ reel }: { reel: ReelCard }) {
         </div>
       )}
 
-      <div className="mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-white/[0.06] pt-4">
+      <div className="mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-ink/[0.06] pt-4">
         <StatusControls id={reel.id} status={reel.status} />
-        <Link href={`/reels/${reel.id}`} className="rounded-xl bg-white/[0.06] px-4 py-2 text-sm font-medium hover:bg-white/[0.12]">
+        <Link href={`/reels/${reel.id}`} className="rounded-xl bg-ink/[0.06] px-4 py-2 text-sm font-medium hover:bg-ink/[0.12]">
           Сценарий и 3D-раскадровка →
         </Link>
       </div>

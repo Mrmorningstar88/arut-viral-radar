@@ -13,7 +13,7 @@ const unbounded = Unbounded({ variable: "--font-unbounded", subsets: ["latin", "
 
 export const metadata: Metadata = {
   title: "YOOMP",
-  description: "Контент-завод: залёты, сценарии и ролики для твоих проектов",
+  description: "Контент-завод: залёты, сценарии и ролики для твоих организаций",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -28,7 +28,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <NavShell />
         </Suspense>
         {demo && (
-          <div className="border-b border-amber-400/10 bg-amber-400/[0.06] px-4 py-1.5 text-center text-xs text-amber-200/80">
+          <div className="border-b border-ink/10 bg-accent/[0.08] px-4 py-1.5 text-center text-xs text-accent">
             Демо-режим: база не подключена, данные вымышленные и сбрасываются при перезапуске.
           </div>
         )}

@@ -8,7 +8,7 @@ import { CopyButton } from "@/components/ui/copy-button";
 
 const Scene3D = dynamic(() => import("./scene3d"), {
   ssr: false,
-  loading: () => <div className="absolute inset-0 animate-pulse bg-white/5" />,
+  loading: () => <div className="absolute inset-0 animate-pulse bg-ink/5" />,
 });
 
 type Vo = { t: string; text: string };
@@ -66,12 +66,12 @@ export function StoryboardStudio({ storyboard, vo }: { storyboard: Shot[]; vo: V
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(260px,340px)_1fr]">
       <div className="lg:sticky lg:top-20 lg:self-start">
-        <div className="relative mx-auto aspect-[9/16] w-full max-w-[340px] overflow-hidden rounded-[28px] border border-white/10 bg-black shadow-[0_30px_80px_-20px_rgba(245,181,68,0.25)]">
+        <div className="relative mx-auto aspect-[9/16] w-full max-w-[340px] overflow-hidden rounded-[28px] border border-ink/10 bg-black shadow-[0_30px_80px_-20px_rgba(75,87,232,0.3)]">
           <Scene3D scene={shot.scene} progress={progress} />
 
-          <div className="pointer-events-none absolute inset-x-0 top-0 flex items-center justify-between p-3 text-[11px] font-medium text-white/80">
-            <span className="rounded-full bg-black/50 px-2 py-1 backdrop-blur">Кадр {shot.n} · {SHOT_LABEL[shot.scene.shot]}</span>
-            <span className="rounded-full bg-black/50 px-2 py-1 tabular-nums backdrop-blur">{time.toFixed(1)} / {total} с</span>
+          <div className="pointer-events-none absolute inset-x-0 top-0 flex items-center justify-between p-3 text-[11px] font-medium text-ink/80">
+            <span className="rounded-full bg-paper/50 px-2 py-1 backdrop-blur">Кадр {shot.n} · {SHOT_LABEL[shot.scene.shot]}</span>
+            <span className="rounded-full bg-paper/50 px-2 py-1 tabular-nums backdrop-blur">{time.toFixed(1)} / {total} с</span>
           </div>
 
           <AnimatePresence mode="wait">
@@ -83,7 +83,7 @@ export function StoryboardStudio({ storyboard, vo }: { storyboard: Shot[]; vo: V
               transition={{ type: "spring", stiffness: 260, damping: 24 }}
               className="pointer-events-none absolute inset-x-4 bottom-[22%] text-center"
             >
-              <span className="inline-block rounded-xl bg-white px-3 py-2 text-base leading-tight font-extrabold text-black shadow-lg">
+              <span className="inline-block rounded-xl bg-paper px-3 py-2 text-base leading-tight font-extrabold text-ink shadow-lg">
                 {shot.overlay}
               </span>
             </motion.div>
@@ -109,10 +109,10 @@ export function StoryboardStudio({ storyboard, vo }: { storyboard: Shot[]; vo: V
                   key={s.n}
                   onClick={() => seek(starts[i])}
                   style={{ flexGrow: s.dur }}
-                  className="relative overflow-hidden rounded-full bg-white/10 transition hover:bg-white/20"
+                  className="relative overflow-hidden rounded-full bg-ink/10 transition hover:bg-ink/20"
                   aria-label={`Кадр ${s.n}`}
                 >
-                  <span className="absolute inset-y-0 left-0 rounded-full bg-white/80" style={{ width: `${Math.min(1, fill) * 100}%` }} />
+                  <span className="absolute inset-y-0 left-0 rounded-full bg-ink/80" style={{ width: `${Math.min(1, fill) * 100}%` }} />
                 </button>
               );
             })}
@@ -123,7 +123,7 @@ export function StoryboardStudio({ storyboard, vo }: { storyboard: Shot[]; vo: V
               whileHover={{ scale: 1.06 }}
               whileTap={{ scale: 0.92 }}
               onClick={() => setPlaying((p) => !p)}
-              className="grid size-12 place-items-center rounded-full bg-[linear-gradient(180deg,#ff9a55,#ff7a2f)] text-lg text-black shadow-[inset_0_1px_0_rgba(255,255,255,0.5),0_8px_28px_-8px_rgba(255,122,47,0.8)]"
+              className="grid size-12 place-items-center rounded-full bg-[linear-gradient(180deg,#7b8cff,#5b6cff)] text-lg text-ink shadow-[inset_0_1px_0_rgba(255,255,255,0.5),0_8px_28px_-8px_rgba(91,108,255,0.8)]"
               aria-label={playing ? "Пауза" : "Играть"}
             >
               {playing ? "❚❚" : "▶"}
@@ -145,7 +145,7 @@ export function StoryboardStudio({ storyboard, vo }: { storyboard: Shot[]; vo: V
                   key={i}
                   onClick={() => seek(Math.min(a, total - 0.01))}
                   animate={{ opacity: active ? 1 : 0.55, x: active ? 4 : 0 }}
-                  className={`flex cursor-pointer gap-3 rounded-xl px-3 py-2 transition-colors ${active ? "bg-amber-400/10 ring-1 ring-amber-400/40" : "hover:bg-white/5"}`}
+                  className={`flex cursor-pointer gap-3 rounded-xl px-3 py-2 transition-colors ${active ? "bg-amber-400/10 ring-1 ring-amber-400/40" : "hover:bg-ink/5"}`}
                 >
                   <span className="w-16 shrink-0 pt-0.5 font-mono text-xs whitespace-nowrap text-amber-300/80">{v.t} с</span>
                   <span className="text-[15px] leading-relaxed">{v.text}</span>
@@ -166,7 +166,7 @@ export function StoryboardStudio({ storyboard, vo }: { storyboard: Shot[]; vo: V
                 key={s.n}
                 onClick={() => seek(starts[i])}
                 animate={{ scale: i === idx ? 1 : 0.985 }}
-                className={`cursor-pointer rounded-2xl border p-4 text-sm transition-colors ${i === idx ? "border-amber-400/60 bg-amber-400/[0.06]" : "border-border bg-card hover:border-white/20"}`}
+                className={`cursor-pointer rounded-2xl border p-4 text-sm transition-colors ${i === idx ? "border-amber-400/60 bg-amber-400/[0.06]" : "border-border bg-card hover:border-ink/20"}`}
               >
                 <div className="flex items-center justify-between text-xs text-muted">
                   <span className="font-semibold text-foreground">Кадр {s.n}</span>
@@ -178,7 +178,7 @@ export function StoryboardStudio({ storyboard, vo }: { storyboard: Shot[]; vo: V
                 </div>
                 <p className="mt-2">{s.frame}</p>
                 <p className="mt-1 font-semibold">«{s.overlay}»</p>
-                <div className="mt-3 rounded-xl bg-black/30 p-2.5 font-mono text-[11px] leading-relaxed text-white/70">{s.prompt}</div>
+                <div className="mt-3 rounded-xl bg-paper/30 p-2.5 font-mono text-[11px] leading-relaxed text-ink/70">{s.prompt}</div>
                 <div className="mt-2 flex justify-end" onClick={(e) => e.stopPropagation()}>
                   <CopyButton text={s.prompt} />
                 </div>
@@ -192,7 +192,7 @@ export function StoryboardStudio({ storyboard, vo }: { storyboard: Shot[]; vo: V
 }
 
 function Chip({ children }: { children: React.ReactNode }) {
-  return <span className="rounded-full bg-white/[0.06] px-2 py-0.5 text-[11px] text-white/70">{children}</span>;
+  return <span className="rounded-full bg-ink/[0.06] px-2 py-0.5 text-[11px] text-ink/70">{children}</span>;
 }
 
 function IconButton({ children, label, onClick }: { children: React.ReactNode; label: string; onClick: () => void }) {
@@ -202,7 +202,7 @@ function IconButton({ children, label, onClick }: { children: React.ReactNode; l
       whileTap={{ scale: 0.9 }}
       onClick={onClick}
       aria-label={label}
-      className="grid size-10 place-items-center rounded-full border border-white/10 bg-white/5 text-sm text-white/80 hover:bg-white/10"
+      className="grid size-10 place-items-center rounded-full border border-ink/10 bg-ink/5 text-sm text-ink/80 hover:bg-ink/10"
     >
       {children}
     </motion.button>

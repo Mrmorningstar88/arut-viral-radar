@@ -37,7 +37,7 @@ export function PasswordForm() {
         required
         autoComplete="new-password"
         placeholder="Новый пароль"
-        className="min-w-0 flex-1 rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-sm outline-none focus:border-[#ff7a2f]/60"
+        className="min-w-0 flex-1 rounded-xl border border-ink/10 bg-paper/30 px-3 py-2 text-sm outline-none focus:border-accent/60"
       />
       <Button type="submit" disabled={pending}>
         {pending ? "Сохраняю…" : "Сохранить"}

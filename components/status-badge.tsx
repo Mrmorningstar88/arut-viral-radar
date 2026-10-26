@@ -1,11 +1,11 @@
 import { STATUS_LABEL, type ReelStatus } from "@/lib/db/types";
 
 const TONE: Record<ReelStatus, string> = {
-  new: "bg-sky-400/10 text-sky-300 ring-sky-400/20",
-  in_work: "bg-amber-400/10 text-amber-300 ring-amber-400/25",
-  rejected: "bg-white/5 text-white/40 ring-white/10",
-  filmed: "bg-violet-400/10 text-violet-300 ring-violet-400/20",
-  published: "bg-emerald-400/10 text-emerald-300 ring-emerald-400/20",
+  new: "bg-sky-500/10 text-sky-800 ring-sky-500/25",
+  in_work: "bg-accent/10 text-accent ring-accent/25",
+  rejected: "bg-ink/5 text-muted ring-ink/10",
+  filmed: "bg-violet-400/10 text-violet-800 ring-violet-400/25",
+  published: "bg-emerald-400/10 text-emerald-200 ring-emerald-400/25",
 };
 
 export function StatusBadge({ status }: { status: ReelStatus }) {

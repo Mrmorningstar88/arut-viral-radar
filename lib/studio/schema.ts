@@ -16,7 +16,7 @@ export const STAGE_LABEL: Record<Stage, string> = {
 };
 
 export const STAGE_HINT: Record<Stage, string> = {
-  script: "Ждут твоего «да»",
+  script: "Одобри, измени или отклони",
   storyboard: "Посмотри кадры и одобри",
   production: "Opuscar рендерит ролик",
   ready: "Посмотри и опубликуй",
@@ -36,12 +36,14 @@ export const ScriptDraft = z.object({
   onScreen: z.array(z.string()).max(6).describe("Ключевые надписи на экране"),
   caption: z.string().describe("Подпись к посту"),
   cta: z.string(),
+  sound: z.string().describe("Звук: какая музыка или трендовый тип трека, темп, звуковые акценты (удар на хуке, whoosh на смене кадра); как звук работал в залёте"),
   whyItWorks: z.array(z.string()).min(2).max(3).describe("Почему зайдёт: опора на механику залёта и боль аудитории"),
   style: z.enum(STYLE_SLUGS).describe("Визуальный стиль lemo-opuscar, который лучше всего подходит ролику"),
 });
-export type ScriptDraft = z.infer<typeof ScriptDraft>;
+// forever: автор убрал сценарий навсегда, похожие больше не предлагаем.
+export type ScriptDraft = z.infer<typeof ScriptDraft> & { forever?: boolean };
 
-export const ScriptBatch = z.object({ scripts: z.array(ScriptDraft).min(1).max(8) });
+export const ScriptBatch = z.object({ scripts: z.array(ScriptDraft).min(1).max(12) });
 
 export const StoryShot = z.object({
   n: z.number().int(),
