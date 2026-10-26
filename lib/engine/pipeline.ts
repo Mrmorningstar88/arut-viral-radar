@@ -100,7 +100,7 @@ export async function rank(ws: string, found: Found[], take = MAX_NEW_PER_RUN, s
     igId: f.extId, views: f.views, postedAt: new Date(f.postedAt), authorFollowers: f.followers,
   }));
   const pick = strictOnly ? pickTop : pickWithFallback;
-  return pick(candidates, existing, take * 2).map((c) => byId.get(c.igId)!);
+  return pick(candidates, existing, take * 3).map((c) => byId.get(c.igId)!);
 }
 
 export async function analyzeCandidate(ws: string, runId: string, f: Found) {

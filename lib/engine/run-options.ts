@@ -26,9 +26,9 @@ export const DEPTH: Record<
   Depth,
   { tags: number; take: number; label: string }
 > = {
-  quick: { tags: 3, take: 2, label: "Быстро" },
-  normal: { tags: 6, take: 4, label: "Обычно" },
-  deep: { tags: 14, take: 8, label: "Глубоко" },
+  quick: { tags: 4, take: 4, label: "Быстро" },
+  normal: { tags: 8, take: 8, label: "Обычно" },
+  deep: { tags: 12, take: 12, label: "Глубоко" },
 };
 
 export function parseRunOptions(raw: unknown): RunOptions {

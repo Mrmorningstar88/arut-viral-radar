@@ -7,6 +7,7 @@ export function runSummary(r: Run) {
     s.scanned != null && `проверил ${s.scanned} источников`,
     s.found != null && `нашёл ${s.found} залётов`,
     s.selected != null && `отобрал ${s.selected}`,
+    s.excluded ? `отсеял фильтром ${s.excluded}` : null,
     s.queue ? `разобрал из ссылок ${s.queue}` : null,
     s.redpill ? "сюжет Red Pill готов" : null,
   ].filter(Boolean);

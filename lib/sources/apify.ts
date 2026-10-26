@@ -74,7 +74,7 @@ export function apifySource(token: string): InstagramSource & {
       } satisfies ReelDetails;
     },
     // Ролики по хэштегу: так радар сам находит авторов, о которых ты ещё не знаешь.
-    async getHashtagReels(tag: string, limit = 40) {
+    async getHashtagReels(tag: string, limit = 60) {
       const items = await run(HASHTAG_ACTOR, { hashtags: [tag], resultsType: "reels", resultsLimit: limit });
       return items
         .filter((it) => !it.error)

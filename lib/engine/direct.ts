@@ -40,8 +40,8 @@ export async function processPendingNow(ws: string) {
 // Ручной поиск прямо на сайте, без Inngest. Всё, что можно, идёт параллельно,
 // а разборы останавливаются заранее, чтобы уложиться в лимит функции Vercel (300 с).
 const BUDGET_MS = 250_000;
-const SOURCE_TIMEOUT_MS = 150_000;
-const MAX_PARALLEL_TAGS = 6;
+const SOURCE_TIMEOUT_MS = 120_000;
+const MAX_PARALLEL_TAGS = 12;
 const DIRECT_CREATORS = 4;
 
 export async function searchNow(
