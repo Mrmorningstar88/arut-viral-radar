@@ -5,16 +5,17 @@ import { motion } from "motion/react";
 import { usePathname } from "next/navigation";
 
 const TABS = [
+  { href: "/", label: "Завод", match: ["/studio"], exact: true },
+  { href: "/reels", label: "Залёты", match: ["/reels", "/sources", "/redpill"] },
   { href: "/projects", label: "Проекты", match: ["/projects"] },
-  { href: "/reels", label: "Ролики", match: ["/reels"] },
-  { href: "/redpill", label: "Red Pill", match: ["/redpill"] },
-  { href: "/sources", label: "Добавить", match: ["/sources"] },
   {
     href: "/settings",
     label: "⚙ Настройки",
     match: ["/settings", "/persona", "/learning", "/runs"],
   },
 ];
+
+const isActive = (t: (typeof TABS)[number], path: string) => (t.exact && path === t.href) || t.match.some((m) => path.startsWith(m));
 
 export function Nav() {
   const path = usePathname();
@@ -23,7 +24,7 @@ export function Nav() {
       <header className="sticky top-0 z-20 border-b border-white/[0.06] bg-black/30 backdrop-blur-2xl backdrop-saturate-[1.8] shadow-[inset_0_-1px_0_rgba(255,255,255,0.06),0_10px_40px_-20px_rgba(0,0,0,0.8)]">
         <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3">
           <Link
-            href="/reels"
+            href="/"
             className="flex items-center gap-2 whitespace-nowrap"
           >
             <span className="relative grid size-7 place-items-center">
@@ -36,7 +37,7 @@ export function Nav() {
           </Link>
           <nav className="hidden flex-1 gap-1 md:flex overflow-x-auto text-sm [scrollbar-width:none]">
             {TABS.map((t) => {
-              const active = t.match.some((m) => path.startsWith(m));
+              const active = isActive(t, path);
               return (
                 <Link
                   key={t.href}
@@ -63,7 +64,7 @@ export function Nav() {
       </header>
       <nav className="fixed inset-x-3 bottom-3 z-30 flex justify-around rounded-full glass-strong p-1.5 text-xs md:hidden">
         {TABS.map((t) => {
-          const active = t.match.some((m) => path.startsWith(m));
+          const active = isActive(t, path);
           return (
             <Link
               key={t.href}
