@@ -5,6 +5,7 @@ import { setRuleStatus } from "@/app/actions";
 import { getRepo, isDemo } from "@/lib/db";
 import { dubaiDate } from "@/lib/format";
 import { learningOverview } from "@/lib/learning";
+import { currentWorkspace } from "@/lib/projects";
 
 const GOALS = [
   { key: "decisions", label: "решений «в работу / не подходит»", goal: 20 },
@@ -19,7 +20,7 @@ export default async function LearningPage() {
   const rules = await (await getRepo()).listRules();
   const overview = isDemo()
     ? { signals: { decisions: 3, edits: 1, published: 0 }, taste: "Демо: берёшь хуки-вопросы про деньги, отвергаешь туристические темы.", updatedAt: null }
-    : await learningOverview(process.env.WORKSPACE_ID!);
+    : await learningOverview(await currentWorkspace());
   const proposed = rules.filter((r) => r.status === "proposed");
   const approved = rules.filter((r) => r.status === "approved");
 

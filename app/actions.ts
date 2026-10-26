@@ -11,6 +11,8 @@ import { reviseReelAnalysis, type AdaptationEdits } from "@/lib/generate";
 import { MODEL_MAIN } from "@/lib/llm";
 import { learn } from "@/lib/learning";
 import { getRepo, isDemo } from "@/lib/db";
+import { buildPassport } from "@/lib/generate/passport";
+import { createProject as insertProject, currentWorkspace, selectProject } from "@/lib/projects";
 import { REEL_STATUSES, REJECT_REASONS, type RejectReason, type ReelStatus, type StatusChange } from "@/lib/db/types";
 
 function statusChange(formData: FormData): StatusChange {
@@ -49,7 +51,7 @@ export async function addToQueue(formData: FormData): Promise<{ error?: string; 
   revalidatePath("/sources");
   revalidatePath("/reels");
   if (isDemo()) return {};
-  const ws = process.env.WORKSPACE_ID!;
+  const ws = await currentWorkspace();
   after(() => processPendingNow(ws).catch((e) => console.error("processPendingNow", e)));
   return { started: true };
 }
@@ -75,7 +77,7 @@ export async function runNow(options?: unknown): Promise<{ error?: string }> {
   const repo = await getRepo(); // проверяет вход владельца
   const last = (await repo.listRuns())[0];
   if (last && !last.finishedAt && Date.now() - Date.parse(last.startedAt) < 10 * 60_000) return { error: "Поиск уже идёт, подожди пару минут" };
-  const ws = process.env.WORKSPACE_ID!;
+  const ws = await currentWorkspace();
   // Запись о прогоне создаём сразу: «Идёт поиск» видно после обновления, а ошибка базы придёт в уведомлении.
   let runId: string;
   try {
@@ -101,7 +103,7 @@ export async function addCreator(formData: FormData): Promise<{ error?: string }
 export async function processQueueNow(): Promise<{ error?: string }> {
   if (isDemo()) return { error: "В демо-режиме разбор недоступен" };
   await getRepo(); // проверяет вход владельца
-  const ws = process.env.WORKSPACE_ID!;
+  const ws = await currentWorkspace();
   after(() => processPendingNow(ws).catch((e) => console.error("processPendingNow", e)));
   return {};
 }
@@ -124,7 +126,7 @@ export async function reviseAdaptation(id: string, edits: AdaptationEdits): Prom
     await repo.saveReelAnalysis(id, a, "demo");
   } else {
     try {
-      const ws = process.env.WORKSPACE_ID!;
+      const ws = await currentWorkspace();
       const profile = await loadProfile(ws);
       const { analysis, usd } = await reviseReelAnalysis(reel.analysis, clean, profile.persona, profile);
       await repo.saveReelAnalysis(id, analysis, MODEL_MAIN);
@@ -142,7 +144,7 @@ export async function learnNow(): Promise<{ error?: string; message?: string }> 
   if (isDemo()) return { error: "В демо-режиме обучение недоступно" };
   await getRepo(); // проверяет вход владельца
   try {
-    const ws = process.env.WORKSPACE_ID!;
+    const ws = await currentWorkspace();
     const r = await learn(ws);
     if (r.usd > 0) await logCost(ws, null, "anthropic", r.usd);
     revalidatePath("/learning");
@@ -150,4 +152,29 @@ export async function learnNow(): Promise<{ error?: string; message?: string }> 
   } catch (e) {
     return { error: `Не получилось: ${e instanceof Error ? e.message.slice(0, 160) : "ошибка"}` };
   }
+}
+
+// Новый проект по ссылке: Claude читает сайт, собирает паспорт продукта и образ проекта.
+export async function createProject(formData: FormData): Promise<{ error?: string }> {
+  if (isDemo()) return { error: "В демо-режиме проекты недоступны" };
+  await getRepo(); // проверяет вход владельца
+  const url = String(formData.get("url") ?? "").trim();
+  if (!/^https?:\/\/[^\s]+\.[^\s]+/.test(url)) return { error: "Нужна ссылка на сайт продукта" };
+  const note = String(formData.get("note") ?? "").trim().slice(0, 600);
+  try {
+    const { passport, usd } = await buildPassport(url, note);
+    const id = await insertProject(url, passport);
+    await logCost(id, null, "anthropic", usd);
+    await selectProject(id);
+  } catch (e) {
+    return { error: `Не получилось собрать проект: ${e instanceof Error ? e.message.slice(0, 160) : "ошибка"}` };
+  }
+  revalidatePath("/", "layout");
+  return {};
+}
+
+export async function switchProject(formData: FormData) {
+  await getRepo(); // проверяет вход владельца
+  await selectProject(String(formData.get("id")));
+  revalidatePath("/", "layout");
 }
