@@ -44,14 +44,58 @@ async function claim() {
   return got;
 }
 
-function brief(s) {
+// Голос и фирменный звук организации из ElevenLabs (настраиваются в портале, лежат в source_cache по ключу sound:<ws>).
+// Ключ ElevenLabs берём из app_metadata владельца звука. Нет настроек или ключа: рендер идёт на edge-tts, как раньше.
+async function soundKit(s, dir) {
+  const { data } = await db.from("source_cache").select("payload").eq("key", `sound:${s.workspace_id}`).maybeSingle();
+  const sound = data?.payload;
+  if (!sound?.owner) return null;
+  const { data: u } = await db.auth.admin.getUserById(sound.owner);
+  const key = u?.user?.app_metadata?.elevenlabs?.key;
+  if (!key) return null;
+  const files = [];
+  const clips = [sound.theme && { ...sound.theme, file: "theme.mp3" }, ...(sound.sfx ?? []).map((c, i) => ({ ...c, file: `sfx${i + 1}.mp3` }))].filter(Boolean);
+  if (clips.length) mkdirSync(join(dir, "sound"), { recursive: true });
+  for (const c of clips) {
+    const res = await fetch(c.url, { signal: AbortSignal.timeout(60_000) }).catch(() => null);
+    if (!res?.ok) continue;
+    writeFileSync(join(dir, "sound", c.file), Buffer.from(await res.arrayBuffer()));
+    files.push(`sound/${c.file} (${c.name})`);
+  }
+  if (sound.voiceId) writeFileSync(join(dir, "tts.mjs"), TTS_HELPER);
+  return { key, voiceId: sound.voiceId, voiceName: sound.voiceName, idea: sound.idea, files };
+}
+
+// Помощник озвучки в папке ролика: node tts.mjs "текст" out.mp3. Ключ берётся из окружения, в файлы не пишется.
+const TTS_HELPER = `import { writeFileSync } from "node:fs";
+const [text, out] = process.argv.slice(2);
+if (!text || !out) { console.error('node tts.mjs "текст" out.mp3'); process.exit(1); }
+const res = await fetch(\`https://api.elevenlabs.io/v1/text-to-speech/\${process.env.ELEVENLABS_VOICE_ID}?output_format=mp3_44100_128\`, {
+  method: "POST",
+  headers: { "xi-api-key": process.env.ELEVENLABS_API_KEY, "Content-Type": "application/json" },
+  body: JSON.stringify({ text, model_id: "eleven_multilingual_v2", voice_settings: { stability: 0.45, similarity_boost: 0.8, style: 0.2 } }),
+  signal: AbortSignal.timeout(120000),
+});
+if (!res.ok) { console.error("ElevenLabs", res.status, await res.text()); process.exit(1); }
+writeFileSync(out, Buffer.from(await res.arrayBuffer()));
+console.log("ok", out);
+`;
+
+function brief(s, kit) {
   const p = s.payload;
   const sb = s.storyboard;
+  const voice = kit?.voiceId
+    ? `Язык ролика: русский. Голос: голос автора «${kit.voiceName}» из ElevenLabs. Озвучку делай ТОЛЬКО через \`node tts.mjs "текст" путь.mp3\` из папки проекта (по реплике или по фразе), edge-tts не используй. Проверку речи faster-whisper делай с языком ru. Субтитры вшиты, по-русски.`
+    : "Язык ролика: русский. Голос: edge-tts через `core/tts/tts_zh.py --voice ru-RU-DmitryNeural` (женский: ru-RU-SvetlanaNeural). Проверку речи faster-whisper делай с языком ru. Субтитры вшиты, по-русски.";
+  const sound = kit?.files.length
+    ? `Звук: у организации есть фирменный звук${kit.idea ? ` («${kit.idea}»)` : ""}, файлы в папке проекта: ${kit.files.join(", ")}. Тема идёт подложкой под голос (громкость около −18 дБ, приглушай под речью, можно обрезать и зациклить), эффекты ставь на хук, смены кадров, цифры и финал. Другую музыку не сочиняй и трендовые треки не используй.`
+    : "Своих материалов у автора нет: музыку и звук делай сам по TECHNIQUE.md. Трендовые треки из соцсетей не используй.";
   return [
     `Стиль: ${s.style} (styles/${s.style}/STYLE.md).`,
     "Формат: вертикальный 1080×1920, 30 fps (`--size 1080x1920`). Длина по озвучке, 15–45 секунд.",
-    "Язык ролика: русский. Голос: edge-tts через `core/tts/tts_zh.py --voice ru-RU-DmitryNeural` (женский: ru-RU-SvetlanaNeural). Проверку речи faster-whisper делай с языком ru. Субтитры вшиты, по-русски.",
-    "Своих материалов у автора нет: музыку и звук делай сам по TECHNIQUE.md. Сториборд автор уже одобрил, на ревью не останавливайся.",
+    voice,
+    sound,
+    "Сториборд автор уже одобрил, на ревью не останавливайся.",
     "",
     `НАЗВАНИЕ: ${s.title}`,
     `ХУК (первые секунды): ${p.hook}`,
@@ -62,7 +106,7 @@ function brief(s) {
     "СТОРИБОРД (одобрен автором):",
     ...(sb?.shots ?? []).map((sh) => `${sh.n}. ${sh.dur} с · ${sh.frame}${sh.overlay ? ` · надпись: «${sh.overlay}»` : ""}`),
     sb?.music ? `МУЗЫКА И ТЕМП: ${sb.music}` : "",
-    p.sound ? `ЗВУК ИЗ МЕХАНИКИ ЗАЛЁТА: ${p.sound}` : "",
+    p.sound ? `ЗВУКОВЫЕ АКЦЕНТЫ ИЗ СЦЕНАРИЯ: ${p.sound}` : "",
   ]
     .filter((x) => x !== "")
     .join("\n");
@@ -81,11 +125,13 @@ ${film}
 async function render(s) {
   const dir = join(WORK, s.id);
   mkdirSync(dir, { recursive: true });
-  writeFileSync(join(dir, "BRIEF.md"), brief(s));
+  const kit = await soundKit(s, dir).catch((e) => (console.error("sound kit", e.message), null));
+  const film = brief(s, kit);
+  writeFileSync(join(dir, "BRIEF.md"), film);
   let cost = 0;
   let lastLog = 0;
   for await (const m of query({
-    prompt: PROMPT(dir, brief(s)),
+    prompt: PROMPT(dir, film),
     options: {
       cwd: dir,
       additionalDirectories: [LIB],
@@ -94,7 +140,7 @@ async function render(s) {
       permissionMode: "dontAsk",
       allowedTools: ["Read", "Write", "Edit", "Glob", "Grep", "Bash"],
       maxBudgetUsd: Number(RENDER_BUDGET_USD),
-      env: { ...process.env, LIB },
+      env: { ...process.env, LIB, ...(kit?.voiceId ? { ELEVENLABS_API_KEY: kit.key, ELEVENLABS_VOICE_ID: kit.voiceId } : {}) },
     },
   })) {
     if (m.type === "assistant") {

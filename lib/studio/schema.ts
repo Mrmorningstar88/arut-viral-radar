@@ -36,7 +36,7 @@ export const ScriptDraft = z.object({
   onScreen: z.array(z.string()).max(6).describe("Ключевые надписи на экране"),
   caption: z.string().describe("Подпись к посту"),
   cta: z.string(),
-  sound: z.string().describe("Звук: какая музыка или трендовый тип трека, темп, звуковые акценты (удар на хуке, whoosh на смене кадра); как звук работал в залёте"),
+  sound: z.string().describe("Звук: темп, где фирменная тема организации громче или тише, звуковые акценты (удар на хуке, whoosh на смене кадра, щелчок на цифре); как звук работал в залёте. Трендовые треки из соцсетей не предлагать"),
   whyItWorks: z.array(z.string()).min(2).max(3).describe("Почему зайдёт: опора на механику залёта и боль аудитории"),
   style: z.enum(STYLE_SLUGS).describe("Визуальный стиль lemo-opuscar, который лучше всего подходит ролику"),
 });

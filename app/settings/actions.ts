@@ -1,8 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { authClient, requireAdmin, requireUser } from "@/lib/auth/server";
 import { serviceDb } from "@/lib/engine/store";
+import { keyOf, listVoices, makeSound, saveKey, saveSound, soundOf } from "@/lib/elevenlabs";
 import { linkOf, listBrands, saveLink } from "@/lib/metricool";
 import { currentWorkspace } from "@/lib/projects";
 
@@ -71,6 +73,52 @@ export async function chooseBrand(blogId: string): Promise<Result> {
 export async function disconnectMetricool(): Promise<Result> {
   const user = await requireUser();
   await saveLink(user, null);
+  revalidatePath("/settings");
+  return {};
+}
+
+// ElevenLabs: ключ проверяется запросом списка голосов, потом голос и фирменный звук выбираются для организации.
+export async function connectElevenLabs(_: Result | null, fd: FormData): Promise<Result> {
+  const user = await requireUser();
+  const key = String(fd.get("key") ?? "").trim();
+  if (key.length < 20) return { error: "Вставь ключ API из ElevenLabs целиком" };
+  try {
+    await listVoices(key);
+    await saveKey(user, key);
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Не получилось подключиться" };
+  }
+  revalidatePath("/settings");
+  return { message: "ElevenLabs подключён. Теперь выбери голос." };
+}
+
+export async function chooseVoice(voiceId: string, voiceName: string): Promise<Result> {
+  const user = await requireUser();
+  if (!keyOf(user)) return { error: "Сначала подключи ElevenLabs" };
+  if (!/^[A-Za-z0-9]{8,64}$/.test(voiceId)) return { error: "Неизвестный голос" };
+  const ws = await currentWorkspace();
+  await saveSound(ws, { ...(await soundOf(ws)), owner: user.id, voiceId, voiceName: voiceName.slice(0, 80) });
+  revalidatePath("/settings");
+  return {};
+}
+
+// Фирменный звук делается в фоне 1–3 минуты: тема и 4 эффекта. Повторный запуск во время работы игнорируется.
+export async function createSound(): Promise<Result> {
+  const user = await requireUser();
+  const key = keyOf(user);
+  if (!key) return { error: "Сначала подключи ElevenLabs" };
+  const ws = await currentWorkspace();
+  const current = await soundOf(ws);
+  if (current?.status === "making") return { message: "Звук уже делается" };
+  await saveSound(ws, { ...current, owner: user.id, status: "making", error: undefined });
+  after(() => makeSound(ws, key));
+  revalidatePath("/settings");
+  return { message: "Делаю фирменный звук, это 1–3 минуты" };
+}
+
+export async function disconnectElevenLabs(): Promise<Result> {
+  const user = await requireUser();
+  await saveKey(user, null);
   revalidatePath("/settings");
   return {};
 }
