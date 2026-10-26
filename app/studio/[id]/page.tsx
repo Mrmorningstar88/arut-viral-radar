@@ -2,7 +2,7 @@ import Link from "next/link";
 import { fmtMultiple, formatLabel } from "@/lib/formats/catalog";
 import { notFound } from "next/navigation";
 import { AutoRefresh } from "@/components/studio/auto-refresh";
-import { PublishForm, ReleaseForm, RetryRender } from "@/components/studio/ready-actions";
+import { DownloadVideo, PublishForm, ReleaseForm, RetryRender } from "@/components/studio/ready-actions";
 import { StageActions } from "@/components/studio/stage-actions";
 import { StylePicker } from "@/components/studio/style-picker";
 import { CopyButton } from "@/components/ui/copy-button";
@@ -64,10 +64,11 @@ export default async function ScriptPage({ params }: PageProps<"/studio/[id]">) 
             <h2 className="font-display text-sm font-semibold tracking-wide uppercase">Ролик готов</h2>
             <p className="text-sm text-muted">Посмотри. Нравится? Отметь площадки и выпусти.</p>
             <ReleaseForm id={s.id} networks={networks} />
+            <DownloadVideo url={s.videoUrl} title={s.title} />
             <details className="text-sm">
-              <summary className="cursor-pointer text-xs text-muted">Выложить вручную</summary>
+              <summary className="cursor-pointer text-xs text-muted">Выложил вручную? Отметь ссылкой на пост</summary>
               <div className="mt-3">
-                <PublishForm id={s.id} videoUrl={s.videoUrl} />
+                <PublishForm id={s.id} />
               </div>
             </details>
           </div>
@@ -77,6 +78,7 @@ export default async function ScriptPage({ params }: PageProps<"/studio/[id]">) 
       {s.stage === "published" && s.videoUrl && (
         <Reveal delay={0.03} className="flex flex-wrap items-center gap-5 rounded-3xl glass p-5">
           <video src={s.videoUrl} controls playsInline className="aspect-[9/16] w-40 rounded-2xl bg-black" />
+          <DownloadVideo url={s.videoUrl} title={s.title} />
           {s.renderLog && !s.publishedUrl && <p className="text-sm text-muted">{s.renderLog}</p>}
           {s.publishedUrl && <a href={s.publishedUrl} target="_blank" rel="noreferrer" className="text-sm text-accent hover:underline">Пост в соцсети ↗</a>}
         </Reveal>
