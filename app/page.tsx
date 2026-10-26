@@ -11,6 +11,7 @@ import { PLANS, planOf, usage } from "@/lib/plans";
 import { isDemo } from "@/lib/db";
 import { currentWorkspace, listProjects } from "@/lib/projects";
 import { STAGE_HINT, STAGE_LABEL, STAGES, type Stage } from "@/lib/studio/schema";
+import { STAGE_TONE } from "@/lib/studio/stage-tone";
 import { listDeclined, listScripts, type Script } from "@/lib/studio/store";
 import { CardActions } from "@/components/studio/card-actions";
 
@@ -95,14 +96,17 @@ function Board({ scripts, warming }: { scripts: Script[]; warming: boolean }) {
               <section className="flex h-full min-h-64 flex-col rounded-3xl glass p-3">
                 <header className="mb-3 flex items-baseline justify-between px-1">
                   <div>
-                    <h2 className="font-display text-xs font-semibold tracking-wide uppercase">{STAGE_LABEL[stage]}</h2>
+                    <h2 className="flex items-center gap-2 font-display text-xs font-semibold tracking-wide uppercase">
+                      <span className={`size-2.5 rounded-full ${STAGE_TONE[stage].dot}`} />
+                      {STAGE_LABEL[stage]}
+                    </h2>
                     <p className="text-[11px] text-muted">{STAGE_HINT[stage]}</p>
                   </div>
-                  <span className="rounded-full bg-ink/[0.06] px-2 py-0.5 text-xs tabular-nums">{items.length}</span>
+                  <span className={`rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums ${STAGE_TONE[stage].chip}`}>{items.length}</span>
                 </header>
                 <div className="flex flex-1 flex-col gap-2">
                   {items.length === 0 ? (
-                    <p className="m-auto px-4 py-8 text-center text-xs text-ink/30">{EMPTY[stage]}</p>
+                    <p className="m-auto px-4 py-8 text-center text-xs text-muted">{EMPTY[stage]}</p>
                   ) : (
                     items.map((s) => <Card key={s.id} s={s} />)
                   )}
@@ -127,13 +131,13 @@ const EMPTY: Record<Stage, string> = {
 
 function Card({ s }: { s: Script }) {
   return (
-    <div className="rounded-2xl border border-ink/[0.06] bg-ink/[0.03] p-3 transition hover:border-accent/40 hover:bg-ink/[0.05]">
+    <div className={`relative overflow-hidden rounded-2xl neo-btn p-3 pl-4 before:absolute before:inset-y-3 before:left-0 before:w-1 before:rounded-r-full ${STAGE_TONE[s.stage].bar}`}>
       <Link href={`/studio/${s.id}`} className="block">
         {s.pillar && <span className="text-[10px] font-semibold tracking-wider text-accent uppercase">{s.pillar}</span>}
         <h3 className="mt-0.5 text-sm leading-snug font-semibold">{s.title}</h3>
         <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted">{s.payload.hook}</p>
         {s.busy && (
-          <p className="mt-2 flex items-center gap-1.5 text-[11px] text-amber-200">
+          <p className="mt-2 flex items-center gap-1.5 text-[11px] text-accent">
             <span className="size-1.5 animate-ping rounded-full bg-accent" /> Claude работает…
           </p>
         )}

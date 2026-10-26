@@ -5,6 +5,8 @@ import { OPUS_FRAME } from "@/lib/studio/styles";
 
 // Главная для гостя: что это, как работает, тарифы, кнопка «Начать бесплатно».
 
+const STEP_INK = ["text-st-script-ink", "text-st-board-ink", "text-st-prod-ink", "text-st-pub-ink"];
+
 const STEPS = [
   { n: "01", title: "Организация", text: "Создай организацию: название, ссылки, пара слов о себе (можно голосом). YOOMP сам прочитает, кто аудитория, какие боли и что обещает продукт." },
   { n: "02", title: "Сценарии", text: "Берём механику роликов, которые залетели в Instagram и TikTok, и переносим её на твой продукт: хук, озвучка, надписи." },
@@ -15,9 +17,9 @@ const STEPS = [
 const STYLES = ["dark-keynote", "watercolor", "risograph", "iso-infographic", "art-deco", "whiteboard", "blueprint", "ukiyoe"];
 
 const BOARD = [
-  { stage: "Сценарий", title: "«Почему 90% стартапов врут про метрики»", tone: "bg-ink/[0.06]" },
-  { stage: "Сториборд", title: "6 кадров · Dark Tech Keynote", tone: "bg-ink/[0.06]" },
-  { stage: "Ролик готов", title: "0:32 · голос, субтитры, музыка", tone: "bg-accent/15 ring-1 ring-accent/30" },
+  { stage: "Сценарий", title: "«Почему 90% стартапов врут про метрики»", tone: "neo-btn before:bg-st-script", ink: "text-st-script-ink" },
+  { stage: "Сториборд", title: "6 кадров · Dark Tech Keynote", tone: "neo-btn before:bg-st-board", ink: "text-st-board-ink" },
+  { stage: "Ролик готов", title: "0:32 · голос, субтитры, музыка", tone: "neo-btn before:bg-st-prod", ink: "text-st-prod-ink" },
 ];
 
 export function Landing() {
@@ -29,7 +31,7 @@ export function Landing() {
           <h1 className="mt-4 font-display text-4xl leading-[1.08] font-semibold md:text-6xl">
             Ссылка на продукт.
             <br />
-            <span className="text-accent">Ролики, которые залетают.</span>
+            <span className="bg-gradient-to-r from-[#d9480f] via-[#c2255c] to-[#6741d9] bg-clip-text text-transparent">Ролики, которые залетают.</span>
           </h1>
           <p className="mt-5 max-w-xl text-base leading-relaxed text-muted md:text-lg">
             YOOMP изучает залетевшие Reels и TikTok, разбирает, почему они сработали, и делает по этой формуле сценарии, сториборды и готовые вертикальные видео для твоего продукта.
@@ -58,8 +60,8 @@ export function Landing() {
             </div>
             {BOARD.map((b, i) => (
               <Reveal key={b.stage} delay={0.25 + i * 0.15}>
-                <div className={`rounded-2xl p-4 ${b.tone}`}>
-                  <p className="text-[10px] font-semibold tracking-wider text-accent uppercase">{b.stage}</p>
+                <div className={`relative overflow-hidden rounded-2xl p-4 pl-5 before:absolute before:inset-y-3 before:left-0 before:w-1 before:rounded-r-full ${b.tone}`}>
+                  <p className={`text-[10px] font-semibold tracking-wider uppercase ${b.ink}`}>{b.stage}</p>
                   <p className="mt-1 text-sm font-medium">{b.title}</p>
                 </div>
               </Reveal>
@@ -83,7 +85,7 @@ export function Landing() {
         <div className="mt-8 grid gap-4 md:grid-cols-4">
           {STEPS.map((s, i) => (
             <Reveal key={s.n} delay={i * 0.07} className="rounded-3xl glass p-5">
-              <span className="font-display text-sm text-accent">{s.n}</span>
+              <span className={`font-display text-sm font-bold ${STEP_INK[i]}`}>{s.n}</span>
               <h3 className="mt-3 text-lg font-semibold">{s.title}</h3>
               <p className="mt-2 text-sm leading-relaxed text-muted">{s.text}</p>
             </Reveal>

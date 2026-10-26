@@ -3,13 +3,13 @@
 /* Стиль: неоморфизм. Светло-голубой фон, элементы выдавлены из той же поверхности мягкими тенями
    (светлая сверху-слева, голубоватая снизу-справа). Нажатие вдавливает элемент внутрь. Акцент сине-фиолетовый. */
 :root {
-  --background: #e6edf8;
-  --foreground: #1d2742;
-  --card: #e9f0fa;
-  --muted: #56637f; /* 5,1:1 на фоне: подписи читаются (WCAG AA) */
+  --background: #e4e2f3;
+  --foreground: #141a33;
+  --card: #ebe9f8;
+  --muted: #5b5675; /* 5,4:1 на фоне: подписи читаются (WCAG AA) */
   --border: rgba(29, 39, 66, 0.08);
-  --accent: #4b57e8; /* 4,7:1 на фоне как текст, 5,5:1 под белой надписью */
-  --neo-dark: rgba(150, 170, 205, 0.55);
+  --accent: #6741d9; /* фиолетовый из лого: 4,9:1 на фоне как текст, 6,3:1 под белой надписью */
+  --neo-dark: rgba(150, 140, 200, 0.55);
   --neo-light: rgba(255, 255, 255, 0.95);
   color-scheme: light;
 }
@@ -27,7 +27,20 @@
 
 /* ink: текст и тонкие тинты, paper: поверхности. Тёплые и статусные оттенки затемнены под светлый фон. */
 @theme {
-  --color-ink: #1d2742;
+  --color-ink: #141a33;
+  /* Цвета этапов конвейера: у каждого этапа свой постоянный цвет (рулбук: роль у каждого цвета). */
+  /* Палитра лого «Лесенка рилсов»: сценарий оранжевый, сториборд розовый, ролик фиолетовый.
+     Яркий тон для точек и полосок, глубокий (контраст ≥ 4,5:1) для текста. */
+  --color-st-script: #ffa94d;
+  --color-st-script-ink: #b33d06;
+  --color-st-board: #f06595;
+  --color-st-board-ink: #b81d55;
+  --color-st-prod: #7048e8;
+  --color-st-prod-ink: #5f3dc4;
+  --color-st-ready: #9775fa;
+  --color-st-ready-ink: #5f3dc4;
+  --color-st-pub: #20c997;
+  --color-st-pub-ink: #087a57;
   --color-paper: #ffffff;
   --color-amber-100: #3f4bd8;
   --color-amber-200: #4553e0;
@@ -50,7 +63,9 @@
 
 body {
   background:
-    radial-gradient(900px 600px at 85% -10%, rgba(123, 140, 255, 0.16), transparent 60%),
+    radial-gradient(900px 600px at 85% -10%, rgba(112, 72, 232, 0.16), transparent 60%),
+    radial-gradient(700px 500px at 100% 90%, rgba(240, 101, 149, 0.12), transparent 60%),
+    radial-gradient(600px 450px at 10% 100%, rgba(255, 169, 77, 0.12), transparent 60%),
     radial-gradient(700px 500px at -5% 25%, rgba(255, 255, 255, 0.9), transparent 60%),
     var(--background);
   background-attachment: fixed;
@@ -64,7 +79,7 @@ body {
 /* Выпуклая карточка. */
 @utility glass {
   border: 1px solid rgba(255, 255, 255, 0.6);
-  background: linear-gradient(145deg, #eef3fc, #e2e9f5);
+  background: linear-gradient(145deg, #f0eefb, #dddaee);
   box-shadow:
     10px 10px 24px var(--neo-dark),
     -10px -10px 24px var(--neo-light);
@@ -73,7 +88,7 @@ body {
 /* Выпуклая панель посильнее: шапка, нижнее меню, панели действий. */
 @utility glass-strong {
   border: 1px solid rgba(255, 255, 255, 0.7);
-  background: linear-gradient(145deg, rgba(240, 245, 253, 0.92), rgba(226, 233, 245, 0.92));
+  background: linear-gradient(145deg, rgba(243, 241, 252, 0.92), rgba(225, 222, 240, 0.92));
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   box-shadow:
@@ -84,7 +99,7 @@ body {
 /* Вдавленная плашка: поля ввода, треки, неактивные кнопки внутри панели. */
 @utility glass-inset {
   border: 1px solid transparent;
-  background: #e4ebf6;
+  background: #dddaee;
   box-shadow:
     inset 4px 4px 10px var(--neo-dark),
     inset -4px -4px 10px var(--neo-light);
@@ -92,7 +107,7 @@ body {
 
 /* Кнопка: выпуклая, при нажатии вдавливается, как настоящая. */
 @utility neo-btn {
-  background: linear-gradient(145deg, #f0f4fc, #e0e7f3);
+  background: linear-gradient(145deg, #f3f1fc, #dedbef);
   box-shadow:
     6px 6px 14px var(--neo-dark),
     -6px -6px 14px var(--neo-light);
@@ -110,9 +125,9 @@ body {
 
 /* Главная кнопка: градиент сине-фиолетовый, мягкое свечение. */
 @utility neo-primary {
-  background: linear-gradient(135deg, #5566f5, #4352d6 50%, #6236c9);
+  background: linear-gradient(135deg, #c2255c, #7048e8 55%, #5f3dc4);
   box-shadow:
-    6px 6px 16px rgba(91, 108, 255, 0.35),
+    6px 6px 18px rgba(112, 72, 232, 0.38),
     -6px -6px 14px var(--neo-light),
     inset 0 1px 0 rgba(255, 255, 255, 0.35);
 }
@@ -145,7 +160,7 @@ a.neo-primary:active,
 input,
 textarea,
 select {
-  background-color: #e4ebf6 !important;
+  background-color: #e1def0 !important;
   box-shadow:
     inset 3px 3px 8px var(--neo-dark),
     inset -3px -3px 8px var(--neo-light);
@@ -174,7 +189,7 @@ select {
   appearance: none;
   height: 4px;
   border-radius: 999px;
-  background: linear-gradient(to right, #4b57e8 var(--fill, 0%), rgba(29, 39, 66, 0.1) var(--fill, 0%));
+  background: linear-gradient(to right, #7048e8 var(--fill, 0%), rgba(29, 39, 66, 0.1) var(--fill, 0%));
   outline: none;
 }
 .range::-webkit-slider-thumb {

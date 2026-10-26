@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Logo } from "@/components/logo";
 import { motion } from "motion/react";
 import { usePathname } from "next/navigation";
 
@@ -22,19 +23,10 @@ export function Nav({ user }: { user: NavUser }) {
   const TABS = !user ? [] : [FACTORY, ...(user.radar ? [RADAR] : []), PROJECTS, SETTINGS, ...(user.admin ? [ADMIN] : [])];
   return (
     <>
-      <header className="sticky top-0 z-20 border-b border-ink/[0.06] bg-paper/30 backdrop-blur-2xl backdrop-saturate-[1.8] shadow-[inset_0_-1px_0_rgba(255,255,255,0.06),0_10px_40px_-20px_rgba(0,0,0,0.8)]">
+      <header className="sticky top-0 z-20 glass-strong rounded-none border-x-0 border-t-0">
         <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3">
-          <Link
-            href="/"
-            className="flex items-center gap-2 whitespace-nowrap"
-          >
-            <span className="relative grid size-7 place-items-center">
-              <span className="absolute inset-0 animate-ping rounded-full bg-accent/30 [animation-duration:2.5s]" />
-              <span className="size-3 rounded-full bg-accent " />
-            </span>
-            <span className="font-display text-sm font-semibold tracking-wide">
-              YOOMP
-            </span>
+          <Link href="/" aria-label="YOOMP, на главную" className="flex min-h-11 items-center whitespace-nowrap">
+            <Logo />
           </Link>
           <nav className="hidden flex-1 gap-1 md:flex overflow-x-auto text-sm [scrollbar-width:none]">
             {TABS.map((t) => {
