@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { fmtMultiple, formatLabel } from "@/lib/formats/catalog";
 import { notFound } from "next/navigation";
 import { AutoRefresh } from "@/components/studio/auto-refresh";
 import { PublishForm, ReleaseForm, RetryRender } from "@/components/studio/ready-actions";
@@ -134,6 +135,11 @@ export default async function ScriptPage({ params }: PageProps<"/studio/[id]">) 
         </Reveal>
         <Reveal delay={0.08}>
           <Panel title="Что взяли из залёта">
+            {p.format && (
+              <Link href="/formats" className="mb-2 inline-block rounded-full bg-st-prod/15 px-2.5 py-1 text-xs font-semibold text-st-prod-ink">
+                Формат «{formatLabel(p.format)}»{p.formatX ? `: ${fmtMultiple(p.formatX)} к медиане ниши` : ""}
+              </Link>
+            )}
             <p className="text-sm leading-relaxed">{p.mechanic}</p>
             {s.sourceReelId && (
               <Link href={`/reels/${s.sourceReelId}`} className="mt-2 inline-block text-xs text-accent hover:underline">

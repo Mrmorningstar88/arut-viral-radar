@@ -2,10 +2,12 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { PasswordForm, RequestPro, SignOut } from "@/components/account-actions";
 import { MetricoolCard } from "@/components/metricool-card";
+import { SoundCard } from "@/components/sound-card";
 import { Reveal } from "@/components/ui/reveal";
 import { isAdmin, requireUser } from "@/lib/auth/server";
 import { isDemo } from "@/lib/db";
 import { healthChecks } from "@/lib/health";
+import { keyOf, listVoices, soundOf, type Voice } from "@/lib/elevenlabs";
 import { linkOf, listBrands, type Brand } from "@/lib/metricool";
 import { PLANS, planOf, usage } from "@/lib/plans";
 import { currentWorkspace, listProjects } from "@/lib/projects";
@@ -16,6 +18,9 @@ const ITEMS = [
   { href: "/runs", icon: "📜", title: "Логи поиска", text: "Когда искались залёты, что нашлось и где споткнулось.", radar: true },
 ];
 
+// «Создать фирменный звук» сочиняет музыку в фоне после ответа.
+export const maxDuration = 300;
+
 export default async function SettingsPage() {
   await connection();
   if (isDemo()) return <p className="text-muted">В демо-режиме настройки недоступны.</p>;
@@ -23,13 +28,16 @@ export default async function SettingsPage() {
   const plan = planOf(user);
   const admin = isAdmin(user);
   const link = linkOf(user);
-  const [used, checks, ws, projects, brands] = await Promise.all([
+  const elKey = keyOf(user);
+  const [used, checks, ws, projects, brands, voices] = await Promise.all([
     usage(user.id),
     admin ? healthChecks() : null,
     currentWorkspace(),
     listProjects(),
     link ? listBrands(link).then((b): Brand[] | string => b).catch((e: Error) => e.message) : ([] as Brand[]),
+    elKey ? listVoices(elKey).then((v): Voice[] | string => v).catch((e: Error) => e.message) : ([] as Voice[]),
   ]);
+  const sound = elKey ? await soundOf(ws) : null;
   const org = projects.find((p) => p.id === ws)?.name ?? "";
   const limits = PLANS[plan].limits;
   const meter = (label: string, n: number, max: number) => (
@@ -89,6 +97,17 @@ export default async function SettingsPage() {
             brands={typeof brands === "string" ? [] : brands}
             chosen={link?.brands[ws] ?? null}
             error={typeof brands === "string" ? brands : null}
+          />
+        </Reveal>
+
+        <Reveal delay={0.07} className="rounded-3xl glass p-5 md:col-span-2">
+          <h2 className="mb-3 font-display text-sm font-semibold tracking-wide uppercase">Голос и фирменный звук</h2>
+          <SoundCard
+            org={org}
+            connected={!!elKey}
+            voices={typeof voices === "string" ? [] : voices}
+            sound={sound && { voiceId: sound.voiceId, status: sound.status, error: sound.error, idea: sound.idea, theme: sound.theme, sfx: sound.sfx }}
+            error={typeof voices === "string" ? voices : null}
           />
         </Reveal>
       </div>

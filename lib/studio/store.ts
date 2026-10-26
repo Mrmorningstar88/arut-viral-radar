@@ -1,4 +1,6 @@
 import "server-only";
+import { fmtMultiple, formatLabel, type FormatId } from "@/lib/formats/catalog";
+import { formatStrength } from "@/lib/formats/store";
 import { serviceDb } from "@/lib/engine/store";
 import type { ScriptDraft, Stage, Storyboard } from "./schema";
 
@@ -85,11 +87,30 @@ export async function updateScript(ws: string, id: string, patch: Row) {
 // Лучшие разобранные залёты проекта: из них берутся механики для новых сценариев.
 // Механики берутся из залётов проекта; у нового проекта своих мало, и тогда добираются
 // из общей базы формул (основной проект радара).
-export async function topFormulas(ws: string, limit = 10) {
-  const own = await formulasOf(ws, limit);
+// Сначала механики форматов с самым большим отрывом от медианы ниши (рейтинг форматов).
+export type Formula = { id: string; line: string; format?: FormatId; multiple?: number };
+
+export async function topFormulas(ws: string, limit = 10): Promise<Formula[]> {
+  const own = await formulasOf(ws, 40);
   const main = process.env.WORKSPACE_ID;
-  if (own.length >= 5 || !main || main === ws) return own;
-  return [...own, ...(await formulasOf(main, limit))].slice(0, limit);
+  const pool = own.length >= 5 || !main || main === ws ? own : [...own, ...(await formulasOf(main, 40))];
+  const strength = await formatStrength(
+    pool.map((f) => f.id),
+    ws,
+  ).catch(() => new Map<string, { format: FormatId; multiple: number; enough: boolean }>());
+  const score = (f: Formula) => {
+    const s = strength.get(f.id);
+    return s ? (s.enough ? 1000 : 0) + s.multiple : -1;
+  };
+  return pool
+    .map((f): Formula => {
+      const s = strength.get(f.id);
+      if (!s) return f;
+      const tag = `Формат: ${formatLabel(s.format)}, ${fmtMultiple(s.multiple)} к медиане залётов ниши${s.enough ? "" : " (мало данных)"}`;
+      return { ...f, line: `${f.line}\n${tag}`, format: s.format, multiple: s.multiple };
+    })
+    .sort((a, b) => score(b) - score(a))
+    .slice(0, limit);
 }
 
 async function formulasOf(ws: string, limit: number) {
