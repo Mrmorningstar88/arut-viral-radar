@@ -2,7 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
-import { getRepo, isDemo } from "@/lib/db";
+import { isDemo } from "@/lib/db";
+import { requireUser } from "@/lib/auth/server";
+import { overLimit } from "@/lib/plans";
 import { currentWorkspace } from "@/lib/projects";
 import { buildStoryboard, generateScripts, reviseScript } from "@/lib/studio/generate";
 import { updateScript } from "@/lib/studio/store";
@@ -14,8 +16,7 @@ const msg = (e: unknown) => (e instanceof Error ? e.message.slice(0, 200) : "о�
 
 async function workspace() {
   if (isDemo()) throw new Error("В демо-режиме конвейер недоступен");
-  await getRepo(); // проверяет вход владельца
-  return currentWorkspace();
+  return currentWorkspace(); // проверяет вход и доступ к проекту
 }
 
 function refresh(id?: string) {
@@ -31,6 +32,8 @@ function background(ws: string, id: string, job: () => Promise<void>) {
 export async function createScripts(wish: string): Promise<Result> {
   try {
     const ws = await workspace();
+    const limit = await overLimit(await requireUser(), "scripts", 5);
+    if (limit) return { error: limit };
     after(() => generateScripts(ws, 5, wish.trim().slice(0, 400)).catch((e) => console.error("generateScripts", e)));
     return {};
   } catch (e) {
@@ -81,6 +84,8 @@ export async function approveStoryboard(id: string, style?: string): Promise<Res
   if (style && !styleBySlug(style)) return { error: "Неизвестный стиль" };
   try {
     const ws = await workspace();
+    const limit = await overLimit(await requireUser(), "videos");
+    if (limit) return { error: limit };
     await updateScript(ws, id, { stage: "production", render_status: "queued", render_log: null, error: null, ...(style ? { style } : {}) });
     refresh(id);
     return {};

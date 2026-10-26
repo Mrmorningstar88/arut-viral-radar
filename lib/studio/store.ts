@@ -72,7 +72,16 @@ export async function updateScript(ws: string, id: string, patch: Row) {
 }
 
 // Лучшие разобранные залёты проекта: из них берутся механики для новых сценариев.
+// Механики берутся из залётов проекта; у нового проекта своих мало, и тогда добираются
+// из общей базы формул (основной проект радара).
 export async function topFormulas(ws: string, limit = 10) {
+  const own = await formulasOf(ws, limit);
+  const main = process.env.WORKSPACE_ID;
+  if (own.length >= 5 || !main || main === ws) return own;
+  return [...own, ...(await formulasOf(main, limit))].slice(0, limit);
+}
+
+async function formulasOf(ws: string, limit: number) {
   const rows = check(
     await serviceDb()
       .from("reels")

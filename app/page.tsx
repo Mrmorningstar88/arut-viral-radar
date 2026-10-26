@@ -1,10 +1,14 @@
 import Link from "next/link";
+import { connection } from "next/server";
 import { redirect } from "next/navigation";
 import { AutoRefresh } from "@/components/studio/auto-refresh";
 import { GenerateScripts } from "@/components/studio/generate-button";
 import { ProjectSwitcher } from "@/components/studio/project-switcher";
+import { Landing } from "@/components/landing";
 import { Reveal } from "@/components/ui/reveal";
-import { getRepo, isDemo } from "@/lib/db";
+import { currentUser, isAdmin } from "@/lib/auth/server";
+import { PLANS, planOf, usage } from "@/lib/plans";
+import { isDemo } from "@/lib/db";
 import { currentWorkspace, listProjects } from "@/lib/projects";
 import { STAGE_HINT, STAGE_LABEL, STAGES, type Stage } from "@/lib/studio/schema";
 import { listScripts, type Script } from "@/lib/studio/store";
@@ -13,10 +17,13 @@ import { listScripts, type Script } from "@/lib/studio/store";
 export const maxDuration = 300;
 
 export default async function Studio() {
+  await connection();
   if (isDemo()) redirect("/reels");
-  await getRepo(); // проверяет вход владельца
-  const ws = await currentWorkspace();
-  const [projects, scripts] = await Promise.all([listProjects(), listScripts(ws).catch(() => null)]);
+  const user = await currentUser();
+  if (!user) return <Landing />;
+  const ws = await currentWorkspace(); // без проектов отправит в мастер первого запуска
+  const plan = planOf(user);
+  const [projects, scripts, used] = await Promise.all([listProjects(), listScripts(ws).catch(() => null), plan === "admin" ? null : usage(user.id)]);
   const project = projects.find((p) => p.id === ws);
 
   return (
@@ -28,26 +35,49 @@ export default async function Studio() {
         <div>
           <p className="text-xs font-semibold tracking-widest text-[#ff7a2f] uppercase">Контент-завод</p>
           <h1 className="font-display text-2xl font-semibold md:text-3xl">{project?.name ?? "Проект"}</h1>
-          <p className="mt-1 text-sm text-muted">Сценарии строятся на механиках залётов из вкладки «Залёты». Ты только говоришь «да» или «переделай».</p>
+          <p className="mt-1 text-sm text-muted">Сценарии строятся на механиках роликов, которые залетели в Instagram и TikTok. Ты только говоришь «да» или «переделай».</p>
+          {used && plan !== "admin" && (
+            <Link href="/settings" className="mt-2 inline-flex items-center gap-2 rounded-full bg-white/[0.05] px-3 py-1 text-xs text-muted hover:text-foreground">
+              <span className="font-semibold text-foreground">{PLANS[plan].name}</span>
+              сценариев в этом месяце: {used.scripts} из {PLANS[plan].limits.scripts}
+              {plan === "free" && <span className="text-[#ff7a2f]">· Хочу Pro</span>}
+            </Link>
+          )}
         </div>
         <GenerateScripts />
       </Reveal>
 
       {scripts === null ? (
         <Reveal className="rounded-3xl glass p-6 text-sm">
-          Конвейеру нужна новая таблица в базе. Запусти в Supabase SQL Editor файл <b>supabase-update-3.sql</b> и обнови страницу.
+          {isAdmin(user) ? (
+            <>
+              Конвейеру нужна новая таблица в базе. Запусти в Supabase SQL Editor файл <b>supabase-update-3.sql</b> и обнови страницу.
+            </>
+          ) : (
+            "Завод обновляется. Загляни через пару минут."
+          )}
         </Reveal>
       ) : (
-        <Board scripts={scripts} />
+        <Board scripts={scripts} warming={scripts.length === 0 && !!project && justCreated(project.createdAt)} />
       )}
     </div>
   );
 }
 
-function Board({ scripts }: { scripts: Script[] }) {
+// Проект создан мастером минуты назад: первые сценарии ещё пишутся.
+const justCreated = (iso: string) => Date.now() - Date.parse(iso) < 5 * 60_000;
+
+// warming: проект только что создан мастером, первые сценарии пишутся в фоне.
+function Board({ scripts, warming }: { scripts: Script[]; warming: boolean }) {
   return (
     <>
-      <AutoRefresh active={scripts.some((s) => s.busy)} />
+      <AutoRefresh active={warming || scripts.some((s) => s.busy)} />
+      {warming && (
+        <div className="flex items-center gap-3 rounded-2xl bg-[#ff7a2f]/10 px-4 py-3 text-sm ring-1 ring-[#ff7a2f]/25">
+          <span className="size-2 animate-ping rounded-full bg-[#ff7a2f]" />
+          Пишу первые 5 сценариев для этого проекта. Они появятся в первой колонке через минуту-две.
+        </div>
+      )}
       <div className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-4 [scrollbar-width:none] lg:mx-0 lg:grid lg:grid-cols-5 lg:overflow-visible lg:px-0">
         {STAGES.map((stage, i) => {
           const items = scripts.filter((s) => s.stage === stage);

@@ -11,9 +11,18 @@ import { reviseReelAnalysis, type AdaptationEdits } from "@/lib/generate";
 import { MODEL_MAIN } from "@/lib/llm";
 import { learn } from "@/lib/learning";
 import { getRepo, isDemo } from "@/lib/db";
+import { requireUser } from "@/lib/auth/server";
+import { overLimit, planOf } from "@/lib/plans";
+import { generateScripts } from "@/lib/studio/generate";
 import { buildPassport } from "@/lib/generate/passport";
 import { createProject as insertProject, currentWorkspace, selectProject } from "@/lib/projects";
 import { REEL_STATUSES, REJECT_REASONS, type RejectReason, type ReelStatus, type StatusChange } from "@/lib/db/types";
+
+// Радар (поиск и разбор залётов) тратит Apify и Claude, поэтому он у админа и на Pro.
+async function radarDenied() {
+  if (isDemo()) return null;
+  return planOf(await requireUser()) === "free" ? "Поиск залётов по твоей нише доступен на тарифе Pro." : null;
+}
 
 function statusChange(formData: FormData): StatusChange {
   const status = String(formData.get("status")) as ReelStatus;
@@ -45,6 +54,8 @@ export async function setRedpillStatus(formData: FormData) {
 
 // Ссылка разбирается сразу, в фоне после ответа: без ожидания расписания и без Inngest.
 export async function addToQueue(formData: FormData): Promise<{ error?: string; started?: boolean }> {
+  const denied = await radarDenied();
+  if (denied) return { error: denied };
   const url = String(formData.get("url") ?? "").trim();
   if (!/^https:\/\/(www\.)?instagram\.com\/([^/]+\/)?(reel|reels|p)\//.test(url)) return { error: "Нужна ссылка на Reels из Instagram" };
   await (await getRepo()).addToQueue(url, String(formData.get("note") ?? "").trim());
@@ -73,6 +84,8 @@ export async function setRuleStatus(formData: FormData) {
 // Возвращает текст ошибки, а не бросает: в продакшене Next скрывает сообщения брошенных ошибок.
 // Ручной поиск идёт прямо на сайте (не зависит от Inngest); расписание по-прежнему через Inngest.
 export async function runNow(options?: unknown): Promise<{ error?: string }> {
+  const denied = await radarDenied();
+  if (denied) return { error: denied };
   if (isDemo()) return { error: "В демо-режиме прогон недоступен: подключи базу и ключи" };
   const repo = await getRepo(); // проверяет вход владельца
   const last = (await repo.listRuns())[0];
@@ -101,6 +114,8 @@ export async function addCreator(formData: FormData): Promise<{ error?: string }
 }
 
 export async function processQueueNow(): Promise<{ error?: string }> {
+  const denied = await radarDenied();
+  if (denied) return { error: denied };
   if (isDemo()) return { error: "В демо-режиме разбор недоступен" };
   await getRepo(); // проверяет вход владельца
   const ws = await currentWorkspace();
@@ -110,6 +125,8 @@ export async function processQueueNow(): Promise<{ error?: string }> {
 
 // Автор правит хук и озвучку, Claude пересобирает раскадровку под его текст. Новая версия сохраняется рядом со старой.
 export async function reviseAdaptation(id: string, edits: AdaptationEdits): Promise<{ error?: string }> {
+  const denied = await radarDenied();
+  if (denied) return { error: denied };
   const repo = await getRepo();
   const reel = await repo.getReel(id);
   if (!reel?.analysis) return { error: "Разбор не найден" };
@@ -141,6 +158,8 @@ export async function reviseAdaptation(id: string, edits: AdaptationEdits): Prom
 }
 
 export async function learnNow(): Promise<{ error?: string; message?: string }> {
+  const denied = await radarDenied();
+  if (denied) return { error: denied };
   if (isDemo()) return { error: "В демо-режиме обучение недоступно" };
   await getRepo(); // проверяет вход владельца
   try {
@@ -157,15 +176,21 @@ export async function learnNow(): Promise<{ error?: string; message?: string }> 
 // Новый проект по ссылке: Claude читает сайт, собирает паспорт продукта и образ проекта.
 export async function createProject(formData: FormData): Promise<{ error?: string }> {
   if (isDemo()) return { error: "В демо-режиме проекты недоступны" };
-  await getRepo(); // проверяет вход владельца
+  const user = await requireUser();
+  const limit = await overLimit(user, "projects");
+  if (limit) return { error: limit };
   const url = String(formData.get("url") ?? "").trim();
   if (!/^https?:\/\/[^\s]+\.[^\s]+/.test(url)) return { error: "Нужна ссылка на сайт продукта" };
   const note = String(formData.get("note") ?? "").trim().slice(0, 600);
   try {
     const { passport, usd } = await buildPassport(url, note);
-    const id = await insertProject(url, passport);
+    const id = await insertProject(user.id, url, passport);
     await logCost(id, null, "anthropic", usd);
     await selectProject(id);
+    // Мастер первого запуска сразу заказывает первые сценарии, чтобы доска не была пустой.
+    if (formData.get("start") === "1" && !(await overLimit(user, "scripts", 5))) {
+      after(() => generateScripts(id, 5, "").catch((e) => console.error("generateScripts", e)));
+    }
   } catch (e) {
     return { error: `Не получилось собрать проект: ${e instanceof Error ? e.message.slice(0, 160) : "ошибка"}` };
   }
