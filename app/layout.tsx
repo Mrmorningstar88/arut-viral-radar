@@ -12,8 +12,8 @@ const inter = Inter({ variable: "--font-inter", subsets: ["latin", "cyrillic"] }
 const unbounded = Unbounded({ variable: "--font-unbounded", subsets: ["latin", "cyrillic"] });
 
 export const metadata: Metadata = {
-  title: "Viral Radar",
-  description: "Залетевшие Reels и адаптации под твой образ",
+  title: "YOOMP",
+  description: "Контент-завод: залёты, сценарии и ролики для твоих проектов",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

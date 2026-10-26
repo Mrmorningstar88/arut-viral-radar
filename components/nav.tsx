@@ -5,6 +5,7 @@ import { motion } from "motion/react";
 import { usePathname } from "next/navigation";
 
 const TABS = [
+  { href: "/projects", label: "Проекты", match: ["/projects"] },
   { href: "/reels", label: "Ролики", match: ["/reels"] },
   { href: "/redpill", label: "Red Pill", match: ["/redpill"] },
   { href: "/sources", label: "Добавить", match: ["/sources"] },
@@ -30,7 +31,7 @@ export function Nav() {
               <span className="size-3 rounded-full bg-[#ff7a2f] shadow-[0_0_14px_rgba(255,122,47,0.8)]" />
             </span>
             <span className="font-display text-sm font-semibold tracking-wide">
-              VIRAL RADAR
+              YOOMP
             </span>
           </Link>
           <nav className="hidden flex-1 gap-1 md:flex overflow-x-auto text-sm [scrollbar-width:none]">

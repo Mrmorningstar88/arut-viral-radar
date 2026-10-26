@@ -8,6 +8,8 @@ create table workspaces (
   id uuid primary key default gen_random_uuid(),
   name text not null,
   plan text not null default 'free',
+  product_url text,
+  passport jsonb,
   created_at timestamptz not null default now()
 );
 
