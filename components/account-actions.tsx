@@ -4,6 +4,7 @@ import { useActionState, useTransition } from "react";
 import { signOut } from "@/app/login/actions";
 import { requestPro, setPassword } from "@/app/settings/actions";
 import { Button } from "@/components/ui/button";
+import { PasswordInput } from "@/components/ui/password-input";
 import { useToast } from "@/components/ui/toast";
 
 export function RequestPro({ requested }: { requested: boolean }) {
@@ -29,20 +30,19 @@ export function RequestPro({ requested }: { requested: boolean }) {
 export function PasswordForm() {
   const [state, action, pending] = useActionState(setPassword, null);
   return (
-    <form action={action} className="flex flex-wrap items-center gap-2">
-      <input
+    <form action={action} className="grid gap-2 sm:grid-cols-[1fr_auto] sm:items-center">
+      <PasswordInput
         name="password"
-        type="password"
         minLength={8}
         required
         autoComplete="new-password"
         placeholder="Новый пароль"
-        className="min-w-0 flex-1 rounded-xl border border-ink/10 bg-paper/30 px-3 py-2 text-sm outline-none focus:border-accent/60"
+        className="w-full rounded-xl border border-ink/10 bg-paper/30 px-3 py-2 text-sm outline-none focus:border-accent/60"
       />
       <Button type="submit" disabled={pending}>
-        {pending ? "Сохраняю…" : "Сохранить"}
+        {pending ? "Сохраняю…" : "Сохранить пароль"}
       </Button>
-      {state && <p className={`w-full text-xs ${state.error ? "text-rose-300" : "text-emerald-300"}`}>{state.error ?? state.message}</p>}
+      {state && <p className={`text-xs sm:col-span-2 ${state.error ? "text-rose-300" : "text-emerald-300"}`}>{state.error ?? state.message}</p>}
     </form>
   );
 }
