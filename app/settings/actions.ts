@@ -5,6 +5,7 @@ import { after } from "next/server";
 import { authClient, requireAdmin, requireUser } from "@/lib/auth/server";
 import { serviceDb } from "@/lib/engine/store";
 import { keyOf, listVoices, makeSound, saveKey, saveSound, soundOf } from "@/lib/elevenlabs";
+import { checkKey, createSoul, faceOf, linkOf as higgsOf, saveFace, saveLink as saveHiggs, training, uploadPhoto } from "@/lib/higgsfield";
 import { linkOf, listBrands, saveLink } from "@/lib/metricool";
 import { currentWorkspace } from "@/lib/projects";
 
@@ -119,6 +120,74 @@ export async function createSound(): Promise<Result> {
 export async function disconnectElevenLabs(): Promise<Result> {
   const user = await requireUser();
   await saveKey(user, null);
+  revalidatePath("/settings");
+  return {};
+}
+
+// Higgsfield: ключ проверяется бесплатным запросом, потом из фото обучается Soul ID, и образ включается для организации.
+export async function connectHiggsfield(_: Result | null, fd: FormData): Promise<Result> {
+  const user = await requireUser();
+  const id = String(fd.get("id") ?? "").trim();
+  const secret = String(fd.get("secret") ?? "").trim();
+  if (id.length < 8 || secret.length < 8) return { error: "Нужны ID ключа и секрет из Higgsfield целиком" };
+  try {
+    await checkKey({ id, secret });
+    await saveHiggs(user, { id, secret });
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Не получилось подключиться" };
+  }
+  revalidatePath("/settings");
+  return { message: "Higgsfield подключён. Теперь загрузи свои фото." };
+}
+
+const MAX_PHOTO = 4 * 1024 * 1024;
+
+// Одно фото за вызов: браузер заранее уменьшает его, чтобы запрос был лёгким.
+export async function uploadFacePhoto(fd: FormData): Promise<Result & { url?: string }> {
+  const user = await requireUser();
+  const link = higgsOf(user);
+  if (!link) return { error: "Сначала подключи Higgsfield" };
+  const photo = fd.get("photo");
+  if (!(photo instanceof File) || !photo.type.startsWith("image/") || photo.size === 0 || photo.size > MAX_PHOTO) return { error: "Нужна фотография до 4 МБ" };
+  try {
+    return { url: await uploadPhoto(link, photo) };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Фото не загрузилось" };
+  }
+}
+
+export async function trainFace(urls: string[]): Promise<Result> {
+  const user = await requireUser();
+  const link = higgsOf(user);
+  if (!link) return { error: "Сначала подключи Higgsfield" };
+  if (training(link.soul)) return { message: "Образ уже обучается" };
+  const clean = Array.isArray(urls) ? urls.filter((u) => typeof u === "string" && u.startsWith("https://")).slice(0, 20) : [];
+  if (clean.length < 5) return { error: "Нужно от 5 до 20 фото лица" };
+  try {
+    const soul = await createSoul(link, `YOOMP ${user.email ?? user.id}`, clean);
+    await saveHiggs(user, { ...link, soul });
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Не получилось начать обучение" };
+  }
+  revalidatePath("/settings");
+  return { message: "Обучаю твой образ, обычно это несколько минут" };
+}
+
+export async function setFace(on: boolean): Promise<Result> {
+  const user = await requireUser();
+  const link = higgsOf(user);
+  if (on && link?.soul?.status !== "completed") return { error: "Сначала дождись, пока образ обучится" };
+  const ws = await currentWorkspace();
+  const face = await faceOf(ws);
+  // Выключить может любой участник, включить только со своим образом.
+  await saveFace(ws, { owner: on ? user.id : (face?.owner ?? user.id), on: !!on });
+  revalidatePath("/settings");
+  return {};
+}
+
+export async function disconnectHiggsfield(): Promise<Result> {
+  const user = await requireUser();
+  await saveHiggs(user, null);
   revalidatePath("/settings");
   return {};
 }

@@ -2,12 +2,14 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { PasswordForm, RequestPro, SignOut } from "@/components/account-actions";
 import { MetricoolCard } from "@/components/metricool-card";
+import { FaceCard } from "@/components/face-card";
 import { SoundCard } from "@/components/sound-card";
 import { Reveal } from "@/components/ui/reveal";
 import { isAdmin, requireUser } from "@/lib/auth/server";
 import { isDemo } from "@/lib/db";
 import { healthChecks } from "@/lib/health";
 import { keyOf, listVoices, soundOf, type Voice } from "@/lib/elevenlabs";
+import { faceOf, getSoul, linkOf as higgsOf, saveLink as saveHiggs, training, type Soul } from "@/lib/higgsfield";
 import { linkOf, listBrands, type Brand } from "@/lib/metricool";
 import { PLANS, planOf, usage } from "@/lib/plans";
 import { currentWorkspace, listProjects } from "@/lib/projects";
@@ -20,6 +22,18 @@ const ITEMS = [
 
 // «Создать фирменный звук» сочиняет музыку в фоне после ответа.
 export const maxDuration = 300;
+
+// Пока образ обучается, статус спрашиваем у Higgsfield при каждом открытии страницы и запоминаем.
+async function freshSoul(user: Parameters<typeof higgsOf>[0], link: NonNullable<ReturnType<typeof higgsOf>>): Promise<Soul | string | null> {
+  if (!link.soul || !training(link.soul)) return link.soul ?? null;
+  try {
+    const soul = await getSoul(link, link.soul.id);
+    if (soul.status !== link.soul.status) await saveHiggs(user, { ...link, soul });
+    return soul;
+  } catch (e) {
+    return e instanceof Error ? e.message : "Не получилось узнать статус образа";
+  }
+}
 
 export default async function SettingsPage() {
   await connection();
@@ -38,6 +52,8 @@ export default async function SettingsPage() {
     elKey ? listVoices(elKey).then((v): Voice[] | string => v).catch((e: Error) => e.message) : ([] as Voice[]),
   ]);
   const sound = elKey ? await soundOf(ws) : null;
+  const higgs = higgsOf(user);
+  const [face, soul] = higgs ? await Promise.all([faceOf(ws), freshSoul(user, higgs)]) : [null, null];
   const org = projects.find((p) => p.id === ws)?.name ?? "";
   const limits = PLANS[plan].limits;
   const meter = (label: string, n: number, max: number) => (
@@ -108,6 +124,17 @@ export default async function SettingsPage() {
             voices={typeof voices === "string" ? [] : voices}
             sound={sound && { voiceId: sound.voiceId, status: sound.status, error: sound.error, idea: sound.idea, theme: sound.theme, sfx: sound.sfx }}
             error={typeof voices === "string" ? voices : null}
+          />
+        </Reveal>
+
+        <Reveal delay={0.08} className="rounded-3xl glass p-5 md:col-span-2">
+          <h2 className="mb-3 font-display text-sm font-semibold tracking-wide uppercase">Мой образ в роликах</h2>
+          <FaceCard
+            org={org}
+            connected={!!higgs}
+            soul={typeof soul === "string" ? (higgs?.soul ?? null) : soul}
+            on={!!face?.on && face.owner === user.id}
+            error={typeof soul === "string" ? soul : null}
           />
         </Reveal>
       </div>

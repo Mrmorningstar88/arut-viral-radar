@@ -66,6 +66,85 @@ async function soundKit(s, dir) {
   return { key, voiceId: sound.voiceId, voiceName: sound.voiceName, idea: sound.idea, files };
 }
 
+// Образ автора из Higgsfield (Soul ID обучается в портале, включается для организации ключом face:<ws> в source_cache).
+// Ключ и Soul ID берём из app_metadata владельца образа. Образ выключен или не готов: ролик идёт как раньше.
+async function faceKit(s, dir) {
+  const { data } = await db.from("source_cache").select("payload").eq("key", `face:${s.workspace_id}`).maybeSingle();
+  const face = data?.payload;
+  if (!face?.on || !face.owner) return null;
+  const { data: u } = await db.auth.admin.getUserById(face.owner);
+  const hf = u?.user?.app_metadata?.higgsfield;
+  if (!hf?.id || !hf.secret || hf.soul?.status !== "completed") return null;
+  writeFileSync(join(dir, "hf.mjs"), HF_HELPER);
+  return { id: hf.id, secret: hf.secret, soulId: hf.soul.id };
+}
+
+// Помощник Higgsfield в папке ролика. Ключ из окружения, в файлы не пишется. Потолок кадров и клипов на ролик
+// держит сам помощник (счётчик в .hf-usage.json), чтобы агент не потратил баланс автора.
+//   node hf.mjs frame "промпт кадра с автором" out.jpg      — кадр 9:16 с лицом автора (Soul 2 + Soul ID)
+//   node hf.mjs clip in.jpg "промпт движения" out.mp4 [5|10] — оживить кадр в видео (Kling 2.5 Turbo Pro)
+const HF_HELPER = `import { existsSync, readFileSync, writeFileSync } from "node:fs";
+const API = "https://api.higgsfield.ai";
+const { HF_KEY_ID: id, HF_KEY_SECRET: secret, HF_SOUL_ID: soul } = process.env;
+const MAX = { frames: Number(process.env.HF_MAX_FRAMES || 16), clips: Number(process.env.HF_MAX_CLIPS || 8) };
+const auth = { Authorization: \`Key \${id}:\${secret}\` };
+const [cmd, ...args] = process.argv.slice(2);
+const usage = existsSync(".hf-usage.json") ? JSON.parse(readFileSync(".hf-usage.json", "utf8")) : { frames: 0, clips: 0, seconds: 0 };
+const fail = (m) => { console.error(m); process.exit(1); };
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+async function api(path, body) {
+  const res = await fetch(API + path, { method: body ? "POST" : "GET", headers: { ...auth, ...(body ? { "Content-Type": "application/json" } : {}) }, body: body && JSON.stringify(body), signal: AbortSignal.timeout(60000) });
+  const text = await res.text();
+  if (!res.ok) fail(\`Higgsfield \${res.status}: \${text.slice(0, 300)}\`);
+  return JSON.parse(text);
+}
+async function run(path, body, minutes) {
+  const r = await api(path, body);
+  const until = Date.now() + minutes * 60000;
+  for (;;) {
+    await sleep(4000);
+    const st = await api(\`/requests/\${r.request_id}/status\`);
+    if (st.status === "completed") return st;
+    if (["failed", "nsfw", "canceled"].includes(st.status)) fail(\`Higgsfield: \${st.status} \${st.error ?? ""}\`);
+    if (Date.now() > until) fail("Higgsfield не успел за отведённое время");
+  }
+}
+async function save(url, out) {
+  const res = await fetch(url, { signal: AbortSignal.timeout(300000) });
+  if (!res.ok) fail(\`Не скачался результат: \${res.status}\`);
+  writeFileSync(out, Buffer.from(await res.arrayBuffer()));
+}
+async function upload(file) {
+  const type = file.endsWith(".png") ? "image/png" : "image/jpeg";
+  const slot = await api("/files/generate-upload-url", { content_type: type });
+  const put = await fetch(slot.upload_url, { method: "PUT", headers: slot.upload_headers ?? { "Content-Type": type }, body: readFileSync(file), signal: AbortSignal.timeout(120000) });
+  if (!put.ok) fail(\`Кадр не загрузился: \${put.status}\`);
+  return slot.public_url;
+}
+
+if (!id || !secret || !soul) fail("Нет ключа Higgsfield или Soul ID");
+if (cmd === "frame") {
+  const [prompt, out] = args;
+  if (!prompt || !out) fail('node hf.mjs frame "промпт" out.jpg');
+  if (usage.frames >= MAX.frames) fail(\`Лимит кадров с автором на ролик: \${MAX.frames}\`);
+  const st = await run("/higgsfield-ai/soul/v2/standard", { prompt, aspect_ratio: "9:16", resolution: "1080p", batch_size: 1, enhance_prompt: true, custom_reference_id: soul, custom_reference_strength: 1 }, 10);
+  await save(st.images?.[0]?.url ?? fail("Higgsfield не вернул кадр"), out);
+  usage.frames++;
+} else if (cmd === "clip") {
+  const [input, prompt, out, dur = "5"] = args;
+  if (!input || !prompt || !out) fail('node hf.mjs clip in.jpg "промпт движения" out.mp4 [5|10]');
+  if (usage.clips >= MAX.clips) fail(\`Лимит видеоклипов с автором на ролик: \${MAX.clips}\`);
+  const duration = dur === "10" ? 10 : 5;
+  const st = await run("/kling-video/v2.5-turbo/pro/image-to-video", { prompt, image_url: await upload(input), duration }, 20);
+  await save(st.video?.url ?? fail("Higgsfield не вернул видео"), out);
+  usage.clips++;
+  usage.seconds += duration;
+} else fail("Команды: frame, clip");
+writeFileSync(".hf-usage.json", JSON.stringify(usage));
+console.log("ok", args.at(cmd === "frame" ? 1 : 2), JSON.stringify(usage));
+`;
+
 // Помощник озвучки в папке ролика: node tts.mjs "текст" out.mp3. Ключ берётся из окружения, в файлы не пишется.
 const TTS_HELPER = `import { writeFileSync } from "node:fs";
 const [text, out] = process.argv.slice(2);
@@ -88,7 +167,7 @@ const SPEECH = {
   es: { name: "испанский", male: "es-ES-AlvaroNeural", female: "es-ES-ElviraNeural", whisper: "es" },
 };
 
-function brief(s, kit) {
+function brief(s, kit, face) {
   const p = s.payload;
   const sb = s.storyboard;
   const lang = SPEECH[p.lang] ?? SPEECH.ru;
@@ -103,6 +182,9 @@ function brief(s, kit) {
     "Формат: вертикальный 1080×1920, 30 fps (`--size 1080x1920`). Длина по озвучке, 15–45 секунд.",
     voice,
     sound,
+    face
+      ? `Автор в кадре: у тебя есть его образ из Higgsfield. Автор и есть герой ролика: в хуке, в ключевых сценах и в финале, а также везде, где по сториборду есть ведущий, рассказчик или человек, в кадре именно он. Такие кадры делай так: \`node hf.mjs frame "кинематографичный промпт на английском: кто (the man), где, что делает, свет, объектив, 9:16" shots/NN.jpg\`, затем оживи \`node hf.mjs clip shots/NN.jpg "движение камеры и героя на английском" shots/NN.mp4 5\` (10 только для длинных планов). Встрой эти клипы в монтаж стиля как живые планы, остальное делай средствами стиля. Лимит: до 16 кадров и до 8 клипов на ролик, команды выполняй по одной и не повторяй удачные. Если Higgsfield ответил ошибкой баланса или ключа, делай ролик без автора.`
+      : "",
     "Сториборд автор уже одобрил, на ревью не останавливайся.",
     "Подача как у мини-фильма с безграничным бюджетом: смелые невероятные образы, глубина кадра, драматичный свет, движение камеры, сильные переходы. Не плоский мультик и не слайды с текстом: каждый кадр должен выглядеть дорого в рамках стиля.",
     "",
@@ -137,7 +219,8 @@ async function render(s) {
   const dir = join(WORK, s.id);
   mkdirSync(dir, { recursive: true });
   const kit = await soundKit(s, dir).catch((e) => (console.error("sound kit", e.message), null));
-  const film = brief(s, kit);
+  const face = await faceKit(s, dir).catch((e) => (console.error("face kit", e.message), null));
+  const film = brief(s, kit, face);
   writeFileSync(join(dir, "BRIEF.md"), film);
   let cost = 0;
   let lastLog = 0;
@@ -159,7 +242,12 @@ async function render(s) {
       permissionMode: "dontAsk",
       allowedTools: ["Read", "Write", "Edit", "Glob", "Grep", "Bash"],
       maxBudgetUsd: Number(RENDER_BUDGET_USD),
-      env: { ...process.env, LIB, ...(kit?.voiceId ? { ELEVENLABS_API_KEY: kit.key, ELEVENLABS_VOICE_ID: kit.voiceId } : {}) },
+      env: {
+        ...process.env,
+        LIB,
+        ...(kit?.voiceId ? { ELEVENLABS_API_KEY: kit.key, ELEVENLABS_VOICE_ID: kit.voiceId } : {}),
+        ...(face ? { HF_KEY_ID: face.id, HF_KEY_SECRET: face.secret, HF_SOUL_ID: face.soulId } : {}),
+      },
     },
   })) {
     if (m.type === "assistant") {
@@ -190,13 +278,23 @@ async function render(s) {
   const { error } = await db.storage.from("videos").upload(key, readFileSync(file), { contentType: "video/mp4", upsert: true });
   if (error) throw new Error(`Не загрузилось в хранилище: ${error.message}`);
   const url = db.storage.from("videos").getPublicUrl(key).data.publicUrl;
+  const hf = higgsfieldUsage(dir);
   // Готовое видео ставим, только если ролик не отменили, пока шла загрузка.
   await db
     .from("scripts")
-    .update({ stage: "ready", render_status: "done", render_log: `Готово, $${cost.toFixed(2)}`, video_url: url, error: null, updated_at: new Date().toISOString() })
+    .update({ stage: "ready", render_status: "done", render_log: `Готово, $${cost.toFixed(2)}${hf ? ` · с тобой: ${hf.frames} кадров, ${hf.clips} клипов` : ""}`, video_url: url, error: null, updated_at: new Date().toISOString() })
     .eq("id", s.id)
     .eq("stage", "production");
   await db.from("usage_costs").insert({ workspace_id: s.workspace_id, provider: "anthropic-render", units: 1, usd: cost });
+}
+
+function higgsfieldUsage(dir) {
+  try {
+    const u = JSON.parse(readFileSync(join(dir, ".hf-usage.json"), "utf8"));
+    return u.frames || u.clips ? u : null;
+  } catch {
+    return null;
+  }
 }
 
 function newestMp4(dir) {
