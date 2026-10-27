@@ -19,12 +19,14 @@ export async function proxy(request: NextRequest) {
       },
     },
   });
-  const { data } = await supabase.auth.getUser();
+  // getClaims проверяет токен на месте (без похода в Supabase Auth, если ключи асимметричные) и при надобности обновляет сессию.
+  const { data } = await supabase.auth.getClaims();
+  const signedIn = !!data?.claims;
   const path = request.nextUrl.pathname;
   // Главная открыта всем: гость видит описание сервиса, вошедший — свой завод.
   const open = path === "/" || path.startsWith("/login") || path.startsWith("/auth");
-  if (!data.user && !open) return NextResponse.redirect(new URL("/login", request.url));
-  if (data.user && path.startsWith("/login")) return NextResponse.redirect(new URL("/", request.url));
+  if (!signedIn && !open) return NextResponse.redirect(new URL("/login", request.url));
+  if (signedIn && path.startsWith("/login")) return NextResponse.redirect(new URL("/", request.url));
   return response;
 }
 
