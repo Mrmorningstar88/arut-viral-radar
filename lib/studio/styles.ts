@@ -66,6 +66,9 @@ export const OPUS_STYLES: OpusStyle[] = [
   { slug: "my-style", name: "My Style", category: "Graphic & Type", line: "One sentence: what happens in the demo film.", uses: ["Use one", "Use two", "Use three"] },
 ];
 
+// Пример-фильм стиля из релиза библиотеки (большой mp4, грузится только по кнопке «Пример»).
+export const OPUS_FILM = (slug: string) => `https://github.com/lemomo-ai/lemo-opuscar/releases/download/films/${slug}.mp4`;
+
 export const OPUS_FRAME = (slug: string) => `https://raw.githubusercontent.com/lemomo-ai/lemo-opuscar/main/docs/frames/${slug}.jpg`;
 
 export const styleBySlug = (slug: string | null | undefined) => OPUS_STYLES.find((s) => s.slug === slug);

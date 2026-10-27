@@ -1,7 +1,8 @@
 "use client";
 
 import { useTransition } from "react";
-import { approveScript, approveStoryboard, rejectScript, restoreScript } from "@/app/studio/actions";
+import Link from "next/link";
+import { approveScript, rejectScript, restoreScript } from "@/app/studio/actions";
 import { useToast } from "@/components/ui/toast";
 import type { Stage } from "@/lib/studio/schema";
 
@@ -30,9 +31,9 @@ export function CardActions({ id, stage }: { id: string; stage: Stage }) {
   if (stage === "storyboard")
     return (
       <div className="mt-3 flex flex-wrap gap-2">
-        <button disabled={pending} onClick={() => run(() => approveStoryboard(id), "Отправил в производство")} className={`${btn} neo-primary text-white`}>
-          ✓ В производство
-        </button>
+        <Link href={`/studio/${id}?launch=1`} className={`${btn} neo-primary inline-flex items-center justify-center text-white`}>
+          ▶ Стиль и запуск
+        </Link>
       </div>
     );
   if (stage === "rejected")
