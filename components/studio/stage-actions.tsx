@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { approveScript, approveStoryboard, redoScript, redoStoryboard, rejectForever, rejectScript, restoreScript, type ScriptEdit } from "@/app/studio/actions";
 import { ScriptEditor } from "@/components/studio/script-editor";
+import { StyleGallery } from "@/components/studio/style-gallery";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import type { Stage } from "@/lib/studio/schema";
@@ -13,14 +14,16 @@ type Redo = (id: string, feedback: string) => Promise<{ error?: string }>;
 
 const CONFIG: Partial<Record<Stage, { yes: string; yesAct: Act; yesToast: string; redo: Redo; redoLabel: string }>> = {
   script: { yes: "Одобрить", yesAct: approveScript, yesToast: "Рисую сториборд, около минуты", redo: redoScript, redoLabel: "Переписать с Claude" },
-  storyboard: { yes: "Да, в производство", yesAct: approveStoryboard, yesToast: "Отправил в производство", redo: redoStoryboard, redoLabel: "Переделать сториборд" },
+  storyboard: { yes: "Выбрать стиль и запустить", yesAct: approveStoryboard, yesToast: "Отправил в производство", redo: redoStoryboard, redoLabel: "Переделать сториборд" },
 };
 
-export function StageActions({ id, stage, busy, edit, style }: { id: string; stage: Stage; busy: boolean; edit: ScriptEdit; style: string | null }) {
+export function StageActions({ id, stage, busy, edit, style, launch = false }: { id: string; stage: Stage; busy: boolean; edit: ScriptEdit; style: string | null; launch?: boolean }) {
   const [pending, start] = useTransition();
   const [redoOpen, setRedoOpen] = useState(false);
   const [editing, setEditing] = useState(false);
-  const [confirm, setConfirm] = useState(false);
+  // launch: пришли с доски по кнопке «В производство», сразу открываем выбор стиля.
+  const [confirm, setConfirm] = useState(launch && stage === "storyboard");
+  const [picked, setPicked] = useState(style);
   const [feedback, setFeedback] = useState("");
   const toast = useToast();
   const c = CONFIG[stage];
@@ -45,7 +48,7 @@ export function StageActions({ id, stage, busy, edit, style }: { id: string; sta
 
   // Перед рендером показываем, в каком стиле будет ролик, и даём сменить его: рендер долгий и стоит денег.
   if (confirm) {
-    const st = styleBySlug(style);
+    const st = styleBySlug(picked);
     return (
       <div className="space-y-4 rounded-3xl glass-strong p-4">
         <div className="flex flex-wrap items-center gap-4">
@@ -54,31 +57,31 @@ export function StageActions({ id, stage, busy, edit, style }: { id: string; sta
             <img src={OPUS_FRAME(st.slug)} alt="" className="h-20 w-36 rounded-2xl object-cover ring-1 ring-ink/10" />
           )}
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-semibold tracking-widest text-muted uppercase">Ролик будет в стиле</p>
-            <p className="font-display text-lg font-semibold">{st?.name ?? "Не выбран"}</p>
-            <a href="#style" onClick={() => setConfirm(false)} className="text-sm text-accent hover:underline">
-              Сменить стиль
-            </a>
+            <p className="text-xs font-semibold tracking-widest text-muted uppercase">Шаг перед производством: выбери стиль</p>
+            <p className="font-display text-lg font-semibold">{st?.name ?? "Стиль не выбран"}</p>
+            <p className="text-sm text-muted">Нажми на кадр, чтобы выбрать, или «▶ Пример», чтобы посмотреть, как выглядит готовый фильм. Рендер идёт 30–60 минут, его можно отменить.</p>
           </div>
         </div>
-        <p className="text-sm text-muted">Рендер идёт 30–60 минут. Пока ролик в очереди или рисуется, его можно отменить.</p>
         <div className="flex flex-wrap gap-2">
           <Button
             variant="primary"
             disabled={pending || busy || !st}
             onClick={() =>
               run(async () => {
-                const r = await approveStoryboard(id);
+                const r = await approveStoryboard(id, picked ?? undefined);
                 if (!r.error) setConfirm(false);
                 return r;
               }, "Запустил рендер")
             }
           >
-            ▶ Запустить ролик
+            ▶ Запустить ролик{st ? ` в стиле ${st.name}` : ""}
           </Button>
           <Button disabled={pending} onClick={() => setConfirm(false)}>
             Назад
           </Button>
+        </div>
+        <div className="max-h-[60vh] overflow-y-auto rounded-2xl pr-1">
+          <StyleGallery current={picked} onPick={setPicked} disabled={pending} />
         </div>
       </div>
     );

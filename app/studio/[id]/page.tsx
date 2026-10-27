@@ -18,8 +18,9 @@ import { getScript } from "@/lib/studio/store";
 // Действия на этой странице запускают Claude в фоне.
 export const maxDuration = 300;
 
-export default async function ScriptPage({ params }: PageProps<"/studio/[id]">) {
+export default async function ScriptPage({ params, searchParams }: PageProps<"/studio/[id]">) {
   const { id } = await params;
+  const launch = (await searchParams).launch === "1";
   const ws = await currentWorkspace(); // проверяет вход и доступ к организации
   const s = await getScript(ws, id);
   if (!s) notFound();
@@ -55,7 +56,7 @@ export default async function ScriptPage({ params }: PageProps<"/studio/[id]">) 
           </p>
         )}
         {s.error && !s.busy && <p className="rounded-2xl bg-rose-500/10 px-4 py-3 text-sm text-rose-200">Не получилось: {s.error}</p>}
-        <StageActions id={s.id} stage={s.stage} busy={s.busy} edit={{ title: s.title, hook: p.hook, vo: p.vo, onScreen: p.onScreen, caption: p.caption, cta: p.cta }} style={s.style ?? p.style} />
+        <StageActions id={s.id} stage={s.stage} busy={s.busy} edit={{ title: s.title, hook: p.hook, vo: p.vo, onScreen: p.onScreen, caption: p.caption, cta: p.cta }} style={s.style ?? p.style} launch={launch} />
       </Reveal>
 
       {(s.style || p.style) && (
