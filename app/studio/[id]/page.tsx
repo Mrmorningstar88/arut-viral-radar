@@ -6,6 +6,7 @@ import { CancelRender, DownloadVideo, DrawSketches, PublishForm, RejectVideo, Re
 import { StageActions } from "@/components/studio/stage-actions";
 import { StylePicker } from "@/components/studio/style-picker";
 import { CopyButton } from "@/components/ui/copy-button";
+import { LangPicker } from "@/components/studio/lang-picker";
 import { Panel } from "@/components/ui/panel";
 import { Reveal } from "@/components/ui/reveal";
 import { requireUser } from "@/lib/auth/server";
@@ -62,6 +63,10 @@ export default async function ScriptPage({ params }: PageProps<"/studio/[id]">) 
           <StylePicker id={s.id} style={s.style ?? p.style} editable={(s.stage === "script" || s.stage === "storyboard") && !s.busy} redraws={s.stage === "storyboard"} />
         </Reveal>
       )}
+
+      <Reveal delay={0.02}>
+        <LangPicker id={s.id} lang={p.lang} editable={(s.stage === "script" || s.stage === "storyboard") && !s.busy} />
+      </Reveal>
 
       {s.stage === "ready" && s.videoUrl && (
         <Reveal delay={0.03} className="grid gap-5 rounded-3xl glass p-5 md:grid-cols-[minmax(0,320px)_1fr]">

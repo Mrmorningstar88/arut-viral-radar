@@ -6,7 +6,7 @@ import { isDemo } from "@/lib/db";
 import { requireUser } from "@/lib/auth/server";
 import { overLimit } from "@/lib/plans";
 import { currentWorkspace } from "@/lib/projects";
-import { asLang } from "@/lib/studio/lang";
+import { asLang, LANGS } from "@/lib/studio/lang";
 import { buildStoryboard, generateScripts, reviseScript, sketchFrames } from "@/lib/studio/generate";
 import { linkOf, NETWORKS, publishVideo } from "@/lib/metricool";
 import { getScript, updateScript } from "@/lib/studio/store";
@@ -64,6 +64,26 @@ export async function redoScript(id: string, feedback: string): Promise<Result> 
     const ws = await workspace();
     await updateScript(ws, id, { busy: true, error: null });
     background(ws, id, () => reviseScript(ws, id, feedback.trim().slice(0, 600)));
+    refresh(id);
+    return {};
+  } catch (e) {
+    return { error: msg(e) };
+  }
+}
+
+// Перевод готового сценария: переписываем на новом языке, а если уже есть сториборд, пересобираем и его.
+export async function translateScript(id: string, lang: string): Promise<Result> {
+  try {
+    const ws = await workspace();
+    const s = await getScript(ws, id);
+    if (!s || (s.stage !== "script" && s.stage !== "storyboard")) return { error: "Перевести можно сценарий или сториборд до запуска ролика" };
+    const to = asLang(lang);
+    if (asLang(s.payload.lang) === to) return {};
+    await updateScript(ws, id, { busy: true, error: null });
+    background(ws, id, async () => {
+      await reviseScript(ws, id, `Переведи и адаптируй сценарий на язык: ${LANGS[to].label}. Смысл, механику, хук и тайм-коды сохрани, звучать должно как у носителя.`, to);
+      if (s.stage === "storyboard") await buildStoryboard(ws, id);
+    });
     refresh(id);
     return {};
   } catch (e) {
