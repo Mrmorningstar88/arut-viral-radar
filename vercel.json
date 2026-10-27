@@ -1,9 +1,27 @@
 {
+  "regions": [
+    "hnd1"
+  ],
   "crons": [
-    { "path": "/api/cron?job=metrics", "schedule": "0 4 * * *" },
-    { "path": "/api/cron?job=redpill", "schedule": "30 4 * * *" },
-    { "path": "/api/cron?job=morning", "schedule": "0 5 * * *" },
-    { "path": "/api/cron?job=evening", "schedule": "0 16 * * *" },
-    { "path": "/api/cron?job=learn", "schedule": "0 6 * * 0" }
+    {
+      "path": "/api/cron?job=metrics",
+      "schedule": "0 4 * * *"
+    },
+    {
+      "path": "/api/cron?job=redpill",
+      "schedule": "30 4 * * *"
+    },
+    {
+      "path": "/api/cron?job=morning",
+      "schedule": "0 5 * * *"
+    },
+    {
+      "path": "/api/cron?job=evening",
+      "schedule": "0 16 * * *"
+    },
+    {
+      "path": "/api/cron?job=learn",
+      "schedule": "0 6 * * 0"
+    }
   ]
 }

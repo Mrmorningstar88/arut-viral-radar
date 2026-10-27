@@ -32,7 +32,7 @@ export async function signIn(_: State, fd: FormData): Promise<State> {
   const email = field(fd, "email").toLowerCase();
   const password = String(fd.get("password") ?? "");
   const { error } = await (await authClient()).auth.signInWithPassword({ email, password });
-  if (error) return { error: "Неверная почта или пароль. Если пароля нет, войди по ссылке на почту ниже." };
+  if (error) return { error: "Неверная почта или пароль. Не помнишь пароль? Нажми «Забыл пароль?» ниже." };
   redirect("/");
 }
 
