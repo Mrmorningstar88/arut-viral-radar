@@ -1,5 +1,6 @@
 "use server";
 
+import { createClient } from "@supabase/supabase-js";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { authClient } from "@/lib/auth/server";
@@ -31,17 +32,22 @@ export async function signIn(_: State, fd: FormData): Promise<State> {
   const email = field(fd, "email").toLowerCase();
   const password = String(fd.get("password") ?? "");
   const { error } = await (await authClient()).auth.signInWithPassword({ email, password });
-  if (error) return { error: "Неверная почта или пароль" };
+  if (error) return { error: "Неверная почта или пароль. Если пароля нет, войди по ссылке на почту ниже." };
   redirect("/");
 }
 
 // Вход по ссылке на почту для тех, у кого нет пароля (первые аккаунты были без него).
 export async function sendMagicLink(_: State, fd: FormData): Promise<State> {
   const email = field(fd, "email").toLowerCase();
-  if (!EMAIL.test(email)) return { error: "Впиши почту выше" };
+  if (!EMAIL.test(email)) return { error: "Проверь почту" };
   const origin = (await headers()).get("origin") ?? "";
   // Одинаковый ответ для любых адресов: не подсказываем, у кого есть аккаунт.
-  await (await authClient()).auth.signInWithOtp({ email, options: { emailRedirectTo: `${origin}/auth/callback`, shouldCreateUser: false } });
+  // Implicit-ссылка несёт токены в самой ссылке, поэтому открывается в любом браузере (Gmail открывает в своём),
+  // а не только в том, где её запросили.
+  const anon = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
+    auth: { flowType: "implicit", persistSession: false, autoRefreshToken: false },
+  });
+  await anon.auth.signInWithOtp({ email, options: { emailRedirectTo: `${origin}/auth/callback`, shouldCreateUser: false } });
   return { sent: true, message: "Если такой аккаунт есть, ссылка для входа уже в почте." };
 }
 

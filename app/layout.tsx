@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Unbounded } from "next/font/google";
+import { AuthHash } from "@/components/auth-hash";
 import { Ambient } from "@/components/ui/ambient";
 import { MotionRoot } from "@/components/ui/motion-root";
 import { ToastProvider } from "@/components/ui/toast";
@@ -22,6 +23,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="ru" className={`${inter.variable} ${unbounded.variable} h-full antialiased`}>
       <body className="relative isolate min-h-full font-sans">
         <Ambient />
+        <AuthHash />
         <MotionRoot>
         <ToastProvider>
         <Suspense fallback={<div className="h-14 border-b border-border" />}>

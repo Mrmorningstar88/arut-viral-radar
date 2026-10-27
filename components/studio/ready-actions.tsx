@@ -15,16 +15,13 @@ export function RetryRender({ id }: { id: string }) {
   );
 }
 
-// Пока автопостинг не подключён: скачать ролик, выложить и отметить ссылкой на пост.
-export function PublishForm({ id, videoUrl }: { id: string; videoUrl: string }) {
+// Выложил вручную: отметить ролик ссылкой на пост.
+export function PublishForm({ id }: { id: string }) {
   const [url, setUrl] = useState("");
   const [pending, start] = useTransition();
   const toast = useToast();
   return (
     <div className="space-y-3">
-      <a href={videoUrl} download className="inline-flex rounded-xl bg-paper px-4 py-2 text-sm font-semibold text-ink">
-        ↓ Скачать ролик
-      </a>
       <div className="flex flex-col gap-2 sm:flex-row">
         <input
           value={url}
@@ -96,5 +93,17 @@ export function ReleaseForm({ id, networks }: { id: string; networks: { id: stri
         {pending ? "Отправляю…" : "🚀 Выпустить"}
       </Button>
     </div>
+  );
+}
+
+// Ссылка с ?download= заставляет Supabase Storage отдать файл как вложение: атрибут download
+// браузер игнорирует для чужого домена, и ролик просто открылся бы во вкладке.
+export function DownloadVideo({ url, title }: { url: string; title: string }) {
+  const name = `${title.replace(/[^\p{L}\p{N}]+/gu, "-").replace(/^-|-$/g, "").slice(0, 60) || "yoomp"}.mp4`;
+  const href = `${url}${url.includes("?") ? "&" : "?"}download=${encodeURIComponent(name)}`;
+  return (
+    <a href={href} className="inline-flex min-h-11 items-center gap-2 rounded-2xl neo-btn px-4 text-sm font-medium">
+      ↓ Скачать ролик
+    </a>
   );
 }
