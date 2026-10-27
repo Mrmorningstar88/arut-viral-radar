@@ -23,6 +23,15 @@ const DONE_MSG: Record<ReelStatus, string> = {
   published: "Выложено! Начну следить за метриками 📈",
 };
 
+// Кнопки называют действие, а не статус: «В работе» на кнопке читалось как текущее состояние.
+const ACTION: Record<ReelStatus, string> = {
+  new: "↺ Вернуть в новые",
+  in_work: "🔥 Беру в работу",
+  rejected: "👎 Не подходит",
+  filmed: "🎬 Снял",
+  published: "📤 Выложил",
+};
+
 const VARIANT = { in_work: "primary", rejected: "danger", filmed: "ghost", published: "success", new: "ghost" } as const;
 
 export function StatusControls({ id, status, kind = "reel" }: { id: string; status: ReelStatus; kind?: "reel" | "redpill" }) {
@@ -48,7 +57,8 @@ export function StatusControls({ id, status, kind = "reel" }: { id: string; stat
     <div onClick={(e) => e.stopPropagation()}>
       <AnimatePresence mode="wait" initial={false}>
         {mode === "idle" && (
-          <motion.div key="idle" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} className="flex flex-wrap gap-2">
+          <motion.div key="idle" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} className="flex flex-wrap items-center gap-2">
+            {status !== "new" && <span className="mr-1 text-xs text-muted">Сейчас: <b className="text-foreground">{STATUS_LABEL[status]}</b></span>}
             {NEXT[status].map((s) => (
               <Button
                 key={s}
@@ -56,7 +66,7 @@ export function StatusControls({ id, status, kind = "reel" }: { id: string; stat
                 disabled={pending}
                 onClick={() => (s === "rejected" ? setMode("reject") : s === "published" ? setMode("publish") : send({ status: s }))}
               >
-                {STATUS_LABEL[s]}
+                {ACTION[s]}
               </Button>
             ))}
           </motion.div>

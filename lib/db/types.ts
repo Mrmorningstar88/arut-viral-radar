@@ -13,6 +13,7 @@ export const STATUS_LABEL: Record<ReelStatus, string> = {
 
 export const REJECT_REASONS = {
   topic: "Не моя тема",
+  language: "Чужой язык",
   format: "Формат не мой",
   delivery: "Подача не моя",
   trash: "Треш / низкое качество",
