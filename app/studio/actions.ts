@@ -6,6 +6,7 @@ import { isDemo } from "@/lib/db";
 import { requireUser } from "@/lib/auth/server";
 import { overLimit } from "@/lib/plans";
 import { currentWorkspace } from "@/lib/projects";
+import { asLang } from "@/lib/studio/lang";
 import { buildStoryboard, generateScripts, reviseScript, sketchFrames } from "@/lib/studio/generate";
 import { linkOf, NETWORKS, publishVideo } from "@/lib/metricool";
 import { getScript, updateScript } from "@/lib/studio/store";
@@ -32,13 +33,13 @@ function background(ws: string, id: string, job: () => Promise<void>) {
   after(() => job().catch((e) => updateScript(ws, id, { busy: false, error: msg(e) }).catch(console.error)));
 }
 
-export async function createScripts(wish: string, count = 10): Promise<Result> {
+export async function createScripts(wish: string, count = 10, lang = "ru"): Promise<Result> {
   const n = [5, 10, 30].includes(count) ? count : 10;
   try {
     const ws = await workspace();
     const limit = await overLimit(await requireUser(), "scripts", n);
     if (limit) return { error: limit };
-    after(() => generateScripts(ws, n, wish.trim().slice(0, 400)).catch((e) => console.error("generateScripts", e)));
+    after(() => generateScripts(ws, n, wish.trim().slice(0, 400), asLang(lang)).catch((e) => console.error("generateScripts", e)));
     return {};
   } catch (e) {
     return { error: msg(e) };

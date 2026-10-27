@@ -42,15 +42,17 @@ export const ScriptDraft = z.object({
 });
 // forever: автор убрал сценарий навсегда, похожие больше не предлагаем.
 // format / formatX: формат залёта-источника и его отрыв от медианы ниши (из рейтинга форматов).
-export type ScriptDraft = z.infer<typeof ScriptDraft> & { forever?: boolean; format?: string; formatX?: number };
+// lang: язык озвучки и надписей (lib/studio/lang.ts), у старых сценариев его нет, значит русский.
+export type ScriptDraft = z.infer<typeof ScriptDraft> & { forever?: boolean; format?: string; formatX?: number; lang?: string };
 
 export const ScriptBatch = z.object({ scripts: z.array(ScriptDraft).min(1).max(12) });
 
 export const StoryShot = z.object({
   n: z.number().int(),
   dur: z.number(),
-  frame: z.string().describe("Что в кадре и как движется, по-русски, в выбранном стиле"),
-  overlay: z.string().describe("Текст на экране, пусто если нет"),
+  frame: z.string().describe("Что в кадре и как движется, по-русски: образ, место, герой, действие, как кадр из большого кино"),
+  camera: z.string().describe("По-русски: крупность, ракурс, движение камеры, оптика и свет, как в режиссёрском сценарии"),
+  overlay: z.string().describe("Текст на экране на языке ролика, пусто если нет"),
 });
 
 export const Storyboard = z.object({
@@ -58,8 +60,8 @@ export const Storyboard = z.object({
   vo: z.array(Vo).min(3).max(10),
   music: z.string().describe("Музыка и темп монтажа"),
 });
-// svg: эскиз кадра 9:16, его рисует отдельный проход после текста сториборда.
-export type Storyboard = Omit<z.infer<typeof Storyboard>, "shots"> & { shots: (z.infer<typeof StoryShot> & { svg?: string })[] };
+// camera есть только у новых сторибордов. svg: эскиз кадра 9:16, его рисует отдельный проход после текста сториборда.
+export type Storyboard = Omit<z.infer<typeof Storyboard>, "shots"> & { shots: (Omit<z.infer<typeof StoryShot>, "camera"> & { camera?: string; svg?: string })[] };
 
 export const FrameSketches = z.object({
   frames: z.array(z.object({ n: z.number().int(), svg: z.string().describe("Полный SVG <svg viewBox=\"0 0 270 480\" ...>...</svg>") })),

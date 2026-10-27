@@ -138,6 +138,7 @@ export default async function ScriptPage({ params }: PageProps<"/studio/[id]">) 
                     <span className="tabular-nums">{sh.dur} с</span>
                   </div>
                   <p className="mt-2 flex-1 text-sm leading-relaxed">{sh.frame}</p>
+                  {sh.camera && <p className="mt-1.5 text-xs leading-relaxed text-muted">🎥 {sh.camera}</p>}
                   {sh.overlay && <p className="mt-2 rounded-xl bg-accent/10 px-2.5 py-1.5 text-xs font-medium text-accent">«{sh.overlay}»</p>}
                 </li>
               ))}

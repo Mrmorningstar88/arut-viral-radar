@@ -81,12 +81,20 @@ writeFileSync(out, Buffer.from(await res.arrayBuffer()));
 console.log("ok", out);
 `;
 
+// Голоса edge-tts и язык whisper для каждого языка сценария (список языков в lib/studio/lang.ts).
+const SPEECH = {
+  ru: { name: "русский", male: "ru-RU-DmitryNeural", female: "ru-RU-SvetlanaNeural", whisper: "ru" },
+  en: { name: "английский", male: "en-US-AndrewNeural", female: "en-US-AvaNeural", whisper: "en" },
+  es: { name: "испанский", male: "es-ES-AlvaroNeural", female: "es-ES-ElviraNeural", whisper: "es" },
+};
+
 function brief(s, kit) {
   const p = s.payload;
   const sb = s.storyboard;
+  const lang = SPEECH[p.lang] ?? SPEECH.ru;
   const voice = kit?.voiceId
-    ? `Язык ролика: русский. Голос: голос автора «${kit.voiceName}» из ElevenLabs. Озвучку делай ТОЛЬКО через \`node tts.mjs "текст" путь.mp3\` из папки проекта (по реплике или по фразе), edge-tts не используй. Проверку речи faster-whisper делай с языком ru. Субтитры вшиты, по-русски.`
-    : "Язык ролика: русский. Голос: edge-tts через `core/tts/tts_zh.py --voice ru-RU-DmitryNeural` (женский: ru-RU-SvetlanaNeural). Проверку речи faster-whisper делай с языком ru. Субтитры вшиты, по-русски.";
+    ? `Язык ролика: ${lang.name}. Голос: голос автора «${kit.voiceName}» из ElevenLabs. Озвучку делай ТОЛЬКО через \`node tts.mjs "текст" путь.mp3\` из папки проекта (по реплике или по фразе), edge-tts не используй. Проверку речи faster-whisper делай с языком ${lang.whisper}. Субтитры вшиты, на языке ролика.`
+    : `Язык ролика: ${lang.name}. Голос: edge-tts через \`core/tts/tts_zh.py --voice ${lang.male}\` (женский: ${lang.female}). Проверку речи faster-whisper делай с языком ${lang.whisper}. Субтитры вшиты, на языке ролика.`;
   const sound = kit?.files.length
     ? `Звук: у организации есть фирменный звук${kit.idea ? ` («${kit.idea}»)` : ""}, файлы в папке проекта: ${kit.files.join(", ")}. Тема идёт подложкой под голос (громкость около −18 дБ, приглушай под речью, можно обрезать и зациклить), эффекты ставь редко: на хук и финал, плюс 1–2 ключевые цифры, не на каждую смену кадра. Эффекты мягкие: громкость −24 дБ относительно голоса, фейд-ин и фейд-аут по 30 мс, срез верхов (ffmpeg lowpass=f=6000) и низов (highpass=f=80), никогда не громче голоса. Финальный микс прогони через ffmpeg loudnorm=I=-14:TP=-1.5:LRA=11 и проверь, что нет клиппинга. Другую музыку не сочиняй и трендовые треки не используй.`
     : "Своих материалов у автора нет: музыку и звук делай сам по TECHNIQUE.md. Трендовые треки из соцсетей не используй.";
@@ -96,6 +104,7 @@ function brief(s, kit) {
     voice,
     sound,
     "Сториборд автор уже одобрил, на ревью не останавливайся.",
+    "Подача как у мини-фильма с безграничным бюджетом: смелые невероятные образы, глубина кадра, драматичный свет, движение камеры, сильные переходы. Не плоский мультик и не слайды с текстом: каждый кадр должен выглядеть дорого в рамках стиля.",
     "",
     `НАЗВАНИЕ: ${s.title}`,
     `ХУК (первые секунды): ${p.hook}`,
@@ -104,7 +113,7 @@ function brief(s, kit) {
     p.onScreen?.length ? `НАДПИСИ НА ЭКРАНЕ: ${p.onScreen.join(" · ")}` : "",
     "",
     "СТОРИБОРД (одобрен автором):",
-    ...(sb?.shots ?? []).map((sh) => `${sh.n}. ${sh.dur} с · ${sh.frame}${sh.overlay ? ` · надпись: «${sh.overlay}»` : ""}`),
+    ...(sb?.shots ?? []).map((sh) => `${sh.n}. ${sh.dur} с · ${sh.frame}${sh.camera ? ` · камера: ${sh.camera}` : ""}${sh.overlay ? ` · надпись: «${sh.overlay}»` : ""}`),
     sb?.music ? `МУЗЫКА И ТЕМП: ${sb.music}` : "",
     p.sound ? `ЗВУКОВЫЕ АКЦЕНТЫ ИЗ СЦЕНАРИЯ: ${p.sound}` : "",
   ]
