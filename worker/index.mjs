@@ -88,7 +88,7 @@ function brief(s, kit) {
     ? `Язык ролика: русский. Голос: голос автора «${kit.voiceName}» из ElevenLabs. Озвучку делай ТОЛЬКО через \`node tts.mjs "текст" путь.mp3\` из папки проекта (по реплике или по фразе), edge-tts не используй. Проверку речи faster-whisper делай с языком ru. Субтитры вшиты, по-русски.`
     : "Язык ролика: русский. Голос: edge-tts через `core/tts/tts_zh.py --voice ru-RU-DmitryNeural` (женский: ru-RU-SvetlanaNeural). Проверку речи faster-whisper делай с языком ru. Субтитры вшиты, по-русски.";
   const sound = kit?.files.length
-    ? `Звук: у организации есть фирменный звук${kit.idea ? ` («${kit.idea}»)` : ""}, файлы в папке проекта: ${kit.files.join(", ")}. Тема идёт подложкой под голос (громкость около −18 дБ, приглушай под речью, можно обрезать и зациклить), эффекты ставь на хук, смены кадров, цифры и финал. Другую музыку не сочиняй и трендовые треки не используй.`
+    ? `Звук: у организации есть фирменный звук${kit.idea ? ` («${kit.idea}»)` : ""}, файлы в папке проекта: ${kit.files.join(", ")}. Тема идёт подложкой под голос (громкость около −18 дБ, приглушай под речью, можно обрезать и зациклить), эффекты ставь редко: на хук и финал, плюс 1–2 ключевые цифры, не на каждую смену кадра. Эффекты мягкие: громкость −24 дБ относительно голоса, фейд-ин и фейд-аут по 30 мс, срез верхов (ffmpeg lowpass=f=6000) и низов (highpass=f=80), никогда не громче голоса. Финальный микс прогони через ffmpeg loudnorm=I=-14:TP=-1.5:LRA=11 и проверь, что нет клиппинга. Другую музыку не сочиняй и трендовые треки не используй.`
     : "Своих материалов у автора нет: музыку и звук делай сам по TECHNIQUE.md. Трендовые треки из соцсетей не используй.";
   return [
     `Стиль: ${s.style} (styles/${s.style}/STYLE.md).`,
@@ -122,6 +122,8 @@ ${film}
 
 Итоговое видео положи ровно по пути ${dir}/final.mp4 (H.264, AAC, 1080×1920). Последней строкой ответа напиши DONE.`;
 
+class Cancelled extends Error {}
+
 async function render(s) {
   const dir = join(WORK, s.id);
   mkdirSync(dir, { recursive: true });
@@ -130,12 +132,20 @@ async function render(s) {
   writeFileSync(join(dir, "BRIEF.md"), film);
   let cost = 0;
   let lastLog = 0;
+  // Автор может отменить ролик из портала: тогда карточка уходит из production, и рендер останавливается.
+  const abort = new AbortController();
+  const watch = setInterval(async () => {
+    const { data } = await db.from("scripts").select("stage, render_status").eq("id", s.id).maybeSingle();
+    if (data && (data.stage !== "production" || data.render_status !== "rendering")) abort.abort();
+  }, 15_000);
+  try {
   for await (const m of query({
     prompt: PROMPT(dir, film),
     options: {
       cwd: dir,
       additionalDirectories: [LIB],
       model: RENDER_MODEL,
+      abortController: abort,
       // Без интерактивных подтверждений: разрешены только перечисленные инструменты, остальное отклоняется.
       permissionMode: "dontAsk",
       allowedTools: ["Read", "Write", "Edit", "Glob", "Grep", "Bash"],
@@ -156,6 +166,13 @@ async function render(s) {
       if (m.subtype !== "success") throw new Error(`Агент остановился: ${m.subtype}`);
     }
   }
+  } catch (e) {
+    if (abort.signal.aborted) throw new Cancelled();
+    throw e;
+  } finally {
+    clearInterval(watch);
+  }
+  if (abort.signal.aborted) throw new Cancelled();
 
   const out = join(dir, "final.mp4");
   const file = existsSync(out) ? out : newestMp4(dir);
@@ -164,7 +181,12 @@ async function render(s) {
   const { error } = await db.storage.from("videos").upload(key, readFileSync(file), { contentType: "video/mp4", upsert: true });
   if (error) throw new Error(`Не загрузилось в хранилище: ${error.message}`);
   const url = db.storage.from("videos").getPublicUrl(key).data.publicUrl;
-  await update(s.id, { stage: "ready", render_status: "done", render_log: `Готово, $${cost.toFixed(2)}`, video_url: url, error: null });
+  // Готовое видео ставим, только если ролик не отменили, пока шла загрузка.
+  await db
+    .from("scripts")
+    .update({ stage: "ready", render_status: "done", render_log: `Готово, $${cost.toFixed(2)}`, video_url: url, error: null, updated_at: new Date().toISOString() })
+    .eq("id", s.id)
+    .eq("stage", "production");
   await db.from("usage_costs").insert({ workspace_id: s.workspace_id, provider: "anthropic-render", units: 1, usd: cost });
 }
 
@@ -193,6 +215,13 @@ function syncLibrary() {
 }
 
 syncLibrary();
+// Воркер один: ролики, которые «рисовались» при перезапуске, никто уже не рисует. Возвращаем их в очередь.
+await db
+  .from("scripts")
+  .update({ render_status: "queued", render_log: "Рендер перезапущен после обновления сервера" })
+  .eq("stage", "production")
+  .eq("render_status", "rendering")
+  .then(({ error }) => error && console.error("requeue", error.message));
 console.log("YOOMP render worker: жду задачи");
 for (;;) {
   const s = await claim().catch((e) => (console.error("claim", e.message), null));
@@ -205,6 +234,10 @@ for (;;) {
     await render(s);
     console.log("done", s.id);
   } catch (e) {
+    if (e instanceof Cancelled) {
+      console.log("cancelled", s.id);
+      continue;
+    }
     console.error("render failed", s.id, e);
     await update(s.id, { render_status: "failed", error: String(e.message ?? e).slice(0, 300) });
   }

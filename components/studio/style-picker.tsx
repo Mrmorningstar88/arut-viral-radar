@@ -7,7 +7,7 @@ import { useToast } from "@/components/ui/toast";
 import { OPUS_FRAME, OPUS_STYLES, styleBySlug } from "@/lib/studio/styles";
 
 // Стиль ролика из библиотеки lemo-opuscar: текущий крупно, остальные в галерее по категориям.
-export function StylePicker({ id, style, editable }: { id: string; style: string | null; editable: boolean }) {
+export function StylePicker({ id, style, editable, redraws = false }: { id: string; style: string | null; editable: boolean; redraws?: boolean }) {
   const [open, setOpen] = useState(false);
   const [pending, start] = useTransition();
   const toast = useToast();
@@ -15,7 +15,7 @@ export function StylePicker({ id, style, editable }: { id: string; style: string
   const categories = [...new Set(OPUS_STYLES.map((s) => s.category))];
 
   return (
-    <section className="rounded-3xl glass p-5">
+    <section id="style" className="scroll-mt-24 rounded-3xl glass p-5">
       <div className="flex flex-wrap items-center gap-4">
         {current && (
           // eslint-disable-next-line @next/next/no-img-element
@@ -25,6 +25,7 @@ export function StylePicker({ id, style, editable }: { id: string; style: string
           <p className="text-xs font-semibold tracking-widest text-muted uppercase">Стиль ролика</p>
           <h2 className="font-display text-lg font-semibold">{current?.name ?? "Не выбран"}</h2>
           {current && <p className="text-sm text-muted">{current.category} · {current.uses.join(", ")}</p>}
+          {editable && <p className="mt-1 text-xs text-muted">Выбери до запуска: от стиля зависит, как будет выглядеть весь ролик.</p>}
         </div>
         {editable && (
           <button onClick={() => setOpen((v) => !v)} className="rounded-full glass-inset px-4 py-2 text-sm hover:bg-ink/[0.08]">
@@ -48,7 +49,7 @@ export function StylePicker({ id, style, editable }: { id: string; style: string
                           const r = await setStyle(id, s.slug);
                           if (r.error) return toast(r.error, "error");
                           setOpen(false);
-                          toast(`Стиль: ${s.name}`);
+                          toast(redraws ? `Стиль: ${s.name}. Перерисовываю кадры, около минуты` : `Стиль: ${s.name}`);
                         })
                       }
                       className={`group overflow-hidden rounded-2xl text-left ring-1 transition ${s.slug === style ? "ring-2 ring-accent" : "ring-ink/10 hover:ring-ink/30"}`}

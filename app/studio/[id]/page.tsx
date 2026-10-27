@@ -2,7 +2,7 @@ import Link from "next/link";
 import { fmtMultiple, formatLabel } from "@/lib/formats/catalog";
 import { notFound } from "next/navigation";
 import { AutoRefresh } from "@/components/studio/auto-refresh";
-import { DownloadVideo, PublishForm, ReleaseForm, RetryRender } from "@/components/studio/ready-actions";
+import { CancelRender, DownloadVideo, DrawSketches, PublishForm, ReleaseForm, RetryRender } from "@/components/studio/ready-actions";
 import { StageActions } from "@/components/studio/stage-actions";
 import { StylePicker } from "@/components/studio/style-picker";
 import { CopyButton } from "@/components/ui/copy-button";
@@ -54,8 +54,14 @@ export default async function ScriptPage({ params }: PageProps<"/studio/[id]">) 
           </p>
         )}
         {s.error && !s.busy && <p className="rounded-2xl bg-rose-500/10 px-4 py-3 text-sm text-rose-200">Не получилось: {s.error}</p>}
-        <StageActions id={s.id} stage={s.stage} busy={s.busy} edit={{ title: s.title, hook: p.hook, vo: p.vo, onScreen: p.onScreen, caption: p.caption, cta: p.cta }} />
+        <StageActions id={s.id} stage={s.stage} busy={s.busy} edit={{ title: s.title, hook: p.hook, vo: p.vo, onScreen: p.onScreen, caption: p.caption, cta: p.cta }} style={s.style ?? p.style} />
       </Reveal>
+
+      {(s.style || p.style) && (
+        <Reveal delay={0.02}>
+          <StylePicker id={s.id} style={s.style ?? p.style} editable={(s.stage === "script" || s.stage === "storyboard") && !s.busy} redraws={s.stage === "storyboard"} />
+        </Reveal>
+      )}
 
       {s.stage === "ready" && s.videoUrl && (
         <Reveal delay={0.03} className="grid gap-5 rounded-3xl glass p-5 md:grid-cols-[minmax(0,320px)_1fr]">
@@ -100,21 +106,33 @@ export default async function ScriptPage({ params }: PageProps<"/studio/[id]">) 
           ) : (
             <p className="mt-2 text-muted">Ролик в очереди на рендер. Как только освободится рендер-сервер, начнётся сборка, а готовое видео появится здесь.</p>
           )}
-        </Reveal>
-      )}
-
-      {(s.style || s.payload.style) && (
-        <Reveal delay={0.04}>
-          <StylePicker id={s.id} style={s.style ?? s.payload.style} editable={s.stage === "script" || s.stage === "storyboard"} />
+          {rendering && (
+            <div className="mt-4">
+              <CancelRender id={s.id} />
+            </div>
+          )}
         </Reveal>
       )}
 
       {s.storyboard && (
         <Reveal delay={0.05}>
-          <Panel title="Сториборд" subtitle={s.storyboard.music}>
-            <ol className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <Panel
+            title="Сториборд"
+            subtitle={s.storyboard.music}
+            action={s.stage === "storyboard" && !s.busy && !s.storyboard.shots.some((sh) => sh.svg) ? <DrawSketches id={s.id} /> : undefined}
+          >
+            <ol className="grid grid-cols-2 gap-3 lg:grid-cols-4">
               {s.storyboard.shots.map((sh) => (
                 <li key={sh.n} className="flex flex-col rounded-2xl border border-ink/[0.06] bg-ink/[0.03] p-3">
+                  {sh.svg ? (
+                    // SVG через <img>: скрипты внутри не исполняются.
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={`data:image/svg+xml;charset=utf-8,${encodeURIComponent(sh.svg)}`} alt={`Эскиз кадра ${sh.n}`} className="mb-3 aspect-[9/16] w-full rounded-xl bg-ink/[0.04] object-cover ring-1 ring-ink/10" />
+                  ) : (
+                    <div className={`mb-3 grid aspect-[9/16] w-full place-items-center rounded-xl bg-ink/[0.04] text-xs text-muted ${s.busy ? "animate-pulse" : ""}`}>
+                      {s.busy ? "Рисую кадр…" : "Без эскиза"}
+                    </div>
+                  )}
                   <div className="flex items-center justify-between text-xs text-muted">
                     <span className="font-semibold text-foreground">Кадр {sh.n}</span>
                     <span className="tabular-nums">{sh.dur} с</span>

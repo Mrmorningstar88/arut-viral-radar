@@ -58,4 +58,9 @@ export const Storyboard = z.object({
   vo: z.array(Vo).min(3).max(10),
   music: z.string().describe("Музыка и темп монтажа"),
 });
-export type Storyboard = z.infer<typeof Storyboard>;
+// svg: эскиз кадра 9:16, его рисует отдельный проход после текста сториборда.
+export type Storyboard = Omit<z.infer<typeof Storyboard>, "shots"> & { shots: (z.infer<typeof StoryShot> & { svg?: string })[] };
+
+export const FrameSketches = z.object({
+  frames: z.array(z.object({ n: z.number().int(), svg: z.string().describe("Полный SVG <svg viewBox=\"0 0 270 480\" ...>...</svg>") })),
+});

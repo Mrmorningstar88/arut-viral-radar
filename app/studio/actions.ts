@@ -6,7 +6,7 @@ import { isDemo } from "@/lib/db";
 import { requireUser } from "@/lib/auth/server";
 import { overLimit } from "@/lib/plans";
 import { currentWorkspace } from "@/lib/projects";
-import { buildStoryboard, generateScripts, reviseScript } from "@/lib/studio/generate";
+import { buildStoryboard, generateScripts, reviseScript, sketchFrames } from "@/lib/studio/generate";
 import { linkOf, NETWORKS, publishVideo } from "@/lib/metricool";
 import { getScript, updateScript } from "@/lib/studio/store";
 import { styleBySlug } from "@/lib/studio/styles";
@@ -200,7 +200,43 @@ export async function setStyle(id: string, style: string): Promise<Result> {
   if (!styleBySlug(style)) return { error: "Неизвестный стиль" };
   try {
     const ws = await workspace();
-    await updateScript(ws, id, { style });
+    const s = await getScript(ws, id);
+    if (!s) return { error: "Сценарий не найден" };
+    if (s.stage !== "script" && s.stage !== "storyboard") return { error: "Стиль меняется до запуска производства" };
+    // На стадии сториборда эскизы кадров перерисовываются в новом стиле.
+    const redraw = s.stage === "storyboard" && !!s.storyboard && s.style !== style;
+    await updateScript(ws, id, { style, ...(redraw ? { busy: true } : {}) });
+    if (redraw) background(ws, id, () => sketchFrames(ws, id, s.storyboard!, style));
+    refresh(id);
+    return {};
+  } catch (e) {
+    return { error: msg(e) };
+  }
+}
+
+// Нарисовать эскизы кадров для сториборда, сделанного до появления эскизов.
+export async function drawSketches(id: string): Promise<Result> {
+  try {
+    const ws = await workspace();
+    const s = await getScript(ws, id);
+    if (!s?.storyboard || s.stage !== "storyboard") return { error: "Нет сториборда" };
+    if (s.busy) return {};
+    await updateScript(ws, id, { busy: true, error: null });
+    background(ws, id, () => sketchFrames(ws, id, s.storyboard!, s.style ?? s.payload.style));
+    refresh(id);
+    return {};
+  } catch (e) {
+    return { error: msg(e) };
+  }
+}
+
+// Отмена ролика в очереди или в работе: карточка возвращается в сториборд, воркер останавливает рендер.
+export async function cancelRender(id: string): Promise<Result> {
+  try {
+    const ws = await workspace();
+    const s = await getScript(ws, id);
+    if (!s || s.stage !== "production") return { error: "Этот ролик уже не в производстве" };
+    await updateScript(ws, id, { stage: "storyboard", render_status: null, render_log: "Рендер отменён", error: null });
     refresh(id);
     return {};
   } catch (e) {
