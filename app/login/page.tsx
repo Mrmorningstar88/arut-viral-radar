@@ -19,7 +19,7 @@ export default function LoginPage() {
 
 function Login() {
   const params = useSearchParams();
-  const [mode, setMode] = useState<"signup" | "signin" | "link">(params.get("mode") === "signup" ? "signup" : "signin");
+  const [mode, setMode] = useState<"signup" | "signin" | "link">(params.get("mode") === "signup" ? "signup" : params.get("mode") === "link" ? "link" : "signin");
   const [email, setEmail] = useState("");
   const [upState, upAction, upPending] = useActionState(signUp, null);
   const [inState, inAction, inPending] = useActionState(signIn, null);
