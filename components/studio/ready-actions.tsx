@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { markPublished, releaseVideo, retryRender } from "@/app/studio/actions";
+import { cancelRender, drawSketches, markPublished, releaseVideo, retryRender } from "@/app/studio/actions";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 
@@ -12,6 +12,49 @@ export function RetryRender({ id }: { id: string }) {
     <Button disabled={pending} onClick={() => start(async () => toast((await retryRender(id)).error ?? "Поставил в очередь заново"))}>
       ↻ Рендерить заново
     </Button>
+  );
+}
+
+export function DrawSketches({ id }: { id: string }) {
+  const [pending, start] = useTransition();
+  const toast = useToast();
+  return (
+    <Button disabled={pending} onClick={() => start(async () => toast((await drawSketches(id)).error ?? "Рисую кадры, около минуты"))}>
+      🎨 Нарисовать кадры
+    </Button>
+  );
+}
+
+// Отмена ролика: сначала спрашиваем, потом возвращаем карточку в сториборд.
+export function CancelRender({ id }: { id: string }) {
+  const [sure, setSure] = useState(false);
+  const [pending, start] = useTransition();
+  const toast = useToast();
+  if (!sure)
+    return (
+      <Button variant="danger" onClick={() => setSure(true)}>
+        ✕ Отменить ролик
+      </Button>
+    );
+  return (
+    <div className="flex flex-wrap items-center gap-2 rounded-2xl bg-rose-500/10 p-3">
+      <span className="text-sm">Остановить рендер и вернуть в сториборд?</span>
+      <Button
+        variant="danger"
+        disabled={pending}
+        onClick={() =>
+          start(async () => {
+            const r = await cancelRender(id);
+            toast(r.error ?? "Отменил. Сториборд можно поправить и запустить снова", r.error ? "error" : undefined);
+          })
+        }
+      >
+        {pending ? "Отменяю…" : "Да, отменить"}
+      </Button>
+      <Button disabled={pending} onClick={() => setSure(false)}>
+        Нет, пусть рисует
+      </Button>
+    </div>
   );
 }
 

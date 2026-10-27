@@ -3,8 +3,8 @@ import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import type { z } from "zod";
 import { loadProfile, logCost, serviceDb } from "@/lib/engine/store";
 import { costUsd, llm, MODEL_MAIN, RefusalError } from "@/lib/llm";
-import { ScriptBatch, Storyboard } from "./schema";
-import { OPUS_STYLES, styleBySlug } from "./styles";
+import { FrameSketches, ScriptBatch, Storyboard } from "./schema";
+import { OPUS_FRAME, OPUS_STYLES, styleBySlug } from "./styles";
 import { foreverTitles, getScript, insertScripts, listScripts, topFormulas, updateScript, type Formula } from "./store";
 
 async function parse<T extends z.ZodType>(schema: T, system: string, user: string, effort: "medium" | "high" = "high") {
@@ -125,6 +125,55 @@ export async function buildStoryboard(ws: string, id: string, feedback = "") {
     .filter(Boolean)
     .join("\n\n");
   const { out, usd } = await parse(Storyboard, `Ты режиссёр коротких вертикальных роликов.\n${RULES}`, user);
-  await updateScript(ws, id, { storyboard: out, style: s.style ?? s.payload.style, stage: "storyboard", busy: false, error: null, feedback: feedback || null });
+  const style = s.style ?? s.payload.style;
+  // Текст сохраняем сразу, карточка остаётся busy, пока рисуются эскизы кадров.
+  await updateScript(ws, id, { storyboard: out, style, stage: "storyboard", busy: true, error: null, feedback: feedback || null });
   await logCost(ws, null, "anthropic", usd);
+  await sketchFrames(ws, id, out, style);
+}
+
+const SVG_OK = /^<svg[\s\S]*<\/svg>$/;
+const cleanSvg = (svg: string) => {
+  const t = svg.trim();
+  // Эскиз показывается через <img>, скрипты там не исполняются; всё равно отбрасываем подозрительное и слишком большое.
+  return SVG_OK.test(t) && t.length < 60_000 && !/<script|<foreignObject|javascript:/i.test(t) ? t : undefined;
+};
+
+// Эскизы кадров: Claude смотрит на эталонный кадр стиля и рисует каждый кадр сториборда в SVG 9:16.
+// Ошибка эскизов не ломает сториборд: кадры остаются текстом.
+export async function sketchFrames(ws: string, id: string, board: Storyboard, style: string) {
+  try {
+    const st = styleBySlug(style);
+    const res = await llm().beta.messages.parse({
+      model: MODEL_MAIN,
+      max_tokens: 32000,
+      output_config: { effort: "medium", format: betaZodOutputFormat(FrameSketches) },
+      system:
+        "Ты художник-раскадровщик. Рисуешь эскизы кадров вертикального ролика в SVG так, чтобы автор сразу видел композицию, ключевой образ, цвета стиля и надпись на экране. Без растровых картинок, без внешних ссылок, без скриптов и foreignObject.",
+      messages: [
+        {
+          role: "user",
+          content: [
+            ...(st ? [{ type: "image" as const, source: { type: "url" as const, url: OPUS_FRAME(st.slug) } }] : []),
+            {
+              type: "text",
+              text: [
+                st ? `Эталонный кадр стиля «${st.name}» выше: повтори его палитру, фактуру и манеру.` : "",
+                `КАДРЫ (JSON):\n${JSON.stringify(board.shots.map(({ n, frame, overlay }) => ({ n, frame, overlay })))}`,
+                'Нарисуй по SVG на каждый кадр: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 270 480">. Фон на весь кадр, крупный главный образ из описания, надпись overlay на экране крупным кириллическим шрифтом (font-family sans-serif) там, где она будет в ролике. Простые формы, 2–5 цветов стиля, до 4 КБ на кадр. Верни frames с теми же n.',
+              ]
+                .filter(Boolean)
+                .join("\n\n"),
+            },
+          ],
+        },
+      ],
+    });
+    await logCost(ws, null, "anthropic", costUsd(MODEL_MAIN, res.usage));
+    const svgs = new Map((res.parsed_output?.frames ?? []).map((f) => [f.n, cleanSvg(f.svg)]));
+    await updateScript(ws, id, { storyboard: { ...board, shots: board.shots.map((sh) => ({ ...sh, svg: svgs.get(sh.n) })) }, busy: false });
+  } catch (e) {
+    console.error("sketchFrames", e);
+    await updateScript(ws, id, { busy: false });
+  }
 }

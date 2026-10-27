@@ -6,6 +6,7 @@ import { ScriptEditor } from "@/components/studio/script-editor";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import type { Stage } from "@/lib/studio/schema";
+import { OPUS_FRAME, styleBySlug } from "@/lib/studio/styles";
 
 type Act = (id: string) => Promise<{ error?: string }>;
 type Redo = (id: string, feedback: string) => Promise<{ error?: string }>;
@@ -15,10 +16,11 @@ const CONFIG: Partial<Record<Stage, { yes: string; yesAct: Act; yesToast: string
   storyboard: { yes: "Да, в производство", yesAct: approveStoryboard, yesToast: "Отправил в производство", redo: redoStoryboard, redoLabel: "Переделать сториборд" },
 };
 
-export function StageActions({ id, stage, busy, edit }: { id: string; stage: Stage; busy: boolean; edit: ScriptEdit }) {
+export function StageActions({ id, stage, busy, edit, style }: { id: string; stage: Stage; busy: boolean; edit: ScriptEdit; style: string | null }) {
   const [pending, start] = useTransition();
   const [redoOpen, setRedoOpen] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [confirm, setConfirm] = useState(false);
   const [feedback, setFeedback] = useState("");
   const toast = useToast();
   const c = CONFIG[stage];
@@ -41,10 +43,51 @@ export function StageActions({ id, stage, busy, edit }: { id: string; stage: Sta
   if (!c) return null;
   if (editing) return <div className="rounded-3xl glass-strong p-4"><ScriptEditor id={id} initial={edit} onDone={() => setEditing(false)} /></div>;
 
+  // Перед рендером показываем, в каком стиле будет ролик, и даём сменить его: рендер долгий и стоит денег.
+  if (confirm) {
+    const st = styleBySlug(style);
+    return (
+      <div className="space-y-4 rounded-3xl glass-strong p-4">
+        <div className="flex flex-wrap items-center gap-4">
+          {st && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={OPUS_FRAME(st.slug)} alt="" className="h-20 w-36 rounded-2xl object-cover ring-1 ring-ink/10" />
+          )}
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-semibold tracking-widest text-muted uppercase">Ролик будет в стиле</p>
+            <p className="font-display text-lg font-semibold">{st?.name ?? "Не выбран"}</p>
+            <a href="#style" onClick={() => setConfirm(false)} className="text-sm text-accent hover:underline">
+              Сменить стиль
+            </a>
+          </div>
+        </div>
+        <p className="text-sm text-muted">Рендер идёт 30–60 минут. Пока ролик в очереди или рисуется, его можно отменить.</p>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="primary"
+            disabled={pending || busy || !st}
+            onClick={() =>
+              run(async () => {
+                const r = await approveStoryboard(id);
+                if (!r.error) setConfirm(false);
+                return r;
+              }, "Запустил рендер")
+            }
+          >
+            ▶ Запустить ролик
+          </Button>
+          <Button disabled={pending} onClick={() => setConfirm(false)}>
+            Назад
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-3 rounded-3xl glass-strong p-4">
       <div className="flex flex-wrap gap-2">
-        <Button variant="primary" disabled={pending || busy} onClick={() => run(() => c.yesAct(id), c.yesToast)}>
+        <Button variant="primary" disabled={pending || busy} onClick={() => (stage === "storyboard" ? setConfirm(true) : run(() => c.yesAct(id), c.yesToast))}>
           ✓ {c.yes}
         </Button>
         <Button disabled={pending || busy} onClick={() => setRedoOpen((v) => !v)}>

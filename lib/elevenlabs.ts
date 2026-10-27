@@ -88,7 +88,7 @@ async function planSound(ws: string) {
     max_tokens: 1024,
     output_config: { effort: "low", format: betaZodOutputFormat(Plan) },
     system:
-      "Ты звукорежиссёр коротких вертикальных роликов. Придумай фирменный звук организации: узнаваемую с первой секунды тему и набор из 4 эффектов, которые звучат как одно семейство. Никаких трендовых треков из соцсетей: звук свой и особенный. Образовательный проект звучит глубже и спокойнее, информационный и новостной резче и плотнее.",
+      "Ты звукорежиссёр коротких вертикальных роликов. Придумай фирменный звук организации: узнаваемую с первой секунды тему и набор из 4 эффектов, которые звучат как одно семейство. Эффекты мягкие и тёплые (приглушённый щелчок, мягкий свуш, тихий колокольчик), без резких писков, сирен, металла и скрежета: они не должны резать слух. Никаких трендовых треков из соцсетей: звук свой и особенный. Образовательный проект звучит глубже и спокойнее, информационный и новостной бодрее и плотнее, но тоже без резкости.",
     messages: [
       {
         role: "user",
@@ -118,7 +118,7 @@ export async function makeSound(ws: string, key: string) {
     const theme: Clip = { name: "Тема", url: await store(ws, "theme", await music.arrayBuffer()) };
     const sfx: Clip[] = [];
     for (const [i, s] of plan.sfx.entries()) {
-      const res = await call(key, "/v1/sound-generation", { method: "POST", body: JSON.stringify({ text: s.prompt, duration_seconds: 1.5, prompt_influence: 0.6 }) }, 60_000);
+      const res = await call(key, "/v1/sound-generation", { method: "POST", body: JSON.stringify({ text: `${s.prompt}. Soft, warm, gentle, low volume, no harsh high frequencies, no distortion`, duration_seconds: 1, prompt_influence: 0.5 }) }, 60_000);
       sfx.push({ name: s.name, url: await store(ws, `sfx${i + 1}`, await res.arrayBuffer()) });
     }
     await saveSound(ws, { ...base, status: "ready", error: undefined, idea: plan.idea, theme, sfx });
