@@ -31,14 +31,14 @@ export async function signIn(_: State, fd: FormData): Promise<State> {
   const email = field(fd, "email").toLowerCase();
   const password = String(fd.get("password") ?? "");
   const { error } = await (await authClient()).auth.signInWithPassword({ email, password });
-  if (error) return { error: "Неверная почта или пароль" };
+  if (error) return { error: "Неверная почта или пароль. Если пароля нет, войди по ссылке на почту ниже." };
   redirect("/");
 }
 
 // Вход по ссылке на почту для тех, у кого нет пароля (первые аккаунты были без него).
 export async function sendMagicLink(_: State, fd: FormData): Promise<State> {
   const email = field(fd, "email").toLowerCase();
-  if (!EMAIL.test(email)) return { error: "Впиши почту выше" };
+  if (!EMAIL.test(email)) return { error: "Проверь почту" };
   const origin = (await headers()).get("origin") ?? "";
   // Одинаковый ответ для любых адресов: не подсказываем, у кого есть аккаунт.
   await (await authClient()).auth.signInWithOtp({ email, options: { emailRedirectTo: `${origin}/auth/callback`, shouldCreateUser: false } });
