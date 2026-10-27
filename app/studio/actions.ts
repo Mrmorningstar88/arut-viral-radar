@@ -245,6 +245,20 @@ export async function cancelRender(id: string): Promise<Result> {
   }
 }
 
+// Готовый ролик не понравился: убираем видео и возвращаем в сториборд, чтобы поправить и отрендерить заново.
+export async function redoVideo(id: string): Promise<Result> {
+  try {
+    const ws = await workspace();
+    const s = await getScript(ws, id);
+    if (!s || s.stage !== "ready") return { error: "Этот ролик уже не на проверке" };
+    await updateScript(ws, id, { stage: "storyboard", render_status: null, video_url: null, render_log: "Ролик отклонён", error: null, busy: false });
+    refresh(id);
+    return {};
+  } catch (e) {
+    return { error: msg(e) };
+  }
+}
+
 export async function retryRender(id: string): Promise<Result> {
   try {
     const ws = await workspace();
