@@ -62,13 +62,8 @@
 }
 
 body {
-  background:
-    radial-gradient(900px 600px at 85% -10%, rgba(112, 72, 232, 0.16), transparent 60%),
-    radial-gradient(700px 500px at 100% 90%, rgba(240, 101, 149, 0.12), transparent 60%),
-    radial-gradient(600px 450px at 10% 100%, rgba(255, 169, 77, 0.12), transparent 60%),
-    radial-gradient(700px 500px at -5% 25%, rgba(255, 255, 255, 0.9), transparent 60%),
-    var(--background);
-  background-attachment: fixed;
+  /* Цветные пятна рисует <Ambient /> один раз в фиксированном слое: фон с attachment: fixed перерисовывался на каждый скролл. */
+  background: var(--background);
   color: var(--foreground);
 }
 
@@ -88,9 +83,8 @@ body {
 /* Выпуклая панель посильнее: шапка, нижнее меню, панели действий. */
 @utility glass-strong {
   border: 1px solid rgba(255, 255, 255, 0.7);
-  background: linear-gradient(145deg, rgba(243, 241, 252, 0.92), rgba(225, 222, 240, 0.92));
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  /* Почти непрозрачный фон вместо backdrop-filter: размытие под липкой шапкой пересчитывалось на каждый кадр прокрутки. */
+  background: linear-gradient(145deg, rgba(243, 241, 252, 0.98), rgba(225, 222, 240, 0.98));
   box-shadow:
     12px 12px 30px var(--neo-dark),
     -10px -10px 26px var(--neo-light);

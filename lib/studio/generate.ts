@@ -4,6 +4,7 @@ import type { z } from "zod";
 import { loadProfile, logCost, serviceDb } from "@/lib/engine/store";
 import { costUsd, llm, MODEL_MAIN, RefusalError } from "@/lib/llm";
 import { FrameSketches, ScriptBatch, Storyboard } from "./schema";
+import { DIRECTION } from "@/lib/direction";
 import { asLang, LANGS, type Lang } from "./lang";
 import { OPUS_FRAME, OPUS_STYLES, styleBySlug } from "./styles";
 import { foreverTitles, getScript, insertScripts, listScripts, topFormulas, updateScript, type Formula } from "./store";
@@ -40,15 +41,6 @@ async function brief(ws: string) {
 
 // Каталог стилей для выбора: ролик рисуется кодом в одном из стилей lemo-opuscar.
 const STYLE_CATALOG = OPUS_STYLES.map((s) => `${s.slug}: ${s.name} (${s.category}) · ${s.uses.join(", ")}`).join("\n");
-
-// Режиссёрское правило автора: каждый познавательный ролик это мини-фильм с безграничным бюджетом.
-// Ролик могут отрендерить кодом, а могут снять вживую, поэтому думаем кадрами кино, а не мультиком.
-const DIRECTION = [
-  "- Каждый сценарий это голливудский мини-фильм с безграничным бюджетом. Не стесняйся сходить с ума: невероятные, смелые, запоминающиеся образы. Это ИИ, ограничений по бюджету и физике нет.",
-  "- Никаких бездушных мультиков и слайдов с текстом. Думай кадрами кино: место действия, герой, свет, движение камеры, масштаб, контраст, визуальная метафора, которую зритель запомнит.",
-  "- Автор может снять ролик вживую, поэтому каждая сцена должна быть понятна оператору и актёру, а не только аниматору.",
-  "- Стиль это то, чему не научить: у каждого ролика свой узнаваемый почерк, а не шаблон.",
-].join("\n");
 
 const rules = (lang: Lang) =>
   [

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { fmtMultiple, formatLabel } from "@/lib/formats/catalog";
 import { notFound } from "next/navigation";
 import { AutoRefresh } from "@/components/studio/auto-refresh";
-import { CancelRender, DownloadVideo, DrawSketches, PublishForm, ReleaseForm, RetryRender } from "@/components/studio/ready-actions";
+import { CancelRender, DownloadVideo, DrawSketches, PublishForm, RejectVideo, ReleaseForm, RetryRender } from "@/components/studio/ready-actions";
 import { StageActions } from "@/components/studio/stage-actions";
 import { StylePicker } from "@/components/studio/style-picker";
 import { CopyButton } from "@/components/ui/copy-button";
@@ -70,7 +70,10 @@ export default async function ScriptPage({ params }: PageProps<"/studio/[id]">) 
             <h2 className="font-display text-sm font-semibold tracking-wide uppercase">Ролик готов</h2>
             <p className="text-sm text-muted">Посмотри. Нравится? Отметь площадки и выпусти.</p>
             <ReleaseForm id={s.id} networks={networks} />
-            <DownloadVideo url={s.videoUrl} title={s.title} />
+            <div className="flex flex-wrap items-center gap-2">
+              <DownloadVideo url={s.videoUrl} title={s.title} />
+              <RejectVideo id={s.id} />
+            </div>
             <details className="text-sm">
               <summary className="cursor-pointer text-xs text-muted">Выложил вручную? Отметь ссылкой на пост</summary>
               <div className="mt-3">
@@ -106,7 +109,7 @@ export default async function ScriptPage({ params }: PageProps<"/studio/[id]">) 
           ) : (
             <p className="mt-2 text-muted">Ролик в очереди на рендер. Как только освободится рендер-сервер, начнётся сборка, а готовое видео появится здесь.</p>
           )}
-          {rendering && (
+          {(rendering || s.renderStatus === "failed") && (
             <div className="mt-4">
               <CancelRender id={s.id} />
             </div>

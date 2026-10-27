@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { cancelRender, drawSketches, markPublished, releaseVideo, retryRender } from "@/app/studio/actions";
+import { useRouter } from "next/navigation";
+import { cancelRender, drawSketches, markPublished, redoVideo, rejectScript, releaseVideo, retryRender } from "@/app/studio/actions";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 
@@ -54,6 +55,43 @@ export function CancelRender({ id }: { id: string }) {
       <Button disabled={pending} onClick={() => setSure(false)}>
         Нет, пусть рисует
       </Button>
+    </div>
+  );
+}
+
+// Готовый ролик не понравился: переделать с правкой сториборда или убрать совсем.
+export function RejectVideo({ id }: { id: string }) {
+  const [open, setOpen] = useState(false);
+  const [pending, start] = useTransition();
+  const toast = useToast();
+  const router = useRouter();
+  if (!open)
+    return (
+      <Button variant="danger" onClick={() => setOpen(true)}>
+        ✕ Не нравится
+      </Button>
+    );
+  const run = (job: () => Promise<{ error?: string }>, done: string, home = false) =>
+    start(async () => {
+      const r = await job();
+      if (r.error) return toast(r.error, "error");
+      toast(done);
+      if (home) router.push("/");
+    });
+  return (
+    <div className="space-y-2 rounded-2xl bg-rose-500/10 p-3">
+      <p className="text-sm">Что сделать с роликом?</p>
+      <div className="flex flex-wrap gap-2">
+        <Button disabled={pending} onClick={() => run(() => redoVideo(id), "Вернул в сториборд. Поправь кадры или стиль и запусти снова")}>
+          ↺ Переделать
+        </Button>
+        <Button variant="danger" disabled={pending} onClick={() => run(() => rejectScript(id), "Ролик убран в отклонённые", true)}>
+          🗑 Убрать ролик
+        </Button>
+        <Button disabled={pending} onClick={() => setOpen(false)}>
+          Отмена
+        </Button>
+      </div>
     </div>
   );
 }

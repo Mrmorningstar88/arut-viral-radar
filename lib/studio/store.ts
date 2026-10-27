@@ -50,14 +50,17 @@ function check<T>(res: { data: T; error: { message: string } | null }): T {
   return res.data;
 }
 
+// Доска не показывает сториборд, а он тяжёлый (эскизы кадров в SVG), поэтому в списках его не тянем.
+const LIST_COLS = "id, stage, busy, error, title, pillar, source_reel_id, payload, style, render_status, render_log, video_url, published_url, created_at, updated_at";
+
 export async function listScripts(ws: string): Promise<Script[]> {
-  const rows = check(await serviceDb().from("scripts").select("*").eq("workspace_id", ws).neq("stage", "rejected").order("created_at", { ascending: false }).limit(200));
+  const rows = check(await serviceDb().from("scripts").select(LIST_COLS).eq("workspace_id", ws).neq("stage", "rejected").order("created_at", { ascending: false }).limit(200));
   return (rows as Row[]).map(toScript);
 }
 
 // Отклонённые «не сейчас»: их можно вернуть. «Убранные навсегда» помечены payload.forever.
 export async function listDeclined(ws: string): Promise<Script[]> {
-  const rows = check(await serviceDb().from("scripts").select("*").eq("workspace_id", ws).eq("stage", "rejected").order("updated_at", { ascending: false }).limit(100));
+  const rows = check(await serviceDb().from("scripts").select(LIST_COLS).eq("workspace_id", ws).eq("stage", "rejected").order("updated_at", { ascending: false }).limit(100));
   return (rows as Row[]).map(toScript).filter((s) => !s.payload.forever);
 }
 
