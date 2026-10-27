@@ -5,7 +5,7 @@ import type { ReelDetails } from "@/lib/sources/types";
 
 export const Verdict = z.object({
   exclude: z.boolean(),
-  reason: z.enum(["none", "ad", "kids", "shock", "politics", "cctv_or_live", "low_quality"]),
+  reason: z.enum(["none", "ad", "kids", "shock", "politics", "cctv_or_live", "low_quality", "language"]),
   fit_score: z.number().int().min(0).max(100),
   fit_reason: z.string().describe("Одно предложение по-русски: почему ролик подходит или нет"),
 });
@@ -18,8 +18,18 @@ const SYSTEM = `Ты фильтруешь залетевшие Reels для ав
 - shock: шок-контент, насилие, жестокость;
 - politics: агитация за или против партий и кандидатов. Разборы политики, экономики, денег и власти не исключай, это может быть темой автора;
 - cctv_or_live: записи камер наблюдения, лайв-камер, случайные съёмки происшествий, стримы;
-- low_quality: треш, низкое качество, контент без идеи, которую можно пересказать.
+- low_quality: треш, низкое качество, контент без идеи, которую можно пересказать;
+- language: ролик не на русском и не на английском (хинди и хинглиш латиницей, испанский, арабский, турецкий и любые другие). Автору нужны только русские и английские ролики.
 fit_score 0–100: насколько формат и идею можно адаптировать под автора (его факты, голос и вкус ниже).`;
+
+// Письменности кроме латиницы и кириллицы (деванагари, арабская, CJK и т.д.): такой ролик не на русском и не на английском.
+// Отсекаем до Claude, бесплатно. Хинглиш латиницей ловит уже классификатор.
+export function foreignScript(text: string) {
+  const letters = text.match(/\p{L}/gu)?.length ?? 0;
+  if (letters < 12) return false;
+  const ours = text.match(/[\p{Script=Latin}\p{Script=Cyrillic}]/gu)?.length ?? 0;
+  return ours / letters < 0.7;
+}
 
 export async function classifyReel(
   reel: ReelDetails,

@@ -4,7 +4,7 @@ import { MODEL_MAIN, RefusalError } from "@/lib/llm";
 import { proposeTopic, researchStory, writeStory } from "@/lib/redpill";
 import { embed } from "@/lib/sources/embeddings";
 import { lanesFor, MAX_NEW_PER_RUN, pickTop, pickWithFallback, VIRAL_MIN_VIEWS, type Candidate } from "@/lib/selection";
-import { classifyReel } from "@/lib/selection/classify";
+import { classifyReel, foreignScript } from "@/lib/selection/classify";
 import { apifySource, shortcodeFromUrl } from "@/lib/sources/apify";
 import { SourceError } from "@/lib/sources/http";
 import { exaSearch } from "@/lib/sources/search/exa";
@@ -106,6 +106,7 @@ export async function rank(ws: string, found: Found[], take = MAX_NEW_PER_RUN, s
 export async function analyzeCandidate(ws: string, runId: string, f: Found) {
   const profile = await store.loadProfile(ws);
   const reel = await getReelCached(f.url);
+  if (foreignScript(`${reel.caption} ${reel.topComments.slice(0, 5).join(" ")}`)) return { accepted: false as const, reason: "language" };
   const { verdict, usd: u1 } = await classifyReel(reel, classifierProfile(profile));
   if (verdict.exclude) {
     await store.logCost(ws, runId, "anthropic", u1);
