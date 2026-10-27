@@ -100,11 +100,12 @@ async function scriptChunk(ws: string, b: string, formulas: Formula[], titles: s
 }
 
 // Переписать сценарий по замечанию автора.
-export async function reviseScript(ws: string, id: string, feedback: string) {
+// toLang: перевести сценарий на другой язык (озвучка, надписи, подпись, CTA), сохранив смысл и механику.
+export async function reviseScript(ws: string, id: string, feedback: string, toLang?: Lang) {
   const s = await getScript(ws, id);
   if (!s) throw new Error("Сценарий не найден");
   const user = [await brief(ws), `ТЕКУЩИЙ СЦЕНАРИЙ (JSON):\n${JSON.stringify(s.payload)}`, `ЗАМЕЧАНИЕ АВТОРА: ${feedback}`, "Перепиши сценарий с учётом замечания. Верни ровно один сценарий, sourceReel оставь прежним."].join("\n\n");
-  const lang = asLang(s.payload.lang);
+  const lang = toLang ?? asLang(s.payload.lang);
   const { out, usd } = await parse(ScriptBatch, `Ты главный сценарист и режиссёр контент-завода.\n${rules(lang)}`, user);
   const draft = { ...s.payload, ...out.scripts[0], sourceReel: s.payload.sourceReel, lang };
   await updateScript(ws, id, { payload: draft, title: draft.title, pillar: draft.pillar, busy: false, error: null, feedback });

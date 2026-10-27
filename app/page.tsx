@@ -141,6 +141,9 @@ function Card({ s }: { s: Script }) {
       <Link href={`/studio/${s.id}`} className="block">
         <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
           {s.pillar && <span className="text-[10px] font-semibold tracking-wider text-accent uppercase">{s.pillar}</span>}
+          {s.payload.lang && s.payload.lang !== "ru" && (
+            <span className="rounded-full bg-ink/[0.06] px-2 py-0.5 text-[10px] font-semibold uppercase text-muted">{s.payload.lang}</span>
+          )}
           {s.payload.format && (
             <span className="rounded-full bg-st-prod/15 px-2 py-0.5 text-[10px] font-semibold text-st-prod-ink" title="Формат залёта-источника и его отрыв от медианы ниши">
               {formatLabel(s.payload.format)}
