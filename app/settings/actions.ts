@@ -5,7 +5,7 @@ import { after } from "next/server";
 import { authClient, requireAdmin, requireUser } from "@/lib/auth/server";
 import { serviceDb } from "@/lib/engine/store";
 import { keyOf, listVoices, makeSound, saveKey, saveSound, soundOf } from "@/lib/elevenlabs";
-import { checkKey, createSoul, faceOf, linkOf as higgsOf, saveFace, saveLink as saveHiggs, training, uploadPhoto } from "@/lib/higgsfield";
+import { connectKey, createSoul, faceOf, linkOf as higgsOf, saveFace, saveLink as saveHiggs, training, uploadPhoto } from "@/lib/higgsfield";
 import { linkOf, listBrands, saveLink } from "@/lib/metricool";
 import { currentWorkspace } from "@/lib/projects";
 
@@ -127,12 +127,10 @@ export async function disconnectElevenLabs(): Promise<Result> {
 // Higgsfield: ключ проверяется бесплатным запросом, потом из фото обучается Soul ID, и образ включается для организации.
 export async function connectHiggsfield(_: Result | null, fd: FormData): Promise<Result> {
   const user = await requireUser();
-  const id = String(fd.get("id") ?? "").trim();
-  const secret = String(fd.get("secret") ?? "").trim();
-  if (id.length < 8 || secret.length < 8) return { error: "Нужны ID ключа и секрет из Higgsfield целиком" };
+  const key = String(fd.get("key") ?? "").trim();
+  if (key.length < 16 || key.length > 400) return { error: "Вставь ключ API из Higgsfield целиком" };
   try {
-    await checkKey({ id, secret });
-    await saveHiggs(user, { id, secret });
+    await saveHiggs(user, await connectKey(key));
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Не получилось подключиться" };
   }

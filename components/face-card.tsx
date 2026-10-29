@@ -44,10 +44,9 @@ export function FaceCard({ org, connected, soul, on, error }: { org: string; con
     return (
       <form action={action} className="space-y-3">
         <p className="text-sm text-muted">
-          В роликах снимаешься ты сам, а не мультяшный герой. Создай ключ в console.higgsfield.ai → API keys, пополни там баланс и вставь сюда ID ключа и секрет.
+          В роликах снимаешься ты сам, а не мультяшный герой. Создай ключ в console.higgsfield.ai → API keys, пополни там баланс и нажми Copy API key и вставь ключ сюда.
         </p>
-        <input name="id" required placeholder="ID ключа Higgsfield" autoComplete="off" className={INPUT} />
-        <input name="secret" required type="password" placeholder="Секрет ключа" autoComplete="off" className={INPUT} />
+        <input name="key" required type="password" placeholder="Ключ API Higgsfield" autoComplete="off" className={INPUT} />
         <Button type="submit" variant="primary" disabled={pending}>
           {pending ? "Проверяю…" : "Подключить Higgsfield"}
         </Button>

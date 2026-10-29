@@ -14,21 +14,25 @@ const FOREVER = "2100-01-01T00:00:00Z";
 
 export type SoulStatus = "not_ready" | "queued" | "in_progress" | "completed" | "failed";
 export type Soul = { id: string; status: SoulStatus; thumb?: string | null };
-export type HiggsfieldLink = { id: string; secret: string; soul?: Soul };
+// auth: готовое значение заголовка Authorization. Новая консоль Higgsfield выдаёт один ключ,
+// старая выдавала ID и секрет (их склеиваем через двоеточие, как в документации).
+export type HiggsfieldLink = { auth: string; id?: string; secret?: string; soul?: Soul };
+type Auth = Pick<HiggsfieldLink, "auth" | "id" | "secret">;
 export type Face = { owner: string; on: boolean };
 
 export const linkOf = (user: User): HiggsfieldLink | null => {
-  const m = user.app_metadata?.higgsfield as HiggsfieldLink | undefined;
-  return m?.id && m.secret ? m : null;
+  const m = user.app_metadata?.higgsfield as Partial<HiggsfieldLink> | undefined;
+  if (m?.auth) return m as HiggsfieldLink;
+  return m?.id && m.secret ? { ...m, auth: `Key ${m.id}:${m.secret}` } as HiggsfieldLink : null;
 };
 
 export const training = (s?: Soul) => !!s && (s.status === "not_ready" || s.status === "queued" || s.status === "in_progress");
 
-async function call(link: Pick<HiggsfieldLink, "id" | "secret">, path: string, init: RequestInit = {}) {
+async function call(link: Auth, path: string, init: RequestInit = {}) {
   const res = await fetch(API + path, {
     ...init,
-    // Основной заголовок Authorization, старые hf-api-key/hf-secret на случай, если Soul ID их ещё ждёт.
-    headers: { Authorization: `Key ${link.id}:${link.secret}`, "hf-api-key": link.id, "hf-secret": link.secret, ...(init.body ? { "Content-Type": "application/json" } : {}), ...init.headers },
+    // Основной заголовок Authorization; со старой парой ID и секрет ещё и hf-api-key/hf-secret, если Soul ID их ждёт.
+    headers: { Authorization: link.auth, ...(link.id && link.secret ? { "hf-api-key": link.id, "hf-secret": link.secret } : {}), ...(init.body ? { "Content-Type": "application/json" } : {}), ...init.headers },
     cache: "no-store",
     signal: AbortSignal.timeout(TIMEOUT_MS),
   }).catch((e: Error) => {
@@ -39,9 +43,22 @@ async function call(link: Pick<HiggsfieldLink, "id" | "secret">, path: string, i
   return text ? (JSON.parse(text) as Record<string, unknown>) : {};
 }
 
-// Ключ проверяется списком Soul ID: запрос бесплатный.
-export async function checkKey(link: Pick<HiggsfieldLink, "id" | "secret">) {
-  await call(link, "/v1/custom-references/list?page=1&page_size=1");
+// Ключ проверяется списком Soul ID: запрос бесплатный. Из вставленного текста пробуем варианты заголовка
+// и сохраняем первый, который Higgsfield принял: «id:секрет» как в документации, иначе один ключ как Key или Bearer.
+export async function connectKey(raw: string): Promise<Auth> {
+  const key = raw.trim().replace(/^(Key|Bearer)\s+/i, "");
+  const [id, secret] = key.includes(":") ? [key.slice(0, key.indexOf(":")), key.slice(key.indexOf(":") + 1)] : [];
+  const variants: Auth[] = id && secret ? [{ auth: `Key ${id}:${secret}`, id, secret }] : [{ auth: `Key ${key}` }, { auth: `Bearer ${key}` }];
+  let last: unknown;
+  for (const v of variants) {
+    try {
+      await call(v, "/v1/custom-references/list?page=1&page_size=1");
+      return v;
+    } catch (e) {
+      last = e;
+    }
+  }
+  throw last;
 }
 
 export async function saveLink(user: User, link: HiggsfieldLink | null) {
