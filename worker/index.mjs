@@ -79,6 +79,28 @@ async function faceKit(s, dir) {
   return { id: hf.id, secret: hf.secret, soulId: hf.soul.id };
 }
 
+// Свой стиль автора, собранный в портале из его роликов (ключ mystyle:<ws>:<slug> в source_cache).
+// Кладём в папку ролика STYLE.md стиля и кадры из роликов автора как эталон.
+async function myStyleKit(s, dir) {
+  if (!s.style?.startsWith("my-")) return null;
+  const { data } = await db.from("source_cache").select("payload").eq("key", `mystyle:${s.workspace_id}:${s.style}`).maybeSingle();
+  const my = data?.payload;
+  if (my?.status !== "ready" || !my.styleMd) throw new Error("Свой стиль не найден или удалён: выбери стиль заново");
+  const root = join(dir, "my-style");
+  mkdirSync(join(root, "refs"), { recursive: true });
+  writeFileSync(join(root, "STYLE.md"), my.styleMd);
+  writeFileSync(join(root, "style.json"), JSON.stringify({ slug: my.slug, en: my.name, based_on: my.basedOn, borrows: my.borrows ?? [], size: "1080x1920", line: my.line, palette: my.palette }, null, 1));
+  const refs = [];
+  for (const [i, url] of (my.frames ?? []).entries()) {
+    const res = await fetch(url, { signal: AbortSignal.timeout(30_000) }).catch(() => null);
+    if (!res?.ok) continue;
+    const file = `refs/${String(i + 1).padStart(2, "0")}.jpg`;
+    writeFileSync(join(root, file), Buffer.from(await res.arrayBuffer()));
+    refs.push(file);
+  }
+  return { name: my.name, basedOn: my.basedOn, borrows: my.borrows ?? [], refs: refs.length };
+}
+
 // Помощник Higgsfield в папке ролика. Ключ из окружения, в файлы не пишется. Потолок кадров и клипов на ролик
 // держит сам помощник (счётчик в .hf-usage.json), чтобы агент не потратил баланс автора.
 //   node hf.mjs frame "промпт кадра с автором" out.jpg      — кадр 9:16 с лицом автора (Soul 2 + Soul ID)
@@ -167,7 +189,19 @@ const SPEECH = {
   es: { name: "испанский", male: "es-ES-AlvaroNeural", female: "es-ES-ElviraNeural", whisper: "es" },
 };
 
-function brief(s, kit, face) {
+function styleLine(s, my) {
+  if (!my) return `Стиль: ${s.style} (styles/${s.style}/STYLE.md).`;
+  const borrows = my.borrows.length ? ` Отдельные приёмы можно брать из: ${my.borrows.map((b) => `$LIB/styles/${b}/`).join(", ")}.` : "";
+  return [
+    `Стиль: свой стиль автора «${my.name}», собран из его роликов. Его STYLE.md лежит в папке проекта: my-style/STYLE.md, читай его вместо STYLE.md библиотеки (как в MY-STYLES.md, раздел «Using it»).`,
+    `Технику и код бери у базы $LIB/styles/${my.basedOn}/ (STYLE.md, DEMO.md, demo/).${borrows}`,
+    my.refs ? `Кадры из роликов автора: my-style/refs/ (${my.refs} шт.). Посмотри их до трактовки и держи ролик как можно ближе к ним по палитре, шрифтам и надписям, фактуре, свету, движению и темпу монтажа. Сюжеты, людей, логотипы и тексты с этих кадров не переноси.` : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
+function brief(s, kit, face, my) {
   const p = s.payload;
   const sb = s.storyboard;
   const lang = SPEECH[p.lang] ?? SPEECH.ru;
@@ -178,7 +212,7 @@ function brief(s, kit, face) {
     ? `Звук: у организации есть фирменный звук${kit.idea ? ` («${kit.idea}»)` : ""}, файлы в папке проекта: ${kit.files.join(", ")}. Тема идёт подложкой под голос (громкость около −18 дБ, приглушай под речью, можно обрезать и зациклить), эффекты ставь редко: на хук и финал, плюс 1–2 ключевые цифры, не на каждую смену кадра. Эффекты мягкие: громкость −24 дБ относительно голоса, фейд-ин и фейд-аут по 30 мс, срез верхов (ffmpeg lowpass=f=6000) и низов (highpass=f=80), никогда не громче голоса. Финальный микс прогони через ffmpeg loudnorm=I=-14:TP=-1.5:LRA=11 и проверь, что нет клиппинга. Другую музыку не сочиняй и трендовые треки не используй.`
     : "Своих материалов у автора нет: музыку и звук делай сам по TECHNIQUE.md. Трендовые треки из соцсетей не используй.";
   return [
-    `Стиль: ${s.style} (styles/${s.style}/STYLE.md).`,
+    styleLine(s, my),
     "Формат: вертикальный 1080×1920, 30 fps (`--size 1080x1920`). Длина по озвучке, 15–45 секунд.",
     voice,
     sound,
@@ -220,7 +254,8 @@ async function render(s) {
   mkdirSync(dir, { recursive: true });
   const kit = await soundKit(s, dir).catch((e) => (console.error("sound kit", e.message), null));
   const face = await faceKit(s, dir).catch((e) => (console.error("face kit", e.message), null));
-  const film = brief(s, kit, face);
+  const my = await myStyleKit(s, dir);
+  const film = brief(s, kit, face, my);
   writeFileSync(join(dir, "BRIEF.md"), film);
   let cost = 0;
   let lastLog = 0;

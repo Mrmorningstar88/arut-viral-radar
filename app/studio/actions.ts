@@ -10,7 +10,7 @@ import { asLang, LANGS } from "@/lib/studio/lang";
 import { buildStoryboard, generateScripts, reviseScript, sketchFrames } from "@/lib/studio/generate";
 import { linkOf, NETWORKS, publishVideo } from "@/lib/metricool";
 import { getScript, updateScript } from "@/lib/studio/store";
-import { styleBySlug } from "@/lib/studio/styles";
+import { styleExists } from "@/lib/studio/my-styles";
 import { z } from "zod";
 import type { ScriptDraft } from "@/lib/studio/schema";
 
@@ -106,9 +106,9 @@ export async function redoStoryboard(id: string, feedback: string): Promise<Resu
 
 // Одобренный сториборд встаёт в очередь рендера lemo-opuscar в выбранном стиле.
 export async function approveStoryboard(id: string, style?: string): Promise<Result> {
-  if (style && !styleBySlug(style)) return { error: "Неизвестный стиль" };
   try {
     const ws = await workspace();
+    if (style && !(await styleExists(ws, style))) return { error: "Неизвестный стиль" };
     const limit = await overLimit(await requireUser(), "videos");
     if (limit) return { error: limit };
     await updateScript(ws, id, { stage: "production", render_status: "queued", render_log: null, error: null, ...(style ? { style } : {}) });
@@ -218,9 +218,9 @@ export async function releaseVideo(id: string, picked: string[]): Promise<Result
 }
 
 export async function setStyle(id: string, style: string): Promise<Result> {
-  if (!styleBySlug(style)) return { error: "Неизвестный стиль" };
   try {
     const ws = await workspace();
+    if (typeof style !== "string" || !(await styleExists(ws, style))) return { error: "Неизвестный стиль" };
     const s = await getScript(ws, id);
     if (!s) return { error: "Сценарий не найден" };
     if (s.stage !== "script" && s.stage !== "storyboard") return { error: "Стиль меняется до запуска производства" };

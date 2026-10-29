@@ -7,7 +7,7 @@ import { StyleGallery } from "@/components/studio/style-gallery";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import type { Stage } from "@/lib/studio/schema";
-import { OPUS_FRAME, styleBySlug } from "@/lib/studio/styles";
+import { viewOf, type MyStyleCard } from "@/lib/studio/styles";
 
 type Act = (id: string) => Promise<{ error?: string }>;
 type Redo = (id: string, feedback: string) => Promise<{ error?: string }>;
@@ -17,13 +17,14 @@ const CONFIG: Partial<Record<Stage, { yes: string; yesAct: Act; yesToast: string
   storyboard: { yes: "Выбрать стиль и запустить", yesAct: approveStoryboard, yesToast: "Отправил в производство", redo: redoStoryboard, redoLabel: "Переделать сториборд" },
 };
 
-export function StageActions({ id, stage, busy, edit, style, launch = false }: { id: string; stage: Stage; busy: boolean; edit: ScriptEdit; style: string | null; launch?: boolean }) {
+export function StageActions({ id, stage, busy, edit, style, mine: initialMine, launch = false }: { id: string; stage: Stage; busy: boolean; edit: ScriptEdit; style: string | null; mine: MyStyleCard[]; launch?: boolean }) {
   const [pending, start] = useTransition();
   const [redoOpen, setRedoOpen] = useState(false);
   const [editing, setEditing] = useState(false);
   // launch: пришли с доски по кнопке «В производство», сразу открываем выбор стиля.
   const [confirm, setConfirm] = useState(launch && stage === "storyboard");
   const [picked, setPicked] = useState(style);
+  const [mine, setMine] = useState(initialMine);
   const [feedback, setFeedback] = useState("");
   const toast = useToast();
   const c = CONFIG[stage];
@@ -48,13 +49,13 @@ export function StageActions({ id, stage, busy, edit, style, launch = false }: {
 
   // Перед рендером показываем, в каком стиле будет ролик, и даём сменить его: рендер долгий и стоит денег.
   if (confirm) {
-    const st = styleBySlug(picked);
+    const st = viewOf(picked, mine);
     return (
       <div className="space-y-4 rounded-3xl glass-strong p-4">
         <div className="flex flex-wrap items-center gap-4">
           {st && (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={OPUS_FRAME(st.slug)} alt="" className="h-20 w-36 rounded-2xl object-cover ring-1 ring-ink/10" />
+            <img src={st.frame} alt="" className="h-20 w-36 rounded-2xl object-cover ring-1 ring-ink/10" />
           )}
           <div className="min-w-0 flex-1">
             <p className="text-xs font-semibold tracking-widest text-muted uppercase">Шаг перед производством: выбери стиль</p>
@@ -81,7 +82,7 @@ export function StageActions({ id, stage, busy, edit, style, launch = false }: {
           </Button>
         </div>
         <div className="max-h-[60vh] overflow-y-auto rounded-2xl pr-1">
-          <StyleGallery current={picked} onPick={setPicked} disabled={pending} />
+          <StyleGallery current={picked} onPick={setPicked} disabled={pending} mine={mine} onMine={setMine} />
         </div>
       </div>
     );
