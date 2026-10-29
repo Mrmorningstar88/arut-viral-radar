@@ -180,7 +180,8 @@ function FilmLightbox({
 }
 
 // Пока Claude разбирает ролики, список своих стилей обновляется раз в 5 секунд (не дольше 6 минут).
-function MyStyles({ current, onPick, disabled, mine, onMine }: { current: string | null; onPick: (slug: string) => void; disabled?: boolean; mine: MyStyleCard[]; onMine: (list: MyStyleCard[]) => void }) {
+// Без onPick (в Настройках) плитки только открывают подробности: выбирать стиль некуда.
+export function MyStyles({ current = null, onPick, disabled, mine, onMine, title = true }: { current?: string | null; onPick?: (slug: string) => void; disabled?: boolean; mine: MyStyleCard[]; onMine: (list: MyStyleCard[]) => void; title?: boolean }) {
   const [making, setMaking] = useState(false);
   const [open, setOpen] = useState<string | null>(null);
   const analyzing = mine.some((m) => m.status === "analyzing");
@@ -197,8 +198,8 @@ function MyStyles({ current, onPick, disabled, mine, onMine }: { current: string
   const shown = mine.find((m) => m.slug === open);
 
   return (
-    <div className="mt-5">
-      <h3 className="mb-2 text-xs font-semibold tracking-wide text-muted uppercase">Мои стили</h3>
+    <div className={title ? "mt-5" : ""}>
+      {title && <h3 className="mb-2 text-xs font-semibold tracking-wide text-muted uppercase">Мои стили</h3>}
       {making ? (
         <div className="rounded-2xl glass-inset p-4">
           <MyStyleMaker
@@ -227,8 +228,8 @@ function MyStyles({ current, onPick, disabled, mine, onMine }: { current: string
             <div key={m.slug} className={`group relative overflow-hidden rounded-2xl ring-1 transition ${m.slug === current ? "ring-2 ring-accent" : "ring-ink/10 hover:ring-ink/30"}`}>
               <button
                 type="button"
-                disabled={disabled || m.status !== "ready"}
-                onClick={() => onPick(m.slug)}
+                disabled={disabled || (onPick ? m.status !== "ready" : m.status === "analyzing")}
+                onClick={() => (onPick ? onPick(m.slug) : setOpen(m.slug))}
                 className="block w-full text-left disabled:cursor-default"
                 aria-pressed={m.slug === current}
               >
@@ -265,7 +266,7 @@ function MyStyles({ current, onPick, disabled, mine, onMine }: { current: string
           style={shown}
           picked={shown.slug === current}
           onClose={() => setOpen(null)}
-          onPick={disabled || shown.status !== "ready" ? undefined : () => (onPick(shown.slug), setOpen(null))}
+          onPick={!onPick || disabled || shown.status !== "ready" ? undefined : () => (onPick(shown.slug), setOpen(null))}
           onDeleted={async () => {
             setOpen(null);
             const r = await myStyles();
