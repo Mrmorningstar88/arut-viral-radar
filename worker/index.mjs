@@ -74,9 +74,10 @@ async function faceKit(s, dir) {
   if (!face?.on || !face.owner) return null;
   const { data: u } = await db.auth.admin.getUserById(face.owner);
   const hf = u?.user?.app_metadata?.higgsfield;
-  if (!hf?.id || !hf.secret || hf.soul?.status !== "completed") return null;
+  const auth = hf?.auth ?? (hf?.id && hf.secret ? `Key ${hf.id}:${hf.secret}` : null);
+  if (!auth || hf.soul?.status !== "completed") return null;
   writeFileSync(join(dir, "hf.mjs"), HF_HELPER);
-  return { id: hf.id, secret: hf.secret, soulId: hf.soul.id };
+  return { auth, soulId: hf.soul.id };
 }
 
 // Свой стиль автора, собранный в портале из его роликов (ключ mystyle:<ws>:<slug> в source_cache).
@@ -107,9 +108,9 @@ async function myStyleKit(s, dir) {
 //   node hf.mjs clip in.jpg "промпт движения" out.mp4 [5|10] — оживить кадр в видео (Kling 2.5 Turbo Pro)
 const HF_HELPER = `import { existsSync, readFileSync, writeFileSync } from "node:fs";
 const API = "https://api.higgsfield.ai";
-const { HF_KEY_ID: id, HF_KEY_SECRET: secret, HF_SOUL_ID: soul } = process.env;
+const { HF_AUTH: authorization, HF_SOUL_ID: soul } = process.env;
 const MAX = { frames: Number(process.env.HF_MAX_FRAMES || 16), clips: Number(process.env.HF_MAX_CLIPS || 8) };
-const auth = { Authorization: \`Key \${id}:\${secret}\` };
+const auth = { Authorization: authorization };
 const [cmd, ...args] = process.argv.slice(2);
 const usage = existsSync(".hf-usage.json") ? JSON.parse(readFileSync(".hf-usage.json", "utf8")) : { frames: 0, clips: 0, seconds: 0 };
 const fail = (m) => { console.error(m); process.exit(1); };
@@ -145,7 +146,7 @@ async function upload(file) {
   return slot.public_url;
 }
 
-if (!id || !secret || !soul) fail("Нет ключа Higgsfield или Soul ID");
+if (!authorization || !soul) fail("Нет ключа Higgsfield или Soul ID");
 if (cmd === "frame") {
   const [prompt, out] = args;
   if (!prompt || !out) fail('node hf.mjs frame "промпт" out.jpg');
@@ -281,7 +282,7 @@ async function render(s) {
         ...process.env,
         LIB,
         ...(kit?.voiceId ? { ELEVENLABS_API_KEY: kit.key, ELEVENLABS_VOICE_ID: kit.voiceId } : {}),
-        ...(face ? { HF_KEY_ID: face.id, HF_KEY_SECRET: face.secret, HF_SOUL_ID: face.soulId } : {}),
+        ...(face ? { HF_AUTH: face.auth, HF_SOUL_ID: face.soulId } : {}),
       },
     },
   })) {
