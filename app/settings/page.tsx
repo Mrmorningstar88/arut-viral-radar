@@ -4,6 +4,7 @@ import { PasswordForm, RequestPro, SignOut } from "@/components/account-actions"
 import { MetricoolCard } from "@/components/metricool-card";
 import { FaceCard } from "@/components/face-card";
 import { SoundCard } from "@/components/sound-card";
+import { MyStylesCard } from "@/components/studio/my-styles-card";
 import { Reveal } from "@/components/ui/reveal";
 import { isAdmin, requireUser } from "@/lib/auth/server";
 import { isDemo } from "@/lib/db";
@@ -13,6 +14,7 @@ import { faceOf, getSoul, linkOf as higgsOf, saveLink as saveHiggs, training, ty
 import { linkOf, listBrands, type Brand } from "@/lib/metricool";
 import { PLANS, planOf, usage } from "@/lib/plans";
 import { currentWorkspace, listProjects } from "@/lib/projects";
+import { listMyStyles } from "@/lib/studio/my-styles";
 
 const ITEMS = [
   { href: "/persona", icon: "🧬", title: "Паспорт организации", text: "Факты, голос, табу и темы открытой организации. Из этого собираются все сценарии.", radar: false },
@@ -51,7 +53,7 @@ export default async function SettingsPage() {
     link ? listBrands(link).then((b): Brand[] | string => b).catch((e: Error) => e.message) : ([] as Brand[]),
     elKey ? listVoices(elKey).then((v): Voice[] | string => v).catch((e: Error) => e.message) : ([] as Voice[]),
   ]);
-  const sound = elKey ? await soundOf(ws) : null;
+  const [sound, mine] = await Promise.all([elKey ? soundOf(ws) : null, listMyStyles(ws).catch(() => [])]);
   const higgs = higgsOf(user);
   const [face, soul] = higgs ? await Promise.all([faceOf(ws), freshSoul(user, higgs)]) : [null, null];
   const org = projects.find((p) => p.id === ws)?.name ?? "";
@@ -114,6 +116,11 @@ export default async function SettingsPage() {
             chosen={link?.brands[ws] ?? null}
             error={typeof brands === "string" ? brands : null}
           />
+        </Reveal>
+
+        <Reveal delay={0.065} className="rounded-3xl glass p-5 md:col-span-2">
+          <h2 className="mb-3 font-display text-sm font-semibold tracking-wide uppercase">Мои стили анимации</h2>
+          <MyStylesCard org={org} initial={mine} />
         </Reveal>
 
         <Reveal delay={0.07} className="rounded-3xl glass p-5 md:col-span-2">
