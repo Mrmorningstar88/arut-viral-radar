@@ -13,6 +13,7 @@ import { requireUser } from "@/lib/auth/server";
 import { linkOf, listBrands, NETWORKS } from "@/lib/metricool";
 import { currentWorkspace } from "@/lib/projects";
 import { STAGE_LABEL, STAGES } from "@/lib/studio/schema";
+import { listMyStyles } from "@/lib/studio/my-styles";
 import { getScript } from "@/lib/studio/store";
 
 // Действия на этой странице запускают Claude в фоне.
@@ -24,7 +25,7 @@ export default async function ScriptPage({ params, searchParams }: PageProps<"/s
   const ws = await currentWorkspace(); // проверяет вход и доступ к организации
   const s = await getScript(ws, id);
   if (!s) notFound();
-  const networks = s.stage === "ready" ? await releaseTargets(ws) : [];
+  const [networks, mine] = await Promise.all([s.stage === "ready" ? releaseTargets(ws) : [], listMyStyles(ws).catch(() => [])]);
   const p = s.payload;
   const rendering = s.stage === "production" && (s.renderStatus === "queued" || s.renderStatus === "rendering");
   const step = STAGES.indexOf(s.stage as (typeof STAGES)[number]);
@@ -56,12 +57,12 @@ export default async function ScriptPage({ params, searchParams }: PageProps<"/s
           </p>
         )}
         {s.error && !s.busy && <p className="rounded-2xl bg-rose-500/10 px-4 py-3 text-sm text-rose-200">Не получилось: {s.error}</p>}
-        <StageActions id={s.id} stage={s.stage} busy={s.busy} edit={{ title: s.title, hook: p.hook, vo: p.vo, onScreen: p.onScreen, caption: p.caption, cta: p.cta }} style={s.style ?? p.style} launch={launch} />
+        <StageActions id={s.id} stage={s.stage} busy={s.busy} edit={{ title: s.title, hook: p.hook, vo: p.vo, onScreen: p.onScreen, caption: p.caption, cta: p.cta }} style={s.style ?? p.style} mine={mine} launch={launch} />
       </Reveal>
 
       {(s.style || p.style) && (
         <Reveal delay={0.02}>
-          <StylePicker id={s.id} style={s.style ?? p.style} editable={(s.stage === "script" || s.stage === "storyboard") && !s.busy} redraws={s.stage === "storyboard"} />
+          <StylePicker id={s.id} style={s.style ?? p.style} mine={mine} editable={(s.stage === "script" || s.stage === "storyboard") && !s.busy} redraws={s.stage === "storyboard"} />
         </Reveal>
       )}
 

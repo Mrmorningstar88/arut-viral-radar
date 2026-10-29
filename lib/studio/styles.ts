@@ -63,7 +63,6 @@ export const OPUS_STYLES: OpusStyle[] = [
   { slug: "kino-montage", name: "Constructivist Montage", category: "Edit & Documentary", line: "The Empire State's 1931 brochure credits its builders; the site film and Hine's photos answer: 2,500 a day.", uses: ["Industry histories", "Milestones", "Collective effort"] },
   { slug: "telestrator", name: "Sports Telestrator", category: "Edit & Documentary", line: "Down 3–0 at half-time, Fenerbahçe scored three in 12 minutes: freeze, draw, split screen, shot map.", uses: ["Sports analysis", "Match recaps", "Coaching"] },
   { slug: "news-package", name: "Broadcast News Package", category: "Edit & Documentary", line: "Four AI stories from one week in a full on-air package: rundown, headline strap, price board, spec card.", uses: ["News round-ups", "Bulletins", "Market updates"] },
-  { slug: "my-style", name: "My Style", category: "Graphic & Type", line: "One sentence: what happens in the demo film.", uses: ["Use one", "Use two", "Use three"] },
 ];
 
 // Пример-фильм стиля из релиза библиотеки (большой mp4, грузится только по кнопке «Пример»).
@@ -72,3 +71,28 @@ export const OPUS_FILM = (slug: string) => `https://github.com/lemomo-ai/lemo-op
 export const OPUS_FRAME = (slug: string) => `https://raw.githubusercontent.com/lemomo-ai/lemo-opuscar/main/docs/frames/${slug}.jpg`;
 
 export const styleBySlug = (slug: string | null | undefined) => OPUS_STYLES.find((s) => s.slug === slug);
+
+// Свой стиль автора, собранный из его роликов (lib/studio/my-styles.ts). Слаг всегда начинается с «my-».
+export type MyStyleCard = {
+  slug: string;
+  name: string;
+  line: string;
+  uses: string[];
+  seen: string[];
+  palette: string[];
+  frames: string[];
+  basedOn: string;
+  status: "analyzing" | "ready" | "failed";
+  error?: string | null;
+};
+
+export const isMySlug = (slug: string | null | undefined) => !!slug && slug.startsWith("my-");
+
+// Карточка стиля для галереи и шапки: библиотечный или свой. Свой показывается первым кадром из роликов автора.
+export type StyleView = { slug: string; name: string; sub: string; frame: string; mine: boolean };
+export function viewOf(slug: string | null | undefined, mine: MyStyleCard[] = []): StyleView | undefined {
+  const my = mine.find((m) => m.slug === slug && m.status === "ready");
+  if (my) return { slug: my.slug, name: my.name, sub: `Мой стиль · ${my.uses.join(", ")}`, frame: my.frames[0] ?? "", mine: true };
+  const st = styleBySlug(slug);
+  return st && { slug: st.slug, name: st.name, sub: `${st.category} · ${st.uses.join(", ")}`, frame: OPUS_FRAME(st.slug), mine: false };
+}

@@ -6,6 +6,7 @@ import { costUsd, llm, MODEL_MAIN, RefusalError } from "@/lib/llm";
 import { FrameSketches, ScriptBatch, Storyboard } from "./schema";
 import { DIRECTION } from "@/lib/direction";
 import { asLang, LANGS, type Lang } from "./lang";
+import { getMyStyle, styleLine } from "./my-styles";
 import { OPUS_FRAME, OPUS_STYLES, styleBySlug } from "./styles";
 import { foreverTitles, getScript, insertScripts, listScripts, topFormulas, updateScript, type Formula } from "./store";
 
@@ -112,11 +113,6 @@ export async function reviseScript(ws: string, id: string, feedback: string, toL
   await logCost(ws, null, "anthropic", usd);
 }
 
-const styleLine = (slug: string) => {
-  const st = styleBySlug(slug);
-  return st ? `${st.name} (${st.category}): ${st.line}` : slug;
-};
-
 // Сториборд по одобренному сценарию: кадры, надписи, промпты для генерации и 3D-превью.
 export async function buildStoryboard(ws: string, id: string, feedback = "") {
   const s = await getScript(ws, id);
@@ -126,7 +122,7 @@ export async function buildStoryboard(ws: string, id: string, feedback = "") {
     `СЦЕНАРИЙ (JSON):\n${JSON.stringify(s.payload)}`,
     s.storyboard && feedback && `ПРОШЛЫЙ СТОРИБОРД (JSON):\n${JSON.stringify(s.storyboard)}`,
     feedback && `ЗАМЕЧАНИЕ АВТОРА: ${feedback}`,
-    `СТИЛЬ: ${styleLine(s.style ?? s.payload.style)}`,
+    `СТИЛЬ: ${await styleLine(ws, s.style ?? s.payload.style)}`,
     "Разложи сценарий на 4–8 кадров вертикального мини-фильма в этом стиле. Для каждого кадра опиши по-русски, что в кадре и что происходит (смело, кинематографично, с запоминающимся образом), как работает камера и свет, и надпись на экране на языке ролика. Сумма dur равна длине озвучки. Озвучку перенеси, подправив только тайм-коды. В music опиши, как фирменная тема и эффекты организации работают по кадрам: темп монтажа и звуковые акценты, опираясь на звук из сценария. Трендовые треки не предлагай.",
   ]
     .filter(Boolean)
@@ -151,6 +147,10 @@ const cleanSvg = (svg: string) => {
 export async function sketchFrames(ws: string, id: string, board: Storyboard, style: string) {
   try {
     const st = styleBySlug(style);
+    const my = st ? null : await getMyStyle(ws, style);
+    // Эталон стиля: кадр библиотеки или до трёх кадров из роликов автора.
+    const refs = st ? [OPUS_FRAME(st.slug)] : my?.status === "ready" ? my.frames.filter((_, i, a) => i % Math.max(1, Math.floor(a.length / 3)) === 0).slice(0, 3) : [];
+    const name = st?.name ?? my?.name;
     const res = await llm().beta.messages.parse({
       model: MODEL_MAIN,
       max_tokens: 32000,
@@ -161,11 +161,12 @@ export async function sketchFrames(ws: string, id: string, board: Storyboard, st
         {
           role: "user",
           content: [
-            ...(st ? [{ type: "image" as const, source: { type: "url" as const, url: OPUS_FRAME(st.slug) } }] : []),
+            ...refs.map((url) => ({ type: "image" as const, source: { type: "url" as const, url } })),
             {
               type: "text",
               text: [
-                st ? `Эталонный кадр стиля «${st.name}» выше: повтори его палитру, фактуру и манеру.` : "",
+                refs.length ? `${refs.length > 1 ? "Эталонные кадры" : "Эталонный кадр"} стиля «${name}» выше: повтори палитру, фактуру и манеру, но не их сюжет.` : "",
+                my?.status === "ready" ? `Палитра стиля: ${my.palette.join(", ")}. Главное в стиле: ${my.seen.join("; ")}.` : "",
                 `КАДРЫ (JSON):\n${JSON.stringify(board.shots.map(({ n, frame, camera, overlay }) => ({ n, frame, camera, overlay })))}`,
                 'Нарисуй по SVG на каждый кадр: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 270 480">. Фон на весь кадр, крупный главный образ из описания, ракурс и свет из camera, надпись overlay на экране крупным шрифтом (font-family sans-serif) там, где она будет в ролике. Формы и градиенты в цветах стиля, до 6 КБ на кадр. Верни frames с теми же n.',
               ]
