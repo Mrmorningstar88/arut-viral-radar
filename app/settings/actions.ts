@@ -189,3 +189,19 @@ export async function disconnectHiggsfield(): Promise<Result> {
   revalidatePath("/settings");
   return {};
 }
+
+// Перенос базы старого радара: ролики с разборами, Red Pill, креаторы и паспорт идут в открытую организацию.
+export async function importOldRadar(): Promise<Result> {
+  await requireAdmin();
+  const ws = await currentWorkspace();
+  try {
+    const { importRadar } = await import("@/lib/import/run");
+    const data = (await import("@/lib/import/radar-2026-10-30.json")).default;
+    const r = await importRadar(ws, data);
+    revalidatePath("/", "layout");
+    const parts = [`роликов ${r.reels}`, `сюжетов Red Pill ${r.redpill}`, `новых авторов ${r.creators}`];
+    return { message: `Перенесено: ${parts.join(", ")}${r.skipped ? `. Уже были: ${r.skipped}` : ""}. Паспорт дополнен.` };
+  } catch (e) {
+    return { error: e instanceof Error ? `Не получилось перенести: ${e.message}` : "Не получилось перенести" };
+  }
+}
