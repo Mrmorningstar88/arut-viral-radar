@@ -3,6 +3,7 @@ import { connection } from "next/server";
 import { PasswordForm, RequestPro, SignOut } from "@/components/account-actions";
 import { MetricoolCard } from "@/components/metricool-card";
 import { FaceCard } from "@/components/face-card";
+import { ImportRadar } from "@/components/import-radar";
 import { SoundCard } from "@/components/sound-card";
 import { Reveal } from "@/components/ui/reveal";
 import { isAdmin, requireUser } from "@/lib/auth/server";
@@ -137,6 +138,12 @@ export default async function SettingsPage() {
             error={typeof soul === "string" ? soul : null}
           />
         </Reveal>
+        {admin && (
+          <Reveal delay={0.09} className="rounded-3xl glass p-5 md:col-span-2">
+            <h2 className="mb-3 font-display text-sm font-semibold tracking-wide uppercase">Данные старого радара</h2>
+            <ImportRadar org={org} />
+          </Reveal>
+        )}
       </div>
 
       {checks && (
