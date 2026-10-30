@@ -112,7 +112,7 @@ export function toReelAnalysis(r: z.infer<typeof RawReel>): ReelAnalysis {
 
 // «Название — https://…» или «Название — ftc.gov/…»: ссылку достаём, вид источника угадываем по словам.
 export function parseSource(s: string): RedPillStory["sources"][number] {
-  const m = s.match(/https?:\/\/\S+/) ?? s.match(/\b[a-z0-9-]+(\.[a-z0-9-]+)+\/\S*/i);
+  const m = s.match(/https?:\/\/\S+/) ?? s.match(/\b[a-z0-9-]+(\.[a-z0-9-]+)*\.(gov|org|com|edu|net|int|eu|uk)\b(\/\S*)?/i);
   const url = m ? (m[0].startsWith("http") ? m[0] : `https://${m[0]}`).replace(/[)»,.;]+$/, "") : "";
   const title = (m ? s.slice(0, m.index) : s).replace(/[\s:—–-]+$/, "").trim() || s;
   const kind = /court|суд|v\.\s|vs\.?\s/i.test(s)

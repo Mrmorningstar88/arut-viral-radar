@@ -44,6 +44,8 @@ test("Red Pill: источники разобраны в ссылки", () => {
   assert.deepEqual(parseSource("FTC, «Penalty», 24.07.2019 — ftc.gov/news/2019/07/x"), {
     title: "FTC, «Penalty», 24.07.2019", url: "https://ftc.gov/news/2019/07/x", kind: "official",
   });
+  assert.equal(parseSource("FTC Business Blog, 12.2019 — ftc.gov").url, "https://ftc.gov");
+  assert.equal(parseSource("USA PATRIOT Act, Pub.L. 107–56").url.startsWith("https://www.google.com/search"), true);
 });
 
 test("паспорт дополняется без повторов", () => {
