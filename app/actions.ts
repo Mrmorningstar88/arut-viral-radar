@@ -167,7 +167,8 @@ export async function learnNow(): Promise<{ error?: string; message?: string }> 
     const r = await learn(ws);
     if (r.usd > 0) await logCost(ws, null, "anthropic", r.usd);
     revalidatePath("/learning");
-    return { message: r.skipped ?? (r.proposed > 0 ? `Готово. Новых правил: ${r.proposed}` : "Профиль вкуса обновил, новых правил нет") };
+    const sifted = r.dropped > 0 ? ` Проверка на ваших правках отсеяла: ${r.dropped}.` : "";
+    return { message: r.skipped ?? (r.proposed > 0 ? `Готово. Новых правил: ${r.proposed}.${sifted}` : `Профиль вкуса обновил, новых правил нет.${sifted}`) };
   } catch (e) {
     return { error: `Не получилось: ${e instanceof Error ? e.message.slice(0, 160) : "ошибка"}` };
   }
