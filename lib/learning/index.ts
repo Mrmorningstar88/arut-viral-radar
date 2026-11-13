@@ -1,12 +1,15 @@
 import "server-only";
 import { z } from "zod";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
-import { serviceDb } from "@/lib/engine/store";
+import { loadProfile, serviceDb } from "@/lib/engine/store";
 import type { ReelAnalysis } from "@/lib/generate/schema";
 import { costUsd, llm, MODEL_MAIN } from "@/lib/llm";
+import { gateRules } from "./gate";
+import type { GateCase } from "./gate-core";
 
 // Еженедельное обучение: из решений, правок и метрик автора собираем профиль вкуса и предлагаем правила.
-// Правила попадают в генерацию только после одобрения автором.
+// Правила попадают в генерацию только после одобрения автором. Перед этим каждое новое правило проходит проверку
+// (gate.ts, метод SkillOpt): с ним сценарий должен выходить ближе к правкам автора на отложенных роликах.
 
 const MIN_SIGNALS = 5;
 
@@ -56,12 +59,30 @@ async function gather(ws: string) {
       return `Было: «${first?.hook}» / ${first?.vo.map((x) => x.text).join(" ")}\nСтало: «${last?.hook}» / ${last?.vo.map((x) => x.text).join(" ")}`;
     });
 
+  // Ролики с правкой автора: о чём ролик и его финальные хук и озвучка, эталон для проверки новых правил.
+  const cases: GateCase[] = (reels.data as Row[])
+    .map((r) => ({ r, v: versions(r) }))
+    .filter((x) => x.v.length > 1)
+    .slice(0, 12)
+    .map(({ r, v }) => {
+      const first = ru(v[0].payload);
+      const last = ru(v[v.length - 1].payload)?.adaptation;
+      return {
+        id: r.id as string,
+        about: [`Ролик @${r.author}: «${String(r.caption ?? "").slice(0, 300)}»`, first?.original?.summary && `Что в оригинале: ${first.original.summary}`]
+          .filter(Boolean)
+          .join("\n"),
+        final: { hook: last?.hook ?? "", vo: (last?.vo ?? []).map((x) => x.text) },
+      };
+    })
+    .filter((c) => c.final.hook && c.final.vo.length > 0);
+
   const published = (posts.data as Row[]).map((p) => {
     const m = ((p.own_post_metrics as Row[] | null) ?? []).sort((a, b) => (b.day as number) - (a.day as number))[0];
     return `${p.url} · хук: «${hookOf(byId.get(p.reel_id as string))}» · ${m ? `день ${m.day}: ${m.views ?? "?"} просмотров, ${m.likes ?? "?"} лайков, ${m.saves ?? "?"} сохранений, ${m.shares ?? "?"} репостов` : "метрик ещё нет"}`;
   });
 
-  return { decisions, edits, published, rules: rules.data as { text: string; status: string }[] };
+  return { decisions, edits, published, cases, rules: rules.data as { text: string; status: string }[] };
 }
 
 export async function learningSignals(ws: string): Promise<LearningSignals> {
@@ -69,10 +90,10 @@ export async function learningSignals(ws: string): Promise<LearningSignals> {
   return { decisions: g.decisions.length, edits: g.edits.length, published: g.published.length };
 }
 
-export async function learn(ws: string): Promise<{ skipped?: string; proposed: number; usd: number }> {
+export async function learn(ws: string): Promise<{ skipped?: string; proposed: number; dropped: number; usd: number }> {
   const g = await gather(ws);
   const total = g.decisions.length + g.edits.length + g.published.length;
-  if (total < MIN_SIGNALS) return { skipped: `Мало данных: ${total} из ${MIN_SIGNALS} сигналов`, proposed: 0, usd: 0 };
+  if (total < MIN_SIGNALS) return { skipped: `Мало данных: ${total} из ${MIN_SIGNALS} сигналов`, proposed: 0, dropped: 0, usd: 0 };
 
   const known = g.rules.map((r) => `${r.status === "approved" ? "ПРИНЯТО" : r.status === "rejected" ? "ОТКЛОНЕНО" : "ЖДЁТ"}: ${r.text}`);
   const res = await llm().beta.messages.parse({
@@ -103,12 +124,16 @@ export async function learn(ws: string): Promise<{ skipped?: string; proposed: n
   const t = await d.from("taste_profile").upsert({ workspace_id: ws, summary: out.taste, updated_at: new Date().toISOString() });
   if (t.error) throw new Error(t.error.message);
   const existing = new Set(g.rules.map((r) => r.text.trim().toLowerCase()));
-  const fresh = out.rules.filter((r) => !existing.has(r.text.trim().toLowerCase()));
+  const candidates = out.rules.filter((r) => !existing.has(r.text.trim().toLowerCase()));
+  const profile = await loadProfile(ws);
+  const gate = await gateRules(profile.persona, out.taste, profile.rules, candidates.map((r) => r.text), g.cases);
+  const fresh = candidates.filter((r) => gate.kept.includes(r.text));
+  const total_usd = usd + gate.usd;
   if (fresh.length > 0) {
     const ins = await d.from("learned_rules").insert(fresh.map((r) => ({ workspace_id: ws, text: r.text, evidence: r.evidence })));
     if (ins.error) throw new Error(ins.error.message);
   }
-  return { proposed: fresh.length, usd };
+  return { proposed: fresh.length, dropped: gate.dropped.length, usd: total_usd };
 }
 
 export async function learningOverview(ws: string) {
