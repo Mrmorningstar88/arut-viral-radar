@@ -12,7 +12,12 @@ import { listProjectIds } from "@/lib/projects";
 // Поиск залётов и обучение идут только по проектам админа и Pro-клиентов: у Free они бы жгли деньги.
 export const maxDuration = 300;
 
+// Arut, 2026-11-14: радар пока не нужен, всё фоновое выключено, чтобы не тратить деньги. Код остаётся.
+// Включить снова: вернуть "crons" в vercel.json (см. историю git), задать CRON_SECRET в Vercel и убрать эту строку.
+const PAUSED = true;
+
 export async function GET(request: Request) {
+  if (PAUSED) return new Response("radar paused", { status: 503 });
   const secret = process.env.CRON_SECRET;
   const authorized = secret
     ? request.headers.get("authorization") === `Bearer ${secret}`
