@@ -80,6 +80,25 @@ async function faceKit(s, dir) {
   return { auth, soulId: hf.soul.id };
 }
 
+// Студия автора (портал, Настройки → «Моя студия», ключ scene:<ws> в source_cache): реальная комната, где он снимается.
+// Нужна, только если в сториборде есть планы в студии. Фото кладём в папку ролика как эталон и живые планы.
+async function sceneKit(s, dir) {
+  if (!s.storyboard?.shots?.some((sh) => sh.studio)) return null;
+  const { data } = await db.from("source_cache").select("payload").eq("key", `scene:${s.workspace_id}`).maybeSingle();
+  const sc = data?.payload;
+  if (!sc?.on || sc.status !== "ready") return null;
+  mkdirSync(join(dir, "studio"), { recursive: true });
+  const files = [];
+  for (const [i, url] of (sc.photos ?? []).entries()) {
+    const res = await fetch(url, { signal: AbortSignal.timeout(30_000) }).catch(() => null);
+    if (!res?.ok) continue;
+    const file = `studio/${String(i + 1).padStart(2, "0")}.jpg`;
+    writeFileSync(join(dir, file), Buffer.from(await res.arrayBuffer()));
+    files.push(file);
+  }
+  return { name: sc.name, en: sc.en, seen: sc.seen ?? [], files };
+}
+
 // Свой стиль автора, собранный в портале из его роликов (ключ mystyle:<ws>:<slug> в source_cache).
 // Кладём в папку ролика STYLE.md стиля и кадры из роликов автора как эталон.
 async function myStyleKit(s, dir) {
@@ -202,7 +221,7 @@ function styleLine(s, my) {
     .join(" ");
 }
 
-function brief(s, kit, face, my) {
+function brief(s, kit, face, my, scene) {
   const p = s.payload;
   const sb = s.storyboard;
   const lang = SPEECH[p.lang] ?? SPEECH.ru;
@@ -220,6 +239,15 @@ function brief(s, kit, face, my) {
     face
       ? `Автор в кадре: у тебя есть его образ из Higgsfield. Автор и есть герой ролика: в хуке, в ключевых сценах и в финале, а также везде, где по сториборду есть ведущий, рассказчик или человек, в кадре именно он. Такие кадры делай так: \`node hf.mjs frame "кинематографичный промпт на английском: кто (the man), где, что делает, свет, объектив, 9:16" shots/NN.jpg\`, затем оживи \`node hf.mjs clip shots/NN.jpg "движение камеры и героя на английском" shots/NN.mp4 5\` (10 только для длинных планов). Встрой эти клипы в монтаж стиля как живые планы, остальное делай средствами стиля. Лимит: до 16 кадров и до 8 клипов на ролик, команды выполняй по одной и не повторяй удачные. Если Higgsfield ответил ошибкой баланса или ключа, делай ролик без автора.`
       : "",
+    scene
+      ? [
+          `Студия автора: кадры сториборда с пометкой [СТУДИЯ] это планы в его реальной студии «${scene.name}» (${scene.seen.join(", ")}), где он говорит в камеру.${scene.files.length ? ` Фото студии: ${scene.files.join(", ")}, посмотри их до работы.` : ""} Описание для промптов: ${scene.en}`,
+          face
+            ? "Такие кадры делай через `node hf.mjs frame` с промптом, который начинается с описания студии выше (the man sits in this exact room and talks to camera), и оживляй `node hf.mjs clip` со спокойным движением: говорит, жестикулирует, камера едва дышит."
+            : `Такие кадры собирай из фото студии как живой план: медленный наезд или параллакс, лёгкое зерно и виньетка, надпись кадра поверх. Студию не стилизуй до неузнаваемости.`,
+          "Монтаж студии и кино контрастом: из огромного кинообраза в тихую тёмную комнату и обратно.",
+        ].join(" ")
+      : "",
     "Сториборд автор уже одобрил, на ревью не останавливайся.",
     "Подача как у мини-фильма с безграничным бюджетом: смелые невероятные образы, глубина кадра, драматичный свет, движение камеры, сильные переходы. Не плоский мультик и не слайды с текстом: каждый кадр должен выглядеть дорого в рамках стиля.",
     "",
@@ -230,7 +258,7 @@ function brief(s, kit, face, my) {
     p.onScreen?.length ? `НАДПИСИ НА ЭКРАНЕ: ${p.onScreen.join(" · ")}` : "",
     "",
     "СТОРИБОРД (одобрен автором):",
-    ...(sb?.shots ?? []).map((sh) => `${sh.n}. ${sh.dur} с · ${sh.frame}${sh.camera ? ` · камера: ${sh.camera}` : ""}${sh.overlay ? ` · надпись: «${sh.overlay}»` : ""}`),
+    ...(sb?.shots ?? []).map((sh) => `${sh.n}. ${sh.dur} с · ${sh.studio && scene ? "[СТУДИЯ] " : ""}${sh.frame}${sh.camera ? ` · камера: ${sh.camera}` : ""}${sh.overlay ? ` · надпись: «${sh.overlay}»` : ""}`),
     sb?.music ? `МУЗЫКА И ТЕМП: ${sb.music}` : "",
     p.sound ? `ЗВУКОВЫЕ АКЦЕНТЫ ИЗ СЦЕНАРИЯ: ${p.sound}` : "",
   ]
@@ -256,7 +284,8 @@ async function render(s) {
   const kit = await soundKit(s, dir).catch((e) => (console.error("sound kit", e.message), null));
   const face = await faceKit(s, dir).catch((e) => (console.error("face kit", e.message), null));
   const my = await myStyleKit(s, dir);
-  const film = brief(s, kit, face, my);
+  const scene = await sceneKit(s, dir).catch((e) => (console.error("scene kit", e.message), null));
+  const film = brief(s, kit, face, my, scene);
   writeFileSync(join(dir, "BRIEF.md"), film);
   let cost = 0;
   let lastLog = 0;

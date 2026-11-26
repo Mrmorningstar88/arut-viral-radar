@@ -7,6 +7,7 @@ import { FrameSketches, ScriptBatch, Storyboard } from "./schema";
 import { DIRECTION } from "@/lib/direction";
 import { asLang, LANGS, type Lang } from "./lang";
 import { getMyStyle, styleLine } from "./my-styles";
+import { sceneBrief, type Scene } from "@/lib/scene";
 import { OPUS_FRAME, OPUS_STYLES, styleBySlug } from "./styles";
 import { foreverTitles, getScript, insertScripts, listScripts, topFormulas, updateScript, type Formula } from "./store";
 
@@ -23,8 +24,20 @@ async function parse<T extends z.ZodType>(schema: T, system: string, user: strin
   return { out: res.parsed_output as z.infer<T>, usd: costUsd(MODEL_MAIN, res.usage) };
 }
 
+// Студия автора: реальное место, где он сам снимает планы в камеру. Это исключение из «никаких говорящих голов»:
+// короткий живой якорь доверия внутри мини-фильма, а не фон для всего ролика.
+const studioBlock = (sc: Scene) =>
+  [
+    `СТУДИЯ АВТОРА «${sc.name}»: ${sc.ru}`,
+    `Узнаваемые детали: ${sc.seen.join("; ")}.`,
+    sc.angles.length > 0 && `Планы, которые там можно снять: ${sc.angles.join("; ")}.`,
+    "Как использовать: автор снимет эти планы сам. В каждом ролике 1–2 коротких плана в студии (вместе не больше трети длины), где автор говорит прямо в камеру: например, вход в тему сразу после визуального хука, разворот мысли или панчлайн, финальный вывод и CTA. Всё остальное мини-фильм по режиссёрскому правилу. Хук остаётся сильным визуальным образом. Монтаж студии и кино делай контрастом: из огромного кинообраза в тихую тёмную комнату и обратно.",
+  ]
+    .filter(Boolean)
+    .join("\n");
+
 async function brief(ws: string) {
-  const [profile, ws_, never] = await Promise.all([loadProfile(ws), serviceDb().from("workspaces").select("name, passport").eq("id", ws).maybeSingle(), foreverTitles(ws)]);
+  const [profile, ws_, never, scene] = await Promise.all([loadProfile(ws), serviceDb().from("workspaces").select("name, passport").eq("id", ws).maybeSingle(), foreverTitles(ws), sceneBrief(ws)]);
   const passport = (ws_.data as { passport: unknown } | null)?.passport;
   const p = profile.persona;
   return [
@@ -35,6 +48,7 @@ async function brief(ws: string) {
     profile.taste && `ВКУС (что автор берёт и отвергает):\n${profile.taste}`,
     profile.rules.length > 0 && `ОДОБРЕННЫЕ ПРАВИЛА:\n- ${profile.rules.join("\n- ")}`,
     never.length > 0 && `АВТОР УБРАЛ НАВСЕГДА (не предлагай ничего похожего по теме и подаче):\n- ${never.join("\n- ")}`,
+    scene && studioBlock(scene),
   ]
     .filter(Boolean)
     .join("\n\n");
@@ -115,7 +129,7 @@ export async function reviseScript(ws: string, id: string, feedback: string, toL
 
 // Сториборд по одобренному сценарию: кадры, надписи, промпты для генерации и 3D-превью.
 export async function buildStoryboard(ws: string, id: string, feedback = "") {
-  const s = await getScript(ws, id);
+  const [s, scene] = await Promise.all([getScript(ws, id), sceneBrief(ws)]);
   if (!s) throw new Error("Сценарий не найден");
   const user = [
     await brief(ws),
@@ -124,6 +138,9 @@ export async function buildStoryboard(ws: string, id: string, feedback = "") {
     feedback && `ЗАМЕЧАНИЕ АВТОРА: ${feedback}`,
     `СТИЛЬ: ${await styleLine(ws, s.style ?? s.payload.style)}`,
     "Разложи сценарий на 4–8 кадров вертикального мини-фильма в этом стиле. Для каждого кадра опиши по-русски, что в кадре и что происходит (смело, кинематографично, с запоминающимся образом), как работает камера и свет, и надпись на экране на языке ролика. Сумма dur равна длине озвучки. Озвучку перенеси, подправив только тайм-коды. В music опиши, как фирменная тема и эффекты организации работают по кадрам: темп монтажа и звуковые акценты, опираясь на звук из сценария. Трендовые треки не предлагай.",
+    scene
+      ? "Планы в студии автора помечай studio=true: в frame опиши, что автор говорит или делает в этой самой комнате, с её узнаваемыми деталями; в camera дай установку, которую реально поставить дома (крупность, ракурс, свет из описания студии). Остальные кадры studio=false."
+      : "У всех кадров studio=false.",
   ]
     .filter(Boolean)
     .join("\n\n");
@@ -151,6 +168,9 @@ export async function sketchFrames(ws: string, id: string, board: Storyboard, st
     // Эталон стиля: кадр библиотеки или до трёх кадров из роликов автора.
     const refs = st ? [OPUS_FRAME(st.slug)] : my?.status === "ready" ? my.frames.filter((_, i, a) => i % Math.max(1, Math.floor(a.length / 3)) === 0).slice(0, 3) : [];
     const name = st?.name ?? my?.name;
+    // Кадры в студии автора рисуются по её фото, чтобы комната была узнаваемой.
+    const scene = board.shots.some((sh) => sh.studio) ? await sceneBrief(ws) : null;
+    const studioRefs = scene ? scene.photos.slice(0, 2) : [];
     const res = await llm().beta.messages.parse({
       model: MODEL_MAIN,
       max_tokens: 32000,
@@ -161,13 +181,16 @@ export async function sketchFrames(ws: string, id: string, board: Storyboard, st
         {
           role: "user",
           content: [
-            ...refs.map((url) => ({ type: "image" as const, source: { type: "url" as const, url } })),
+            ...[...refs, ...studioRefs].map((url) => ({ type: "image" as const, source: { type: "url" as const, url } })),
             {
               type: "text",
               text: [
-                refs.length ? `${refs.length > 1 ? "Эталонные кадры" : "Эталонный кадр"} стиля «${name}» выше: повтори палитру, фактуру и манеру, но не их сюжет.` : "",
+                refs.length ? `${refs.length > 1 ? "Эталонные кадры" : "Эталонный кадр"} стиля «${name}» ${studioRefs.length ? `это первые ${refs.length} картинки` : "выше"}: повтори палитру, фактуру и манеру, но не их сюжет.` : "",
+                scene
+                  ? `${studioRefs.length > 1 ? "Последние две картинки" : "Последняя картинка"} это реальная студия автора («${scene.name}»: ${scene.seen.join(", ")}). Кадры со studio=true рисуй именно в этой комнате: та же композиция, фон, мебель, техника и свет, автор фигурой без черт лица. Палитра таких кадров: ${scene.palette.join(", ")}.`
+                  : "",
                 my?.status === "ready" ? `Палитра стиля: ${my.palette.join(", ")}. Главное в стиле: ${my.seen.join("; ")}.` : "",
-                `КАДРЫ (JSON):\n${JSON.stringify(board.shots.map(({ n, frame, camera, overlay }) => ({ n, frame, camera, overlay })))}`,
+                `КАДРЫ (JSON):\n${JSON.stringify(board.shots.map(({ n, frame, camera, overlay, studio }) => ({ n, frame, camera, overlay, studio: !!studio })))}`,
                 'Нарисуй по SVG на каждый кадр: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 270 480">. Фон на весь кадр, крупный главный образ из описания, ракурс и свет из camera, надпись overlay на экране крупным шрифтом (font-family sans-serif) там, где она будет в ролике. Формы и градиенты в цветах стиля, до 6 КБ на кадр. Верни frames с теми же n.',
               ]
                 .filter(Boolean)

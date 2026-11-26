@@ -53,6 +53,7 @@ export const StoryShot = z.object({
   frame: z.string().describe("Что в кадре и как движется, по-русски: образ, место, герой, действие, как кадр из большого кино"),
   camera: z.string().describe("По-русски: крупность, ракурс, движение камеры, оптика и свет, как в режиссёрском сценарии"),
   overlay: z.string().describe("Текст на экране на языке ролика, пусто если нет"),
+  studio: z.boolean().describe("true, если это план в студии автора, где он сам говорит в камеру; иначе false"),
 });
 
 export const Storyboard = z.object({
@@ -60,8 +61,8 @@ export const Storyboard = z.object({
   vo: z.array(Vo).min(3).max(10),
   music: z.string().describe("Музыка и темп монтажа"),
 });
-// camera есть только у новых сторибордов. svg: эскиз кадра 9:16, его рисует отдельный проход после текста сториборда.
-export type Storyboard = Omit<z.infer<typeof Storyboard>, "shots"> & { shots: (Omit<z.infer<typeof StoryShot>, "camera"> & { camera?: string; svg?: string })[] };
+// camera и studio есть только у новых сторибордов. svg: эскиз кадра 9:16, его рисует отдельный проход после текста сториборда.
+export type Storyboard = Omit<z.infer<typeof Storyboard>, "shots"> & { shots: (Omit<z.infer<typeof StoryShot>, "camera" | "studio"> & { camera?: string; studio?: boolean; svg?: string })[] };
 
 export const FrameSketches = z.object({
   frames: z.array(z.object({ n: z.number().int(), svg: z.string().describe("Полный SVG <svg viewBox=\"0 0 270 480\" ...>...</svg>") })),

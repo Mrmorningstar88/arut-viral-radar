@@ -144,7 +144,10 @@ export default async function ScriptPage({ params, searchParams }: PageProps<"/s
                     </div>
                   )}
                   <div className="flex items-center justify-between text-xs text-muted">
-                    <span className="font-semibold text-foreground">Кадр {sh.n}</span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="font-semibold text-foreground">Кадр {sh.n}</span>
+                      {sh.studio && <span title="План в твоей студии: снимаешь сам или рендер по фото студии" className="rounded-full bg-[#f06595]/15 px-2 py-0.5 text-[11px] font-medium text-[#c2255c]">🎙 Студия</span>}
+                    </span>
                     <span className="tabular-nums">{sh.dur} с</span>
                   </div>
                   <p className="mt-2 flex-1 text-sm leading-relaxed">{sh.frame}</p>

@@ -4,6 +4,7 @@ import { PasswordForm, RequestPro, SignOut } from "@/components/account-actions"
 import { MetricoolCard } from "@/components/metricool-card";
 import { FaceCard } from "@/components/face-card";
 import { ImportRadar } from "@/components/import-radar";
+import { SceneCard } from "@/components/scene-card";
 import { SoundCard } from "@/components/sound-card";
 import { Reveal } from "@/components/ui/reveal";
 import { isAdmin, requireUser } from "@/lib/auth/server";
@@ -13,6 +14,7 @@ import { keyOf, listVoices, soundOf, type Voice } from "@/lib/elevenlabs";
 import { faceOf, getSoul, linkOf as higgsOf, saveLink as saveHiggs, training, type Soul } from "@/lib/higgsfield";
 import { linkOf, listBrands, type Brand } from "@/lib/metricool";
 import { PLANS, planOf, usage } from "@/lib/plans";
+import { sceneCard, sceneOf } from "@/lib/scene";
 import { currentWorkspace, listProjects } from "@/lib/projects";
 
 const ITEMS = [
@@ -52,7 +54,7 @@ export default async function SettingsPage() {
     link ? listBrands(link).then((b): Brand[] | string => b).catch((e: Error) => e.message) : ([] as Brand[]),
     elKey ? listVoices(elKey).then((v): Voice[] | string => v).catch((e: Error) => e.message) : ([] as Voice[]),
   ]);
-  const sound = elKey ? await soundOf(ws) : null;
+  const [sound, scene] = await Promise.all([elKey ? soundOf(ws) : null, sceneOf(ws)]);
   const higgs = higgsOf(user);
   const [face, soul] = higgs ? await Promise.all([faceOf(ws), freshSoul(user, higgs)]) : [null, null];
   const org = projects.find((p) => p.id === ws)?.name ?? "";
@@ -137,6 +139,10 @@ export default async function SettingsPage() {
             on={!!face?.on && face.owner === user.id}
             error={typeof soul === "string" ? soul : null}
           />
+        </Reveal>
+        <Reveal delay={0.085} className="rounded-3xl glass p-5 md:col-span-2">
+          <h2 className="mb-3 font-display text-sm font-semibold tracking-wide uppercase">Моя студия</h2>
+          <SceneCard org={org} scene={scene && sceneCard(scene)} />
         </Reveal>
         {admin && (
           <Reveal delay={0.09} className="rounded-3xl glass p-5 md:col-span-2">
